@@ -183,8 +183,6 @@ NAN_METHOD(ecdsaVerify) {
 	return RETURNV(result);
 }
 
-secp256k1_context* secp256k1ctx;
-
 NAN_MODULE_INIT(Init) {
   secp256k1ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
 
