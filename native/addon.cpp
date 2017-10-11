@@ -144,6 +144,7 @@ NAN_METHOD(publicKeyValidate) {
 	return RETURNV(isPublicKey(pub, public_key));
 }
 
+// returns Signature
 NAN_METHOD(ecdsaSign) {
 	Nan::HandleScope scope;
 	EXPECT_ARGS(2);
@@ -162,6 +163,7 @@ NAN_METHOD(ecdsaSign) {
 	return RETURNV(asBuffer(output, 64));
 }
 
+// returns Bool
 NAN_METHOD(ecdsaVerify) {
 	Nan::HandleScope scope;
 	EXPECT_ARGS(3);
