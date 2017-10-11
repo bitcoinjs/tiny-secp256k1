@@ -1,0 +1,28 @@
+{
+  "name": "tiny-secp256k1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "gypfile": true,
+  "engines": {
+    "node": ">=4.0.0"
+  },
+  "scripts": {
+    "build": "node-gyp rebuild"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dcousens/secp256k1-tiny.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "gypfile": true,
+  "bugs": {
+    "url": "https://github.com/dcousens/secp256k1-tiny/issues"
+  },
+  "homepage": "https://github.com/dcousens/secp256k1-tiny#readme",
+  "dependencies": {
+    "bindings": "^1.3.0",
+    "nan": "^2.7.0"
+  }
+}
