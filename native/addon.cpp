@@ -11,7 +11,7 @@
 #define THROW_BAD_SIGNATURE Nan::ThrowTypeError("Expected Signature")
 #define RETURNV(X) info.GetReturnValue().Set(X)
 
-extern secp256k1_context* secp256k1ctx;
+secp256k1_context* secp256k1ctx;
 
 namespace {
 	v8::Local<v8::Object> asBuffer (const unsigned char* data, const size_t length) {
@@ -49,7 +49,7 @@ namespace {
 }
 
 // returns ?Secret
-NAN_METHOD(privateKeyTweakAdd) {
+NAN_METHOD(eccPrivateKeyTweakAdd) {
 	Nan::HandleScope scope;
 	EXPECT_ARGS(2);
 
@@ -66,7 +66,7 @@ NAN_METHOD(privateKeyTweakAdd) {
 }
 
 // returns Bool
-NAN_METHOD(privateKeyValidate) {
+NAN_METHOD(eccIsPrivateKey) {
 	Nan::HandleScope scope;
 	EXPECT_ARGS(1);
 
@@ -75,7 +75,7 @@ NAN_METHOD(privateKeyValidate) {
 }
 
 // returns ?Point
-NAN_METHOD(publicKeyDerive) {
+NAN_METHOD(eccDerivePublicKey) {
 	Nan::HandleScope scope;
 	EXPECT_ARGS(2);
 
@@ -94,7 +94,7 @@ NAN_METHOD(publicKeyDerive) {
 }
 
 // returns Point
-NAN_METHOD(publicKeyReform) {
+NAN_METHOD(eccReformPublicKey) {
 	Nan::HandleScope scope;
 	EXPECT_ARGS(2);
 
@@ -112,7 +112,7 @@ NAN_METHOD(publicKeyReform) {
 }
 
 // returns ?Point
-NAN_METHOD(publicKeyTweakAdd) {
+NAN_METHOD(eccPublicKeyTweakAdd) {
 	Nan::HandleScope scope;
 	EXPECT_ARGS(3);
 
@@ -134,7 +134,7 @@ NAN_METHOD(publicKeyTweakAdd) {
 }
 
 // returns Bool
-NAN_METHOD(publicKeyValidate) {
+NAN_METHOD(eccIsPublicKey) {
 	Nan::HandleScope scope;
 	EXPECT_ARGS(1);
 
@@ -182,3 +182,23 @@ NAN_METHOD(ecdsaVerify) {
 	const auto result = secp256k1_ecdsa_verify(secp256k1ctx, &signature, asDataPointer(hash), &public_key) == 1;
 	return RETURNV(result);
 }
+
+secp256k1_context* secp256k1ctx;
+
+NAN_MODULE_INIT(Init) {
+  secp256k1ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
+
+  // ecc
+  Nan::Export(target, "isPrivateKey", eccIsPrivateKey);
+  Nan::Export(target, "isPublicKey", eccIsPublicKey);
+  Nan::Export(target, "privateKeyTweakAdd", eccPrivateKeyTweakAdd);
+  Nan::Export(target, "publicKeyTweakAdd", eccPublicKeyTweakAdd);
+  Nan::Export(target, "derivePublicKey", eccDerivePublicKey);
+  Nan::Export(target, "reformPublicKey", eccReformPublicKey);
+
+  // ecdsa
+  Nan::Export(target, "sign", ecdsaSign);
+  Nan::Export(target, "verify", ecdsaVerify);
+}
+
+NODE_MODULE(secp256k1, Init)
