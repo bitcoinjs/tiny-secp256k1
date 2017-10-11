@@ -49,7 +49,7 @@ namespace {
 }
 
 // returns ?Secret
-NAN_METHOD(eccPrivateKeyTweakAdd) {
+NAN_METHOD(eccPrivateAdd) {
 	Nan::HandleScope scope;
 	EXPECT_ARGS(2);
 
@@ -65,8 +65,29 @@ NAN_METHOD(eccPrivateKeyTweakAdd) {
 	return RETURNV(asBuffer(output, 32));
 }
 
+// returns ?Secret
+NAN_METHOD(eccPrivateSub) {
+	Nan::HandleScope scope;
+	EXPECT_ARGS(2);
+
+	const auto priv = info[0].As<v8::Object>();
+	const auto tweak = info[1].As<v8::Object>();
+	if (!isPrivateKey(priv)) return THROW_BAD_PRIVATE_KEY;
+	if (!isUInt256(tweak)) return THROW_BAD_TWEAK;
+
+	unsigned char tweak_negated[32];
+	memcpy(tweak_negated, asDataPointer(tweak), 32);
+	secp256k1_ec_privkey_negate(secp256k1ctx, tweak_negated);
+
+	unsigned char output[32];
+	memcpy(output, asDataPointer(priv), 32);
+	if (secp256k1_ec_privkey_tweak_add(secp256k1ctx, output, tweak_negated) == 0) return RETURNV(Nan::Null());
+
+	return RETURNV(asBuffer(output, 32));
+}
+
 // returns Bool
-NAN_METHOD(eccIsPrivateKey) {
+NAN_METHOD(eccIsPrivate) {
 	Nan::HandleScope scope;
 	EXPECT_ARGS(1);
 
@@ -75,7 +96,7 @@ NAN_METHOD(eccIsPrivateKey) {
 }
 
 // returns ?Point
-NAN_METHOD(eccDerivePublicKey) {
+NAN_METHOD(eccPointDerive) {
 	Nan::HandleScope scope;
 	EXPECT_ARGS(2);
 
@@ -94,7 +115,7 @@ NAN_METHOD(eccDerivePublicKey) {
 }
 
 // returns Point
-NAN_METHOD(eccReformPublicKey) {
+NAN_METHOD(eccPointReform) {
 	Nan::HandleScope scope;
 	EXPECT_ARGS(2);
 
@@ -112,7 +133,7 @@ NAN_METHOD(eccReformPublicKey) {
 }
 
 // returns ?Point
-NAN_METHOD(eccPublicKeyTweakAdd) {
+NAN_METHOD(eccPointAdd) {
 	Nan::HandleScope scope;
 	EXPECT_ARGS(3);
 
@@ -134,7 +155,7 @@ NAN_METHOD(eccPublicKeyTweakAdd) {
 }
 
 // returns Bool
-NAN_METHOD(eccIsPublicKey) {
+NAN_METHOD(eccIsPoint) {
 	Nan::HandleScope scope;
 	EXPECT_ARGS(1);
 
@@ -187,12 +208,14 @@ NAN_MODULE_INIT(Init) {
   secp256k1ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
 
   // ecc
-  Nan::Export(target, "isPrivateKey", eccIsPrivateKey);
-  Nan::Export(target, "isPublicKey", eccIsPublicKey);
-  Nan::Export(target, "privateKeyTweakAdd", eccPrivateKeyTweakAdd);
-  Nan::Export(target, "publicKeyTweakAdd", eccPublicKeyTweakAdd);
-  Nan::Export(target, "derivePublicKey", eccDerivePublicKey);
-  Nan::Export(target, "reformPublicKey", eccReformPublicKey);
+  Nan::Export(target, "isPrivateKey", eccIsPrivate);
+  Nan::Export(target, "isPublicKey", eccIsPoint);
+  Nan::Export(target, "privateAdd", eccPrivateAdd);
+  Nan::Export(target, "privateSub", eccPrivateSub);
+  Nan::Export(target, "pointAdd", eccPointAdd);
+//   Nan::Export(target, "pointCombine", eccPointAdd); // TODO
+  Nan::Export(target, "pointDerive", eccPointDerive);
+  Nan::Export(target, "pointReform", eccPointReform);
 
   // ecdsa
   Nan::Export(target, "sign", ecdsaSign);
