@@ -4,9 +4,11 @@
 #include <secp256k1.h>
 
 #define EXPECT_ARGS(N) if (info.Length() != N) return Nan::ThrowTypeError("Wrong number of arguments")
-#define THROW_PRIVATE_KEY Nan::ThrowTypeError("Expected Private Key")
-#define THROW_PUBLIC_KEY Nan::ThrowTypeError("Expected Public Key")
+#define THROW_BAD_PRIVATE_KEY Nan::ThrowTypeError("Expected Private Key")
+#define THROW_BAD_PUBLIC_KEY Nan::ThrowTypeError("Expected Public Key")
 #define THROW_BAD_TWEAK Nan::ThrowTypeError("Expected Tweak")
+#define THROW_BAD_HASH Nan::ThrowTypeError("Expected Hash")
+#define THROW_BAD_SIGNATURE Nan::ThrowTypeError("Expected Signature")
 #define RETURNV(X) info.GetReturnValue().Set(X)
 
 extern secp256k1_context* secp256k1ctx;
@@ -29,13 +31,20 @@ namespace {
 	template <typename T>
 	bool isPrivateKey (const T& x) {
 		if (!isUInt256<T>(x)) return false;
-		return secp256k1_ec_seckey_verify(secp256k1ctx, asDataPointer(x)) == 1;
+		return secp256k1_ec_seckey_verify(secp256k1ctx, asDataPointer(x)) != 0;
 	}
 
 	template <typename T>
 	bool isPublicKey (const T& x, secp256k1_pubkey& pubkey) {
 		if (!node::Buffer::HasInstance(x)) return false;
 		return secp256k1_ec_pubkey_parse(secp256k1ctx, &pubkey, asDataPointer(x), node::Buffer::Length(x)) != 0;
+	}
+
+	template <typename T>
+	bool isSignature (const T& x, secp256k1_ecdsa_signature& sig) {
+		if (!node::Buffer::HasInstance(x)) return false;
+		if (node::Buffer::Length(x) != 64) return false;
+		return secp256k1_ecdsa_signature_parse_compact(secp256k1ctx, &sig, asDataPointer(x)) != 0;
 	}
 }
 
@@ -46,7 +55,7 @@ NAN_METHOD(privateKeyTweakAdd) {
 
 	const auto priv = info[0].As<v8::Object>();
 	const auto tweak = info[1].As<v8::Object>();
-	if (!isPrivateKey(priv)) return THROW_PRIVATE_KEY;
+	if (!isPrivateKey(priv)) return THROW_BAD_PRIVATE_KEY;
 	if (!isUInt256(tweak)) return THROW_BAD_TWEAK;
 
 	unsigned char output[32];
@@ -72,7 +81,7 @@ NAN_METHOD(publicKeyDerive) {
 
 	const auto priv = info[0].As<v8::Object>();
 	const auto flags = info[1]->BooleanValue() ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED;
-	if (!isPrivateKey(priv)) return THROW_PRIVATE_KEY;
+	if (!isPrivateKey(priv)) return THROW_BAD_PRIVATE_KEY;
 
 	secp256k1_pubkey public_key;
 	if (secp256k1_ec_pubkey_create(secp256k1ctx, &public_key, asDataPointer(priv)) == 0) return RETURNV(Nan::Null());
@@ -93,7 +102,7 @@ NAN_METHOD(publicKeyReform) {
 	const auto flags = info[1]->BooleanValue() ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED;
 
 	secp256k1_pubkey public_key;
-	if (!isPublicKey(pub, public_key)) return THROW_PUBLIC_KEY;
+	if (!isPublicKey(pub, public_key)) return THROW_BAD_PUBLIC_KEY;
 
 	unsigned char output[65];
 	size_t output_length = 65;
@@ -112,7 +121,7 @@ NAN_METHOD(publicKeyTweakAdd) {
 	const auto flags = info[2]->BooleanValue() ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED;
 
 	secp256k1_pubkey public_key;
-	if (!isPublicKey(pub, public_key)) return THROW_PUBLIC_KEY;
+	if (!isPublicKey(pub, public_key)) return THROW_BAD_PUBLIC_KEY;
 	if (!isUInt256(tweak)) return THROW_BAD_TWEAK;
 
 	if (secp256k1_ec_pubkey_tweak_add(secp256k1ctx, &public_key, asDataPointer(tweak)) == 0) return RETURNV(Nan::Null());
@@ -133,4 +142,41 @@ NAN_METHOD(publicKeyValidate) {
 
 	secp256k1_pubkey public_key;
 	return RETURNV(isPublicKey(pub, public_key));
+}
+
+NAN_METHOD(ecdsaSign) {
+	Nan::HandleScope scope;
+	EXPECT_ARGS(2);
+
+	const auto hash = info[0].As<v8::Object>();
+	const auto priv = info[1].As<v8::Object>();
+	if (!isUInt256(hash)) return THROW_BAD_HASH;
+	if (!isPrivateKey(priv)) return THROW_BAD_PRIVATE_KEY;
+
+	secp256k1_ecdsa_signature signature;
+	if (secp256k1_ecdsa_sign(secp256k1ctx, &signature, asDataPointer(hash), asDataPointer(priv), secp256k1_nonce_function_rfc6979, NULL) == 0) return THROW_BAD_SIGNATURE;
+
+	unsigned char output[64];
+	secp256k1_ecdsa_signature_serialize_compact(secp256k1ctx, output, &signature);
+
+	return RETURNV(asBuffer(output, 64));
+}
+
+NAN_METHOD(ecdsaVerify) {
+	Nan::HandleScope scope;
+	EXPECT_ARGS(3);
+
+	const auto hash = info[0].As<v8::Object>();
+	const auto pub = info[1].As<v8::Object>();
+	const auto sig = info[2].As<v8::Object>();
+
+	secp256k1_pubkey public_key;
+	secp256k1_ecdsa_signature signature;
+
+	if (!isUInt256(hash)) return THROW_BAD_HASH;
+	if (!isPublicKey(pub, public_key)) return THROW_BAD_PUBLIC_KEY;
+	if (!isSignature(sig, signature)) return THROW_BAD_SIGNATURE;
+
+	const auto result = secp256k1_ecdsa_verify(secp256k1ctx, &signature, asDataPointer(hash), &public_key) == 1;
+	return RETURNV(result);
 }
