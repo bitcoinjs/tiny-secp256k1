@@ -39,6 +39,7 @@ namespace {
 	}
 }
 
+// returns ?Secret
 NAN_METHOD(privateKeyTweakAdd) {
 	Nan::HandleScope scope;
 	EXPECT_ARGS(2);
@@ -55,6 +56,7 @@ NAN_METHOD(privateKeyTweakAdd) {
 	return RETURNV(asBuffer(output, 32));
 }
 
+// returns Bool
 NAN_METHOD(privateKeyValidate) {
 	Nan::HandleScope scope;
 	EXPECT_ARGS(1);
@@ -63,6 +65,7 @@ NAN_METHOD(privateKeyValidate) {
 	return RETURNV(isPrivateKey(priv));
 }
 
+// returns ?Point
 NAN_METHOD(publicKeyDerive) {
 	Nan::HandleScope scope;
 	EXPECT_ARGS(2);
@@ -81,6 +84,7 @@ NAN_METHOD(publicKeyDerive) {
 	return RETURNV(asBuffer(output, output_length));
 }
 
+// returns Point
 NAN_METHOD(publicKeyReform) {
 	Nan::HandleScope scope;
 	EXPECT_ARGS(2);
@@ -98,6 +102,7 @@ NAN_METHOD(publicKeyReform) {
 	return RETURNV(asBuffer(output, output_length));
 }
 
+// returns ?Point
 NAN_METHOD(publicKeyTweakAdd) {
 	Nan::HandleScope scope;
 	EXPECT_ARGS(3);
@@ -119,6 +124,7 @@ NAN_METHOD(publicKeyTweakAdd) {
 	return RETURNV(asBuffer(output, output_length));
 }
 
+// returns Bool
 NAN_METHOD(publicKeyValidate) {
 	Nan::HandleScope scope;
 	EXPECT_ARGS(1);
