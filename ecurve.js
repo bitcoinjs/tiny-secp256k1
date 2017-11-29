@@ -44,6 +44,7 @@ function pointAdd (pA, pB, compressed) {
 
 function pointAddScalar (p, tweak, compressed) {
   if (!isPoint(p)) throw new TypeError('Expected Point')
+  if (!isPrivate(tweak)) throw new TypeError('Expected Tweak')
   let q = ecurve.Point.decodeFrom(secp256k1, p)
   let u = q.multiply(tweak)
   if (secp256k1.isInfinity(u)) return null
@@ -62,7 +63,7 @@ function pointDerive (d, compressed) {
 
 function privateAdd (d, tweak) {
   if (!isPrivate(d)) throw new TypeError('Expected Private')
-  if (!isUInt256(tweak)) throw new TypeError('Expected Tweak')
+  if (!isPrivate(tweak)) throw new TypeError('Expected Tweak')
   let dd = bigi.fromBuffer(d)
   let tt = bigi.fromBuffer(tweak)
   return dd.add(tt).mod(secp256k1.n)
@@ -70,7 +71,7 @@ function privateAdd (d, tweak) {
 
 function privateSub (d, tweak) {
   if (!isPrivate(d)) throw new TypeError('Expected Private')
-  if (!isUInt256(tweak)) throw new TypeError('Expected Tweak')
+  if (!isPrivate(tweak)) throw new TypeError('Expected Tweak')
   let dd = bigi.fromBuffer(d)
   let tt = bigi.fromBuffer(tweak)
   return dd.subtract(tt).mod(secp256k1.n)

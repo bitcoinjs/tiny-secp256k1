@@ -123,7 +123,7 @@ NAN_METHOD(eccPointAddScalar) {
 
 	secp256k1_pubkey public_key;
 	if (!isPoint(p, public_key)) return THROW_BAD_POINT;
-	if (!isUInt256(tweak)) return THROW_BAD_TWEAK;
+	if (!isPrivate(tweak)) return THROW_BAD_TWEAK;
 
 	if (secp256k1_ec_pubkey_tweak_add(secp256k1ctx, &public_key, asDataPointer(tweak)) == 0) return RETURNV(Nan::Null());
 
@@ -160,7 +160,7 @@ NAN_METHOD(eccPrivateAdd) {
 	const auto d = info[0].As<v8::Object>();
 	const auto tweak = info[1].As<v8::Object>();
 	if (!isPrivate(d)) return THROW_BAD_PRIVATE;
-	if (!isUInt256(tweak)) return THROW_BAD_TWEAK;
+	if (!isPrivate(tweak)) return THROW_BAD_TWEAK; // required
 
 	unsigned char output[32];
 	memcpy(output, asDataPointer(d), 32);
@@ -177,7 +177,7 @@ NAN_METHOD(eccPrivateSub) {
 	const auto d = info[0].As<v8::Object>();
 	const auto tweak = info[1].As<v8::Object>();
 	if (!isPrivate(d)) return THROW_BAD_PRIVATE;
-	if (!isUInt256(tweak)) return THROW_BAD_TWEAK;
+	if (!isPrivate(tweak)) return THROW_BAD_TWEAK; // required
 
 	unsigned char tweak_negated[32];
 	memcpy(tweak_negated, asDataPointer(tweak), 32);
