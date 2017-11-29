@@ -79,12 +79,12 @@ NAN_METHOD(eccPointAdd) {
 	const auto flags = info[2]->BooleanValue() ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED;
 
 	secp256k1_pubkey a, b;
-	if (!isPoint(pA, public_keyA)) return THROW_BAD_POINT;
-	if (!isPoint(pB, public_keyB)) return THROW_BAD_POINT;
+	if (!isPoint(pA, a)) return THROW_BAD_POINT;
+	if (!isPoint(pB, b)) return THROW_BAD_POINT;
 
-	const secp256k1_pubkey* points[] = { &a, &b};
+	const secp256k1_pubkey* points[] = { &a, &b };
 	secp256k1_pubkey p;
-	if (secp256k1_ec_pubkey_combine(secp256k1ctx, &result, points, 2) == 0) return RETURNV(Nan::Null());
+	if (secp256k1_ec_pubkey_combine(secp256k1ctx, &p, points, 2) == 0) return RETURNV(Nan::Null());
 
 	unsigned char output[65];
 	size_t output_length = 65;
@@ -103,7 +103,7 @@ NAN_METHOD(eccPointDerive) {
 	if (!isPrivate(d)) return THROW_BAD_PRIVATE;
 
 	secp256k1_pubkey public_key;
-	if (secp256k1_ec_pubkey_create(secp256k1ctx, &public_key, asDataPointer(priv)) == 0) return RETURNV(Nan::Null());
+	if (secp256k1_ec_pubkey_create(secp256k1ctx, &public_key, asDataPointer(d)) == 0) return RETURNV(Nan::Null());
 
 	unsigned char output[65];
 	size_t output_length = 65;
@@ -163,7 +163,7 @@ NAN_METHOD(eccPrivateAdd) {
 	if (!isUInt256(tweak)) return THROW_BAD_TWEAK;
 
 	unsigned char output[32];
-	memcpy(output, asDataPointer(priv), 32);
+	memcpy(output, asDataPointer(d), 32);
 	if (secp256k1_ec_privkey_tweak_add(secp256k1ctx, output, asDataPointer(tweak)) == 0) return RETURNV(Nan::Null());
 
 	return RETURNV(asBuffer(output, 32));
@@ -184,7 +184,7 @@ NAN_METHOD(eccPrivateSub) {
 	secp256k1_ec_privkey_negate(secp256k1ctx, tweak_negated);
 
 	unsigned char output[32];
-	memcpy(output, asDataPointer(priv), 32);
+	memcpy(output, asDataPointer(d), 32);
 	if (secp256k1_ec_privkey_tweak_add(secp256k1ctx, output, tweak_negated) == 0) return RETURNV(Nan::Null());
 
 	return RETURNV(asBuffer(output, 32));
@@ -201,7 +201,14 @@ NAN_METHOD(ecdsaSign) {
 	if (!isPrivate(d)) return THROW_BAD_PRIVATE;
 
 	secp256k1_ecdsa_signature signature;
-	if (secp256k1_ecdsa_sign(secp256k1ctx, &signature, asDataPointer(hash), asDataPointer(priv), secp256k1_nonce_function_rfc6979, NULL) == 0) return THROW_BAD_SIGNATURE;
+	if (secp256k1_ecdsa_sign(
+		secp256k1ctx,
+		&signature,
+		asDataPointer(hash),
+		asDataPointer(d),
+		secp256k1_nonce_function_rfc6979,
+		NULL
+	) == 0) return THROW_BAD_SIGNATURE;
 
 	unsigned char output[64];
 	secp256k1_ecdsa_signature_serialize_compact(secp256k1ctx, output, &signature);
