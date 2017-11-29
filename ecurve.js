@@ -134,7 +134,7 @@ function deterministicGenerateK (hash, x, checkSig) {
 let N_OVER_TWO = secp256k1.n.shiftRight(1)
 
 function sign (hash, x) {
-  if (!isUInt256(hash)) throw new TypeError('Expected UInt256 hash')
+  if (!isUInt256(hash)) throw new TypeError('Expected Hash')
   if (!isPrivate(x)) throw new TypeError('Expected Private')
 
   let d = bigi.fromBuffer(x)
@@ -166,7 +166,7 @@ function sign (hash, x) {
 }
 
 function verify (hash, p, signature) {
-  if (!isUInt256(hash)) throw new TypeError('Expected UInt256 hash')
+  if (!isUInt256(hash)) throw new TypeError('Expected Hash')
   if (!isPoint(p)) throw new TypeError('Expected Private')
   if (!isSignature(signature)) throw new TypeError('Expected Signature')
 
