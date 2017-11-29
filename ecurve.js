@@ -1,6 +1,5 @@
 let bigi = require('bigi')
 let createHmac = require('create-hmac')
-let typeforce = require('typeforce')
 let ecurve = require('ecurve')
 let secp256k1 = ecurve.getCurveByName('secp256k1')
 
@@ -27,6 +26,10 @@ function isPrivate (value) {
   if (!isUInt256(value)) return false
   return value.compare(EC_ZERO) > 0 && // > 0
     value.compare(EC_UINT_MAX) < 0 // < n-1
+}
+
+function isSignature (value) {
+  return Buffer.isBuffer(value) && value.length === 64
 }
 
 function pointAdd (pA, pB, compressed) {
@@ -75,12 +78,6 @@ function privateSub (d, tweak) {
 
 // https://tools.ietf.org/html/rfc6979#section-3.2
 function deterministicGenerateK (hash, x, checkSig) {
-  typeforce(typeforce.tuple(
-    isUInt256,
-    isPrivate,
-    typeforce.Function
-  ), arguments)
-
   // Step A, ignored as hash already provided
   // Step B
   // Step C
@@ -136,7 +133,8 @@ function deterministicGenerateK (hash, x, checkSig) {
 let N_OVER_TWO = secp256k1.n.shiftRight(1)
 
 function sign (hash, x) {
-  typeforce(typeforce.tuple(isUInt256, isPrivate), arguments)
+  if (!isUInt256(hash)) throw new TypeError('Expected UInt256 hash')
+  if (!isPrivate(x)) throw new TypeError('Expected Private')
 
   let d = bigi.fromBuffer(x)
   let e = bigi.fromBuffer(hash)
@@ -167,11 +165,9 @@ function sign (hash, x) {
 }
 
 function verify (hash, p, signature) {
-  typeforce(typeforce.tuple(
-    isUInt256,
-    isPoint,
-    typeforce.BufferN(64)
-  ), arguments)
+  if (!isUInt256(hash)) throw new TypeError('Expected UInt256 hash')
+  if (!isPoint(p)) throw new TypeError('Expected Private')
+  if (!isSignature(signature)) throw new TypeError('Expected Signature')
 
   let Q = ecurve.Point.decodeFrom(secp256k1, p)
   let n = secp256k1.n
