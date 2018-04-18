@@ -121,12 +121,14 @@ auto _privok (const uint8_t_32& key) {
 const auto ZERO = scalarFromHex("0000000000000000000000000000000000000000000000000000000000000000");
 const auto ONE = scalarFromHex("0000000000000000000000000000000000000000000000000000000000000001");
 const auto TWO = scalarFromHex("0000000000000000000000000000000000000000000000000000000000000002");
+const auto THREE = scalarFromHex("0000000000000000000000000000000000000000000000000000000000000003");
+const auto GROUP_ORDER = scalarFromHex("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
+const auto GROUP_ORDER_LESS_3 = scalarFromHex("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd036413e");
 const auto GROUP_ORDER_LESS_2 = scalarFromHex("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd036413f");
 const auto GROUP_ORDER_LESS_1 = scalarFromHex("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140");
-const auto GROUP_ORDER = scalarFromHex("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
 const auto GROUP_ORDER_OVER_1 = scalarFromHex("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364142");
-const auto UINT256_MAX = scalarFromHex("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 const auto THROWS = scalarFromHex("fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe");
+const auto UINT256_MAX = scalarFromHex("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
 struct AE { uint8_t_32 a = {}; bool e = false; };
 struct ABE { uint8_t_32 a; uint8_t_32 b; uint8_t_32 e = THROWS; };
@@ -158,135 +160,71 @@ void generatePrivates (std::ostream& o) {
 
 	///////////////////////////////// privateAdd
 	std::vector<ABE> pa;
+	const auto paPush = [&](const auto k, const auto t) {
+		bool ok;
+		const auto expected = _privadd(k, t, ok);
+		if (ok) pa.push_back({ k, t, expected });
+		else pa.push_back({ k, t });
+	};
+
+	paPush(ONE, GROUP_ORDER); // bad tweak
 
 	// visually inspected
-	for (size_t i = 0; i < 10; ++i) {
-		const auto key = scalarFromUInt32(i + 1);
-		const auto tweak = scalarFromUInt32(1);
-		pa.push_back({ key, tweak, _privadd(key, tweak) });
-	}
-	for (size_t i = 0; i < 5; ++i) {
-		const auto key = ONE;
-		const auto tweak = scalarFromUInt32(i);
-		pa.push_back({ key, tweak, _privadd(key, tweak) });
-	}
-
-	// edge cases (tweak add)
-	//   from https://github.com/bitcoin-core/secp256k1/blob/6ad5cdb42a1a8257289a0423d644dcbdeab0f83c/src/tests.c
-	pa.push_back({ UINT256_MAX, ZERO }); // fail, bad private
-	pa.push_back({ ZERO, GROUP_ORDER }); // fail, bad private
-	pa.push_back({ ZERO, GROUP_ORDER_LESS_2 }); // fail, bad private
-	pa.push_back({ ONE, GROUP_ORDER_LESS_2, GROUP_ORDER_LESS_1 }); // OK, == G - 1
-	pa.push_back({ ONE, GROUP_ORDER }); // #L3212, fail, == 0
-	pa.push_back({ TWO, GROUP_ORDER_LESS_1 }); // fail, == 0
-	pa.push_back({ TWO, GROUP_ORDER, ONE }); // #L3220, OK, > 0
-	pa.push_back({ GROUP_ORDER_LESS_2, GROUP_ORDER, GROUP_ORDER_LESS_1 }); // OK, == G - 1
-	pa.push_back({ GROUP_ORDER_LESS_1, GROUP_ORDER }); // #L3193, fail, == 0
-
-	// above, but flipped parameters
-	pa.push_back({ UINT256_MAX, ZERO }); // fail, bad private
-	pa.push_back({ GROUP_ORDER_LESS_1, TWO }); // fail, == 0
-	pa.push_back({ GROUP_ORDER_LESS_2, ZERO }); // fail, bad private
-	pa.push_back({ GROUP_ORDER_LESS_2, ONE, GROUP_ORDER_LESS_1 }); // OK, == G - 1
-	pa.push_back({ GROUP_ORDER, ZERO }); // fail, bad private
-	pa.push_back({ GROUP_ORDER, ONE }); // #L3212, fail, == 0
-	pa.push_back({ GROUP_ORDER, TWO, ONE }); // #L3220, OK, > 0
-	pa.push_back({ GROUP_ORDER, GROUP_ORDER_LESS_2, GROUP_ORDER_LESS_1 }); // OK, == G - 1
-	pa.push_back({ GROUP_ORDER, GROUP_ORDER_LESS_1 }); // #L3193, fail, == 0
-
+	//   covers https://github.com/bitcoin-core/secp256k1/blob/6ad5cdb42a1a8257289a0423d644dcbdeab0f83c/src/tests.c
+	for (size_t i = 0; i < 5; ++i) paPush(ONE, scalarFromUInt32(i));
+	for (size_t i = 0; i < 5; ++i) paPush(GROUP_ORDER_LESS_3, scalarFromUInt32(i));
+	for (size_t i = 1; i < 5; ++i) paPush(scalarFromUInt32(i), ONE);
+	for (size_t i = 1; i < 5; ++i) paPush(scalarFromUInt32(i), GROUP_ORDER_LESS_2);
+	paPush(GROUP_ORDER_LESS_2, GROUP_ORDER_LESS_1);
+	paPush(GROUP_ORDER_LESS_1, GROUP_ORDER_LESS_1);
 	// fuzz
 	for (size_t i = 0; i < 10000; ++i) {
-		// random random
-		{
-			const auto key = randomPrivate();
-			const auto tweak = randomPrivate();
-			pa.push_back({ key, tweak, _privadd(key, tweak) });
-		}
-
-		// high low
-		{
-			const auto key = randomPrivateHigh();
-			const auto tweak = randomPrivateLow();
-			pa.push_back({ key, tweak, _privadd(key, tweak) });
-		}
-
-		// low high
-		{
-			const auto key = randomPrivateLow();
-			const auto tweak = randomPrivateHigh();
-			pa.push_back({ key, tweak, _privadd(key, tweak) });
-		}
+		paPush(randomPrivate(), randomPrivate());
+		paPush(randomPrivateHigh(), randomPrivateLow());
+		paPush(randomPrivateLow(), randomPrivateHigh());
 	}
 
-	///////////////////////////////// privateAdd
+	///////////////////////////////// privateSub
 	std::vector<ABE> ps;
+	const auto psPush = [&](const auto k, const auto t) {
+		bool ok;
+		const auto expected = _privsub(k, t, ok);
+		if (ok) ps.push_back({ k, t, expected });
+		else ps.push_back({ k, t });
+	};
 
 	// visually inspected
-	for (size_t i = 0; i < 10; ++i) {
-		const auto key = scalarFromUInt32(i + 2);
-		const auto tweak = scalarFromUInt32(1);
-		ps.push_back({ key, tweak, _privsub(key, tweak) });
-	}
-	for (size_t i = 0; i < 5; ++i) {
-		const auto key = scalarFromUInt32(10);
-		const auto tweak = scalarFromUInt32(i);
-		ps.push_back({ key, tweak, _privsub(key, tweak) });
-	}
-
-	// edge cases (tweak sub)
-	ps.push_back({ GROUP_ORDER_LESS_1, ONE, GROUP_ORDER_LESS_2 }); // OK
-	ps.push_back({ GROUP_ORDER_LESS_1, GROUP_ORDER_LESS_2, ONE }); // OK
-	ps.push_back({ ZERO, ZERO }); // fail, == 0
-	ps.push_back({ ZERO, ONE }); // fail, == group order
-	ps.push_back({ ZERO, TWO, GROUP_ORDER_LESS_1 }); // OK
-	ps.push_back({ GROUP_ORDER_LESS_1, GROUP_ORDER_LESS_1 }); // fail, == 0
-
+	for (size_t i = 0; i < 5; ++i) psPush(ONE, scalarFromUInt32(i));
+	for (size_t i = 0; i < 5; ++i) psPush(GROUP_ORDER_LESS_3, scalarFromUInt32(i));
+	for (size_t i = 1; i < 5; ++i) psPush(scalarFromUInt32(i), ONE);
+	for (size_t i = 1; i < 5; ++i) psPush(scalarFromUInt32(i), GROUP_ORDER_LESS_2);
 	// fuzz
 	for (size_t i = 0; i < 10000; ++i) {
-		// random random
-		{
-			const auto key = randomPrivate();
-			const auto tweak = randomPrivate();
-			ps.push_back({ key, tweak, _privsub(key, tweak) });
-		}
-
-		// high low
-		{
-			const auto key = randomPrivateHigh();
-			const auto tweak = randomPrivateLow();
-			ps.push_back({ key, tweak, _privsub(key, tweak) });
-		}
-
-		// low high
-		{
-			const auto key = randomPrivateLow();
-			const auto tweak = randomPrivateHigh();
-			ps.push_back({ key, tweak, _privsub(key, tweak) });
-		}
+		psPush(randomPrivate(), randomPrivate());
+		psPush(randomPrivateHigh(), randomPrivateLow());
+		psPush(randomPrivateLow(), randomPrivateHigh());
 	}
 
 	// (re)verify
-	for (auto& x : p) enforce(_privok(x.a) == x.e, hexify(x.a) + (x.e ? " true" : " false"));
-	for (auto& x : pa) {
+	const auto fverify = [](const auto x, const auto f) {
 		bool ok;
-		const auto actual = _privadd(x.a, x.b, ok);
+		const auto actual = f(x.a, x.b, ok);
+// 		std::cerr << hexify(x.a) << ' ' << hexify(x.b) << ' ' << ok << ' ' << (ok ? hexify(x.e) : "") << std::endl;
 		if (x.e == THROWS) {
-			enforce(!ok, hexify(x.a) + " - " + hexify(x.b) + " should throw");
-			continue;
+			enforce(!ok, hexify(x.a) + " + " + hexify(x.b) + " should throw");
+			return;
 		}
 		enforce(ok, hexify(x.a) + " + " + hexify(x.b) + " should pass");
-		enforce(actual == x.e, hexify(x.a) + " + " + hexify(x.b) + " = " + hexify(x.e) + " ... " + hexify(actual));
-	}
-// 	for (auto& x : ps) {
-// 		bool ok;
-// 		const auto actual = _privsub(x.a, x.b, ok);
-// 		if (x.e == THROWS) {
-// 			enforce(!ok, hexify(x.a) + " - " + hexify(x.b) + " should throw");
-// 			continue;
-// 		}
-// 		enforce(ok, hexify(x.a) + " - " + hexify(x.b) + " should pass");
-// 		enforce(actual == x.e, hexify(x.a) + " - " + hexify(x.b) + " = " + hexify(x.e) + " ... " + hexify(actual));
-// 	}
+		enforce(actual == x.e, hexify(x.a) + " + " + hexify(x.b) + " should equal " + hexify(x.e) + " ... " + hexify(actual));
+	};
+
+	for (auto& x : p) enforce(_privok(x.a) == x.e, hexify(x.a) + (x.e ? " true" : " false"));
+	for (auto& x : pa) fverify(x, [](auto a, auto b, auto ok) {
+		return _privadd(a, b, ok);
+	});
+	for (auto& x : pa) fverify(x, [](auto a, auto b, auto ok) {
+		return _privsub(a, b, ok);
+	});
 
 	// dump JSON
 	o << "{";
@@ -302,21 +240,25 @@ void generatePrivates (std::ostream& o) {
 	o << "], \"privateAdd\": [";
 	i = 0;
 	for (auto& x : pa) {
-		if (i > 0) o << ',';
+		if (i++ > 0) o << ',';
 		o << '{';
 		o << "\"priv\": \"" << hexify(x.a) << "\",";
 		o << "\"tweak\": \"" << hexify(x.b) << "\",";
-		o << "\"expected\": \"" << hexify(x.e) << "\",";
+		o << "\"expected\": ";
+		if (x.e == THROWS) o << "null";
+		else o << "\"" << hexify(x.e) << "\"";
 		o << '}';
 	}
 	o << "], \"privateSub\": [";
 	i = 0;
 	for (auto& x : ps) {
-		if (i > 0) o << ',';
+		if (i++ > 0) o << ',';
 		o << '{';
 		o << "\"priv\": \"" << hexify(x.a) << "\",";
 		o << "\"tweak\": \"" << hexify(x.b) << "\",";
-		o << "\"expected\": \"" << hexify(x.e) << "\",";
+		o << "\"expected\": ";
+		if (x.e == THROWS) o << "null";
+		else o << "\"" << hexify(x.e) << "\"";
 		o << '}';
 	}
 	o << "]}";
