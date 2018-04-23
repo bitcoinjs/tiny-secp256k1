@@ -203,6 +203,30 @@ void generate (std::ostream& o, const A G) {
 		o << "\"expected\": " << (x.e ? "true" : "false");
 		o << '}';
 	}
+	o << "], \"pointAdd\": [";
+	i = 0;
+	for (auto& x : pa) {
+		if (i++ > 0) o << ',';
+		o << '{';
+		o << "\"P\": \"" << hexify(x.a) << "\",";
+		o << "\"d\": \"" << hexify(x.b) << "\",";
+		o << "\"expected\": ";
+		if (x.e == THROWSQ) o << "null";
+		else o << "\"" << hexify(x.e) << "\"";
+		o << '}';
+	}
+	o << "], \"pointAddScalar\": [";
+	i = 0;
+	for (auto& x : pas) {
+		if (i++ > 0) o << ',';
+		o << '{';
+		o << "\"P\": \"" << hexify(x.a) << "\",";
+		o << "\"d\": \"" << hexify(x.b) << "\",";
+		o << "\"expected\": ";
+		if (x.e == THROWSQ) o << "null";
+		else o << "\"" << hexify(x.e) << "\"";
+		o << '}';
+	}
 	o << "], \"pointCompress\": [";
 	i = 0;
 	for (auto& x : pc) {
@@ -221,18 +245,6 @@ void generate (std::ostream& o, const A G) {
 		if (i++ > 0) o << ',';
 		o << '{';
 		o << "\"d\": \"" << hexify(x.a) << "\",";
-		o << "\"expected\": ";
-		if (x.e == THROWSQ) o << "null";
-		else o << "\"" << hexify(x.e) << "\"";
-		o << '}';
-	}
-	o << "], \"pointAddScalar\": [";
-	i = 0;
-	for (auto& x : pas) {
-		if (i++ > 0) o << ',';
-		o << '{';
-		o << "\"P\": \"" << hexify(x.a) << "\",";
-		o << "\"d\": \"" << hexify(x.b) << "\",";
 		o << "\"expected\": ";
 		if (x.e == THROWSQ) o << "null";
 		else o << "\"" << hexify(x.e) << "\"";
