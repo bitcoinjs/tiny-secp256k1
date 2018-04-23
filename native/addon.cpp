@@ -2,7 +2,6 @@
 #include <node.h>
 #include <nan.h>
 #include <secp256k1.h>
-#include <vector>
 
 #define EXPECT_ARGS(N) if (info.Length() != N) return Nan::ThrowTypeError("Wrong number of arguments")
 #define THROW_BAD_PRIVATE Nan::ThrowTypeError("Expected Private")
@@ -47,6 +46,13 @@ namespace {
 		if (node::Buffer::Length(x) != 64) return false;
 		return secp256k1_ecdsa_signature_parse_compact(secp256k1ctx, &sig, asDataPointer(x)) != 0;
 	}
+
+	v8::Local<v8::Object> pointAsBuffer (const secp256k1_pubkey& public_key, const uint32_t flags) {
+		unsigned char output[65];
+		size_t output_length = 65;
+		secp256k1_ec_pubkey_serialize(secp256k1ctx, output, &output_length, &public_key, flags);
+		return asBuffer(output, output_length);
+	}
 }
 
 // returns Bool
@@ -86,15 +92,11 @@ NAN_METHOD(eccPointAdd) {
 	secp256k1_pubkey p;
 	if (secp256k1_ec_pubkey_combine(secp256k1ctx, &p, points, 2) == 0) return RETURNV(Nan::Null());
 
-	unsigned char output[65];
-	size_t output_length = 65;
-	secp256k1_ec_pubkey_serialize(secp256k1ctx, output, &output_length, &p, flags);
-
-	return RETURNV(asBuffer(output, output_length));
+	return RETURNV(pointAsBuffer(p, flags));
 }
 
 // returns ?Point
-NAN_METHOD(eccPointDerive) {
+NAN_METHOD(eccPointFromScalar) {
 	Nan::HandleScope scope;
 	EXPECT_ARGS(2);
 
@@ -105,11 +107,7 @@ NAN_METHOD(eccPointDerive) {
 	secp256k1_pubkey public_key;
 	if (secp256k1_ec_pubkey_create(secp256k1ctx, &public_key, asDataPointer(d)) == 0) return RETURNV(Nan::Null());
 
-	unsigned char output[65];
-	size_t output_length = 65;
-	secp256k1_ec_pubkey_serialize(secp256k1ctx, output, &output_length, &public_key, flags);
-
-	return RETURNV(asBuffer(output, output_length));
+	return RETURNV(pointAsBuffer(public_key, flags));
 }
 
 // returns ?Point
@@ -127,11 +125,7 @@ NAN_METHOD(eccPointAddScalar) {
 
 	if (secp256k1_ec_pubkey_tweak_add(secp256k1ctx, &public_key, asDataPointer(tweak)) == 0) return RETURNV(Nan::Null());
 
-	unsigned char output[65];
-	size_t output_length = 65;
-	secp256k1_ec_pubkey_serialize(secp256k1ctx, output, &output_length, &public_key, flags);
-
-	return RETURNV(asBuffer(output, output_length));
+	return RETURNV(pointAsBuffer(public_key, flags));
 }
 
 // returns Point
@@ -145,11 +139,7 @@ NAN_METHOD(eccPointCompress) {
 	secp256k1_pubkey public_key;
 	if (!isPoint(p, public_key)) return THROW_BAD_POINT;
 
-	unsigned char output[65];
-	size_t output_length = 65;
-	secp256k1_ec_pubkey_serialize(secp256k1ctx, output, &output_length, &public_key, flags);
-
-	return RETURNV(asBuffer(output, output_length));
+	return RETURNV(pointAsBuffer(public_key, flags));
 }
 
 // returns ?Secret
@@ -245,7 +235,7 @@ NAN_MODULE_INIT(Init) {
   Nan::Export(target, "pointAdd", eccPointAdd);
   Nan::Export(target, "pointAddScalar", eccPointAddScalar);
   Nan::Export(target, "pointCompress", eccPointCompress);
-  Nan::Export(target, "pointDerive", eccPointDerive);
+  Nan::Export(target, "pointFromScalar", eccPointFromScalar);
   Nan::Export(target, "privateAdd", eccPrivateAdd);
   Nan::Export(target, "privateSub", eccPrivateSub);
 

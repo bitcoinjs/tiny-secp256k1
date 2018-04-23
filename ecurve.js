@@ -8,6 +8,12 @@ let EC_UINT_MAX = Buffer.from('fffffffffffffffffffffffffffffffebaaedce6af48a03bb
 let ONE1 = Buffer.alloc(1, 1)
 let ZERO1 = Buffer.alloc(1, 0)
 
+let THROW_BAD_PRIVATE = 'Expected Private'
+let THROW_BAD_POINT = 'Expected Point'
+let THROW_BAD_TWEAK = 'Expected Tweak'
+let THROW_BAD_HASH = 'Expected Hash'
+let THROW_BAD_SIGNATURE = 'Expected Signature'
+
 function isUInt256 (value) {
   return Buffer.isBuffer(value) && value.length === 32
 }
@@ -33,8 +39,8 @@ function isSignature (value) {
 }
 
 function pointAdd (pA, pB, compressed) {
-  if (!isPoint(pA)) throw new TypeError('Expected Point')
-  if (!isPoint(pB)) throw new TypeError('Expected Point')
+  if (!isPoint(pA)) throw new TypeError(THROW_BAD_POINT)
+  if (!isPoint(pB)) throw new TypeError(THROW_BAD_POINT)
   let a = ecurve.Point.decodeFrom(secp256k1, pA)
   let b = ecurve.Point.decodeFrom(secp256k1, pB)
   let p = a.add(b)
@@ -43,8 +49,8 @@ function pointAdd (pA, pB, compressed) {
 }
 
 function pointAddScalar (p, tweak, compressed) {
-  if (!isPoint(p)) throw new TypeError('Expected Point')
-  if (!isPrivate(tweak)) throw new TypeError('Expected Tweak')
+  if (!isPoint(p)) throw new TypeError(THROW_BAD_POINT)
+  if (!isPrivate(tweak)) throw new TypeError(THROW_BAD_TWEAK)
   let q = ecurve.Point.decodeFrom(secp256k1, p)
   let u = q.multiply(tweak)
   if (secp256k1.isInfinity(u)) return null
@@ -52,26 +58,26 @@ function pointAddScalar (p, tweak, compressed) {
 }
 
 function pointCompress (p, compressed) {
-  if (!isPoint(p)) throw new TypeError('Expected Point')
+  if (!isPoint(p)) throw new TypeError(THROW_BAD_POINT)
   let q = ecurve.Point.decodeFrom(secp256k1, p)
   return q.getEncoded(compressed)
 }
 
-function pointDerive (d, compressed) {
+function pointFromScalar (d, compressed) {
   return secp256k1.G.multiply(d).getEncoded(compressed)
 }
 
 function privateAdd (d, tweak) {
-  if (!isPrivate(d)) throw new TypeError('Expected Private')
-  if (!isPrivate(tweak)) throw new TypeError('Expected Tweak')
+  if (!isPrivate(d)) throw new TypeError(THROW_BAD_PRIVATE)
+  if (!isPrivate(tweak)) throw new TypeError(THROW_BAD_TWEAK)
   let dd = bigi.fromBuffer(d)
   let tt = bigi.fromBuffer(tweak)
   return dd.add(tt).mod(secp256k1.n)
 }
 
 function privateSub (d, tweak) {
-  if (!isPrivate(d)) throw new TypeError('Expected Private')
-  if (!isPrivate(tweak)) throw new TypeError('Expected Tweak')
+  if (!isPrivate(d)) throw new TypeError(THROW_BAD_PRIVATE)
+  if (!isPrivate(tweak)) throw new TypeError(THROW_BAD_TWEAK)
   let dd = bigi.fromBuffer(d)
   let tt = bigi.fromBuffer(tweak)
   return dd.subtract(tt).mod(secp256k1.n)
@@ -134,8 +140,8 @@ function deterministicGenerateK (hash, x, checkSig) {
 let N_OVER_TWO = secp256k1.n.shiftRight(1)
 
 function sign (hash, x) {
-  if (!isUInt256(hash)) throw new TypeError('Expected Hash')
-  if (!isPrivate(x)) throw new TypeError('Expected Private')
+  if (!isUInt256(hash)) throw new TypeError(THROW_BAD_HASH)
+  if (!isPrivate(x)) throw new TypeError(THROW_BAD_PRIVATE)
 
   let d = bigi.fromBuffer(x)
   let e = bigi.fromBuffer(hash)
@@ -166,9 +172,9 @@ function sign (hash, x) {
 }
 
 function verify (hash, p, signature) {
-  if (!isUInt256(hash)) throw new TypeError('Expected Hash')
-  if (!isPoint(p)) throw new TypeError('Expected Private')
-  if (!isSignature(signature)) throw new TypeError('Expected Signature')
+  if (!isUInt256(hash)) throw new TypeError(THROW_BAD_HASH)
+  if (!isPoint(p)) throw new TypeError(THROW_BAD_PRIVATE)
+  if (!isSignature(signature)) throw new TypeError(THROW_BAD_SIGNATURE)
 
   let Q = ecurve.Point.decodeFrom(secp256k1, p)
   let n = secp256k1.n
@@ -216,7 +222,7 @@ module.exports = {
   pointAdd,
   pointAddScalar,
   pointCompress,
-  pointDerive,
+  pointFromScalar,
   privateAdd,
   privateSub,
   sign,
