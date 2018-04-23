@@ -6,7 +6,15 @@ template <typename A> struct IP { A a; bool e; std::string description = ""; };
 template <typename A> struct PFS { uint8_t_32 a; A e; };
 template <typename A> struct PA { A a; A b; A e; };
 template <typename A> struct PAS { A a; uint8_t_32 b; A e; };
-template <typename A> struct PC { uint8_t_vec a; bool b; uint8_t_vec e; };
+struct PC { uint8_t_vec a; bool b; uint8_t_vec e; };
+template <typename A>
+struct Fixtures {
+	std::vector<IP<A>> ip;
+	std::vector<PFS<A>> pfs;
+	std::vector<PA<A>> pa;
+	std::vector<PAS<A>> pas;
+	A throws;
+};
 
 template <typename U, typename F, typename A = decltype(U::a)>
 void fverify1 (const std::string& prefix, const U& x, const F f, const A& THROWSQ) {
@@ -71,8 +79,39 @@ void test_ec_combine (std::vector<PA<A>>& pa, std::vector<PAS<A>>& pas, std::vec
 	}
 }
 
-template <typename A, bool COMPRESSED = (sizeof(A) == 65)>
-void generate (std::ostream& o, const A G) {
+auto generatePC () {
+	std::vector<PC> pc;
+	pc.push_back({ vectorify(GENERATOR), true, vectorify(GENERATORC) });
+	pc.push_back({ vectorify(GENERATOR), false, vectorify(GENERATOR) });
+	pc.push_back({ vectorify(GENERATORC), true, vectorify(GENERATORC) });
+	pc.push_back({ vectorify(GENERATORC), false, vectorify(GENERATOR) });
+	pc.push_back({ uint8_t_vec(33, 0), false, {} });
+	pc.push_back({ uint8_t_vec(33, 0), true, {} });
+	pc.push_back({ uint8_t_vec(65, 0), false, {} });
+	pc.push_back({ uint8_t_vec(65, 0), true, {} });
+
+	bool ok = true;
+	for (auto i = 1; i < 10; ++i) {
+		const auto iic = vectorify(_pointFromUInt32<uint8_t_33>(i, ok));
+		const auto ii = vectorify(_pointFromUInt32<uint8_t_65>(i, ok));
+		assert(ok);
+
+		pc.push_back({ iic, true, iic });
+		pc.push_back({ iic, false, ii });
+		pc.push_back({ ii, true, iic });
+		pc.push_back({ ii, false, ii });
+	}
+
+	for (auto& x : pc) {
+		if (x.b) fverify1("pointCompress", x, _pointCompress<uint8_t_33>, {});
+		else fverify1("pointCompress", x, _pointCompress<uint8_t_65>, {});
+	}
+
+	return pc;
+}
+
+template <typename A>
+auto generate (const A G) {
 	bool ok = true;
 	const auto G_LESS_1 = _pointFromScalar<A>(GROUP_ORDER_LESS_1, ok);
 	const auto G_LESS_2 = _pointFromScalar<A>(GROUP_ORDER_LESS_2, ok);
@@ -118,6 +157,14 @@ void generate (std::ostream& o, const A G) {
 	pa.push_back({ G_TWO, G_LESS_1, G_ONE }); // == 1
 	pa.push_back({ G_ONE, G, THROWSQ });
 
+	for (size_t i = 0; i < 100; ++i) {
+		const auto a = _pointFromScalar<A>(randomPrivate(), ok);
+		const auto b = _pointFromScalar<A>(randomPrivate(), ok);
+		const auto e = _pointAdd(a, b, ok);
+		assert(ok);
+		pa.push_back({ a, b, e });
+	}
+
 	///////////////////////////////// pointAddScalar
 	std::vector<PAS<A>> pas;
 
@@ -139,28 +186,6 @@ void generate (std::ostream& o, const A G) {
 		const auto G_i_p1 = _pointFromUInt32<A>(i + 1, ok); assert(ok);
 
 		pas.push_back({ G_i, ONE, G_i_p1 });
-	}
-
-	///////////////////////////////// pointCompress
-	std::vector<PC<A>> pc;
-	pc.push_back({ vectorify(GENERATOR), true, vectorify(GENERATORC) });
-	pc.push_back({ vectorify(GENERATOR), false, vectorify(GENERATOR) });
-	pc.push_back({ vectorify(GENERATORC), true, vectorify(GENERATORC) });
-	pc.push_back({ vectorify(GENERATORC), false, vectorify(GENERATOR) });
-	pc.push_back({ uint8_t_vec(33, 0), false, {} });
-	pc.push_back({ uint8_t_vec(33, 0), true, {} });
-	pc.push_back({ uint8_t_vec(65, 0), false, {} });
-	pc.push_back({ uint8_t_vec(65, 0), true, {} });
-
-	for (auto i = 1; i < 10; ++i) {
-		const auto iic = vectorify(_pointFromUInt32<uint8_t_33>(i, ok));
-		const auto ii = vectorify(_pointFromUInt32<uint8_t_65>(i, ok));
-		assert(ok);
-
-		pc.push_back({ iic, true, iic });
-		pc.push_back({ iic, false, ii });
-		pc.push_back({ ii, true, iic });
-		pc.push_back({ ii, false, ii });
 	}
 
 	///////////////////////////////// pointFromScalar
@@ -186,16 +211,28 @@ void generate (std::ostream& o, const A G) {
 	for (auto& x : ip) enforce(_isPoint(x.a) == x.e, "expected " + hexify(x.a) + " as " + (x.e ? "valid" : "invalid"));
 	for (auto& x : pas) fverify2("pointAddScalar", x, _pointAddScalar<A>, THROWSQ);
 	for (auto& x : pfs) fverify1("pointFromScalar", x, _pointFromScalar<A>, THROWSQ);
-	for (auto& x : pc) {
-		if (x.b) fverify1("pointCompress", x, _pointCompress<uint8_t_33>, {});
-		else fverify1("pointCompress", x, _pointCompress<uint8_t_65>, {});
-	}
 
+	return Fixtures<A>{ ip, pfs, pa, pas, THROWSQ };
+}
+
+void dumpJSON (
+	std::ostream& o,
+	const Fixtures<uint8_t_33>& compressed,
+	const Fixtures<uint8_t_65>& uncompressed,
+	const std::vector<PC>& trans
+) {
 	// dump JSON
-	o << "{";
-	o << "\"isPoint\": [";
+	o << "{ \"isPoint\": [";
 	auto i = 0;
-	for (auto& x : ip) {
+	for (auto& x : compressed.ip) {
+		if (i++ > 0) o << ',';
+		o << '{';
+		if (!x.description.empty()) o << "\"description\": \"" << x.description << "\",";
+		o << "\"point\": \"" << hexify(x.a) << "\",";
+		o << "\"expected\": " << (x.e ? "true" : "false");
+		o << '}';
+	}
+	for (auto& x : uncompressed.ip) {
 		if (i++ > 0) o << ',';
 		o << '{';
 		if (!x.description.empty()) o << "\"description\": \"" << x.description << "\",";
@@ -205,48 +242,77 @@ void generate (std::ostream& o, const A G) {
 	}
 	o << "], \"pointAdd\": [";
 	i = 0;
-	for (auto& x : pa) {
+	for (auto& x : compressed.pa) {
 		if (i++ > 0) o << ',';
 		o << '{';
 		o << "\"P\": \"" << hexify(x.a) << "\",";
 		o << "\"d\": \"" << hexify(x.b) << "\",";
 		o << "\"expected\": ";
-		if (x.e == THROWSQ) o << "null";
+		if (x.e == compressed.throws) o << "null";
+		else o << "\"" << hexify(x.e) << "\"";
+		o << '}';
+	}
+	for (auto& x : uncompressed.pa) {
+		if (i++ > 0) o << ',';
+		o << '{';
+		o << "\"P\": \"" << hexify(x.a) << "\",";
+		o << "\"d\": \"" << hexify(x.b) << "\",";
+		o << "\"expected\": ";
+		if (x.e == uncompressed.throws) o << "null";
 		else o << "\"" << hexify(x.e) << "\"";
 		o << '}';
 	}
 	o << "], \"pointAddScalar\": [";
 	i = 0;
-	for (auto& x : pas) {
+	for (auto& x : compressed.pas) {
 		if (i++ > 0) o << ',';
 		o << '{';
 		o << "\"P\": \"" << hexify(x.a) << "\",";
 		o << "\"d\": \"" << hexify(x.b) << "\",";
 		o << "\"expected\": ";
-		if (x.e == THROWSQ) o << "null";
+		if (x.e == compressed.throws) o << "null";
+		else o << "\"" << hexify(x.e) << "\"";
+		o << '}';
+	}
+	for (auto& x : uncompressed.pas) {
+		if (i++ > 0) o << ',';
+		o << '{';
+		o << "\"P\": \"" << hexify(x.a) << "\",";
+		o << "\"d\": \"" << hexify(x.b) << "\",";
+		o << "\"expected\": ";
+		if (x.e == uncompressed.throws) o << "null";
+		else o << "\"" << hexify(x.e) << "\"";
+		o << '}';
+	}
+	o << "], \"pointFromScalar\": [";
+	i = 0;
+	for (auto& x : compressed.pfs) {
+		if (i++ > 0) o << ',';
+		o << '{';
+		o << "\"d\": \"" << hexify(x.a) << "\",";
+		o << "\"expected\": ";
+		if (x.e == compressed.throws) o << "null";
+		else o << "\"" << hexify(x.e) << "\"";
+		o << '}';
+	}
+	for (auto& x : uncompressed.pfs) {
+		if (i++ > 0) o << ',';
+		o << '{';
+		o << "\"d\": \"" << hexify(x.a) << "\",";
+		o << "\"expected\": ";
+		if (x.e == uncompressed.throws) o << "null";
 		else o << "\"" << hexify(x.e) << "\"";
 		o << '}';
 	}
 	o << "], \"pointCompress\": [";
 	i = 0;
-	for (auto& x : pc) {
+	for (auto& x : trans) {
 		if (i++ > 0) o << ',';
 		o << '{';
 		o << "\"P\": \"" << hexify(x.a) << "\",";
-		o << "\"compressed\": " << (x.b ? "true" : "false");
+		o << "\"compress\": " << (x.b ? "true" : "false") << ',';
 		o << "\"expected\": ";
 		if (x.e.empty()) o << "null";
-		else o << "\"" << hexify(x.e) << "\",";
-		o << '}';
-	}
-	o << "], \"pointFromScalar\": [";
-	i = 0;
-	for (auto& x : pfs) {
-		if (i++ > 0) o << ',';
-		o << '{';
-		o << "\"d\": \"" << hexify(x.a) << "\",";
-		o << "\"expected\": ";
-		if (x.e == THROWSQ) o << "null";
 		else o << "\"" << hexify(x.e) << "\"";
 		o << '}';
 	}
@@ -255,7 +321,11 @@ void generate (std::ostream& o, const A G) {
 
 int main () {
 	_ec_init();
-	generate<uint8_t_33>(std::cout, GENERATORC);
-	generate<uint8_t_65>(std::cout, GENERATOR);
+
+	const auto c = generate<uint8_t_33>(GENERATORC);
+	const auto u = generate<uint8_t_65>(GENERATOR);
+	const auto t = generatePC();
+	dumpJSON(std::cout, c, u, t);
+
 	return 0;
 }
