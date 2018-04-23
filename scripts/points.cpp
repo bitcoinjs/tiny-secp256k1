@@ -215,6 +215,45 @@ auto generate (const A G) {
 	return Fixtures<A>{ ip, pfs, pa, pas, THROWSQ };
 }
 
+template <typename X>
+void dumpPE (std::ostream& o, const X& xs, size_t i = 0) {
+	for (auto& x : xs) {
+		if (i++ > 0) o << ',';
+		o << '{';
+		if (!x.description.empty()) o << "\"description\": \"" << x.description << "\",";
+		o << "\"point\": \"" << hexify(x.a) << "\",";
+		o << "\"expected\": " << (x.e ? "true" : "false");
+		o << '}';
+	}
+}
+
+template <typename X, typename T>
+void dumpPdE (std::ostream& o, const X& xs, const T& throws, size_t i = 0) {
+	for (auto& x : xs) {
+		if (i++ > 0) o << ',';
+		o << '{';
+		o << "\"P\": \"" << hexify(x.a) << "\",";
+		o << "\"d\": \"" << hexify(x.b) << "\",";
+		o << "\"expected\": ";
+		if (x.e == throws) o << "null";
+		else o << "\"" << hexify(x.e) << "\"";
+		o << '}';
+	}
+}
+
+template <typename X, typename T>
+void dumpdE (std::ostream& o, const X& xs, const T& throws, size_t i = 0) {
+	for (auto& x : xs) {
+		if (i++ > 0) o << ',';
+		o << '{';
+		o << "\"d\": \"" << hexify(x.a) << "\",";
+		o << "\"expected\": ";
+		if (x.e == throws) o << "null";
+		else o << "\"" << hexify(x.e) << "\"";
+		o << '}';
+	}
+}
+
 void dumpJSON (
 	std::ostream& o,
 	const Fixtures<uint8_t_33>& compressed,
@@ -223,89 +262,19 @@ void dumpJSON (
 ) {
 	// dump JSON
 	o << "{ \"isPoint\": [";
-	auto i = 0;
-	for (auto& x : compressed.ip) {
-		if (i++ > 0) o << ',';
-		o << '{';
-		if (!x.description.empty()) o << "\"description\": \"" << x.description << "\",";
-		o << "\"point\": \"" << hexify(x.a) << "\",";
-		o << "\"expected\": " << (x.e ? "true" : "false");
-		o << '}';
-	}
-	for (auto& x : uncompressed.ip) {
-		if (i++ > 0) o << ',';
-		o << '{';
-		if (!x.description.empty()) o << "\"description\": \"" << x.description << "\",";
-		o << "\"point\": \"" << hexify(x.a) << "\",";
-		o << "\"expected\": " << (x.e ? "true" : "false");
-		o << '}';
-	}
+	dumpPE(o, compressed.ip);
+	dumpPE(o, uncompressed.ip, compressed.ip.size());
 	o << "], \"pointAdd\": [";
-	i = 0;
-	for (auto& x : compressed.pa) {
-		if (i++ > 0) o << ',';
-		o << '{';
-		o << "\"P\": \"" << hexify(x.a) << "\",";
-		o << "\"d\": \"" << hexify(x.b) << "\",";
-		o << "\"expected\": ";
-		if (x.e == compressed.throws) o << "null";
-		else o << "\"" << hexify(x.e) << "\"";
-		o << '}';
-	}
-	for (auto& x : uncompressed.pa) {
-		if (i++ > 0) o << ',';
-		o << '{';
-		o << "\"P\": \"" << hexify(x.a) << "\",";
-		o << "\"d\": \"" << hexify(x.b) << "\",";
-		o << "\"expected\": ";
-		if (x.e == uncompressed.throws) o << "null";
-		else o << "\"" << hexify(x.e) << "\"";
-		o << '}';
-	}
+	dumpPdE(o, compressed.pa, compressed.throws);
+	dumpPdE(o, uncompressed.pa, uncompressed.throws, compressed.pa.size());
 	o << "], \"pointAddScalar\": [";
-	i = 0;
-	for (auto& x : compressed.pas) {
-		if (i++ > 0) o << ',';
-		o << '{';
-		o << "\"P\": \"" << hexify(x.a) << "\",";
-		o << "\"d\": \"" << hexify(x.b) << "\",";
-		o << "\"expected\": ";
-		if (x.e == compressed.throws) o << "null";
-		else o << "\"" << hexify(x.e) << "\"";
-		o << '}';
-	}
-	for (auto& x : uncompressed.pas) {
-		if (i++ > 0) o << ',';
-		o << '{';
-		o << "\"P\": \"" << hexify(x.a) << "\",";
-		o << "\"d\": \"" << hexify(x.b) << "\",";
-		o << "\"expected\": ";
-		if (x.e == uncompressed.throws) o << "null";
-		else o << "\"" << hexify(x.e) << "\"";
-		o << '}';
-	}
+	dumpPdE(o, compressed.pas, compressed.throws);
+	dumpPdE(o, uncompressed.pas, uncompressed.throws, compressed.pas.size());
 	o << "], \"pointFromScalar\": [";
-	i = 0;
-	for (auto& x : compressed.pfs) {
-		if (i++ > 0) o << ',';
-		o << '{';
-		o << "\"d\": \"" << hexify(x.a) << "\",";
-		o << "\"expected\": ";
-		if (x.e == compressed.throws) o << "null";
-		else o << "\"" << hexify(x.e) << "\"";
-		o << '}';
-	}
-	for (auto& x : uncompressed.pfs) {
-		if (i++ > 0) o << ',';
-		o << '{';
-		o << "\"d\": \"" << hexify(x.a) << "\",";
-		o << "\"expected\": ";
-		if (x.e == uncompressed.throws) o << "null";
-		else o << "\"" << hexify(x.e) << "\"";
-		o << '}';
-	}
+	dumpdE(o, compressed.pfs, compressed.throws);
+	dumpdE(o, uncompressed.pfs, uncompressed.throws, compressed.pfs.size());
 	o << "], \"pointCompress\": [";
-	i = 0;
+	size_t i = 0;
 	for (auto& x : trans) {
 		if (i++ > 0) o << ',';
 		o << '{';
