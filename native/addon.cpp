@@ -96,21 +96,6 @@ NAN_METHOD(eccPointAdd) {
 }
 
 // returns ?Point
-NAN_METHOD(eccPointFromScalar) {
-	Nan::HandleScope scope;
-	EXPECT_ARGS(2);
-
-	const auto d = info[0].As<v8::Object>();
-	const auto flags = info[1]->BooleanValue() ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED;
-	if (!isPrivate(d)) return THROW_BAD_PRIVATE;
-
-	secp256k1_pubkey public_key;
-	if (secp256k1_ec_pubkey_create(secp256k1ctx, &public_key, asDataPointer(d)) == 0) return RETURNV(Nan::Null());
-
-	return RETURNV(pointAsBuffer(public_key, flags));
-}
-
-// returns ?Point
 NAN_METHOD(eccPointAddScalar) {
 	Nan::HandleScope scope;
 	EXPECT_ARGS(3);
@@ -138,6 +123,21 @@ NAN_METHOD(eccPointCompress) {
 
 	secp256k1_pubkey public_key;
 	if (!isPoint(p, public_key)) return THROW_BAD_POINT;
+
+	return RETURNV(pointAsBuffer(public_key, flags));
+}
+
+// returns ?Point
+NAN_METHOD(eccPointFromScalar) {
+	Nan::HandleScope scope;
+	EXPECT_ARGS(2);
+
+	const auto d = info[0].As<v8::Object>();
+	const auto flags = info[1]->BooleanValue() ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED;
+	if (!isPrivate(d)) return THROW_BAD_PRIVATE;
+
+	secp256k1_pubkey public_key;
+	if (secp256k1_ec_pubkey_create(secp256k1ctx, &public_key, asDataPointer(d)) == 0) return RETURNV(Nan::Null());
 
 	return RETURNV(pointAsBuffer(public_key, flags));
 }
