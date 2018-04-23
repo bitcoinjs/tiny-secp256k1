@@ -118,12 +118,6 @@ auto _privAdd (uint8_t_32 key, const uint8_t_32 tweak, bool& ok) {
 	return key;
 }
 
-auto _privSub (uint8_t_32 key, uint8_t_32 tweak, bool& ok) {
-	ok &= secp256k1_ec_privkey_negate(ctx, tweak.data());
-	ok &= secp256k1_ec_privkey_tweak_add(ctx, key.data(), tweak.data());
-	return key;
-}
-
 void _ec_init () {
 	ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
 }

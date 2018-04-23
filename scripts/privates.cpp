@@ -69,32 +69,9 @@ void generate (std::ostream& o) {
 		paPush(randomPrivateLow(), randomPrivateHigh());
 	}
 
-	///////////////////////////////// privateSub
-	std::vector<ABE> ps;
-	const auto psPush = [&](const auto k, const auto t) {
-		bool ok = true;
-		const auto expected = _privSub(k, t, ok);
-		if (ok) ps.push_back({ k, t, expected });
-		else ps.push_back({ k, t, THROWS });
-	};
-
-	// visually inspected
-	for (size_t i = 0; i < 5; ++i) psPush(ONE, scalarFromUInt32(i));
-	for (size_t i = 0; i < 5; ++i) psPush(GROUP_ORDER_LESS_3, scalarFromUInt32(i));
-	for (size_t i = 0; i < 3; ++i) psPush(scalarFromUInt32(i), ONE);
-	for (size_t i = 2; i < 5; ++i) ps.push_back({ scalarFromUInt32(i), ONE, scalarFromUInt32(i - 1) });
-	for (size_t i = 1; i < 5; ++i) psPush(scalarFromUInt32(i), GROUP_ORDER_LESS_2);
-	// fuzz
-	for (size_t i = 0; i < 10000; ++i) {
-		psPush(randomPrivate(), randomPrivate());
-		psPush(randomPrivateHigh(), randomPrivateLow());
-		psPush(randomPrivateLow(), randomPrivateHigh());
-	}
-
 	// (re)verify
 	for (auto& x : ip) enforce(_isPriv(x.a) == x.e, hexify(x.a) + (x.e ? " true" : " false"));
 	for (auto& x : pa) fverify('+', x, _privAdd);
-	for (auto& x : ps) fverify('-', x, _privSub);
 
 	// dump JSON
 	o << "{";
@@ -110,18 +87,6 @@ void generate (std::ostream& o) {
 	o << "], \"privateAdd\": [";
 	i = 0;
 	for (auto& x : pa) {
-		if (i++ > 0) o << ',';
-		o << '{';
-		o << "\"priv\": \"" << hexify(x.a) << "\",";
-		o << "\"tweak\": \"" << hexify(x.b) << "\",";
-		o << "\"expected\": ";
-		if (x.e == THROWS) o << "null";
-		else o << "\"" << hexify(x.e) << "\"";
-		o << '}';
-	}
-	o << "], \"privateSub\": [";
-	i = 0;
-	for (auto& x : ps) {
 		if (i++ > 0) o << ',';
 		o << '{';
 		o << "\"priv\": \"" << hexify(x.a) << "\",";

@@ -244,6 +244,6 @@ void generate (std::ostream& o, const A G) {
 int main () {
 	_ec_init();
 	generate<uint8_t_33>(std::cout, GENERATORC);
-// 	generate<uint8_t_65>(std::cout, GENERATOR);
+	generate<uint8_t_65>(std::cout, GENERATOR);
 	return 0;
 }
