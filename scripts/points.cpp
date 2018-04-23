@@ -2,7 +2,7 @@
 #include <vector>
 #include "utils.hpp"
 
-template <typename A> struct IP { A a; bool e; };
+template <typename A> struct IP { A a; bool e; std::string description = ""; };
 template <typename A> struct PFS { uint8_t_32 a; A e; };
 template <typename A> struct PA { A a; A b; A e; };
 template <typename A> struct PAS { A a; uint8_t_32 b; A e; };
@@ -94,11 +94,17 @@ void generate (std::ostream& o, const A G) {
 	ip.push_back({ G_TWO, true });
 	ip.push_back({ G_THREE, true });
 
-	for (size_t i = 0; i < 100; ++i) {
-		ip.push_back({ _pointFromScalar<A>(randomPrivate(), ok), true });
+	// from https://github.com/cryptocoinjs/ecurve/blob/14d72f5f468d53ff33dc13c1c7af350a41d52aab/test/fixtures/point.json#L84
+	if (sizeof(A) == 65) {
+		ip.push_back({ fromHex<A>("0579be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10ab2e"), false, "Bad sequence prefix" });
+	} else {
+		ip.push_back({ fromHex<A>("0179be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"), true, "Bad sequence prefix" });
 	}
 
-	assert(ok);
+	for (size_t i = 0; i < 100; ++i) {
+		ip.push_back({ _pointFromScalar<A>(randomPrivate(), ok), true });
+		assert(ok);
+	}
 
 	///////////////////////////////// pointAdd
 	std::vector<PA<A>> pa;
@@ -159,7 +165,7 @@ void generate (std::ostream& o, const A G) {
 	// ref https://github.com/bitcoin-core/secp256k1/blob/6ad5cdb42a1a8257289a0423d644dcbdeab0f83c/src/tests.c#L2160
 	test_ec_combine<A>(pa, pas, pfs);
 
-	for (auto& x : ip) enforce(_isPoint(x.a) == x.e, "expected " + hexify(x.a) + " to return " + (x.e ? "true" : "false"));
+	for (auto& x : ip) enforce(_isPoint(x.a) == x.e, "expected " + hexify(x.a) + " as " + (x.e ? "valid" : "invalid"));
 	for (auto& x : pas) fverify2("pas", x, _pointAddScalar<A>, THROWSQ);
 	for (auto& x : pfs) fverify1("pfs", x, _pointFromScalar<A>, THROWSQ);
 
@@ -170,6 +176,7 @@ void generate (std::ostream& o, const A G) {
 	for (auto& x : ip) {
 		if (i++ > 0) o << ',';
 		o << '{';
+		if (!x.description.empty()) o << "\"description\": \"" << x.description << "\",";
 		o << "\"point\": \"" << hexify(x.a) << "\",";
 		o << "\"expected\": " << (x.e ? "true" : "false");
 		o << '}';
