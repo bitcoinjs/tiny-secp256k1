@@ -93,31 +93,6 @@ auto randomPrivateLow () {
 	}
 }
 
-auto _privadd (uint8_t_32 key, const uint8_t_32 tweak, bool& ok) {
-	ok = true;
-	ok &= secp256k1_ec_privkey_tweak_add(ctx, key.data(), tweak.data());
-	return key;
-}
-auto _privadd (uint8_t_32 key, const uint8_t_32 tweak) {
-	bool ok;
-	return _privadd(key, tweak, ok);
-}
-
-auto _privsub (uint8_t_32 key, uint8_t_32 tweak, bool& ok) {
-	ok = true;
-	ok &= secp256k1_ec_privkey_negate(ctx, tweak.data());
-	ok &= secp256k1_ec_privkey_tweak_add(ctx, key.data(), tweak.data());
-	return key;
-}
-auto _privsub (uint8_t_32 key, const uint8_t_32 tweak) {
-	bool ok;
-	return _privsub(key, tweak, ok);
-}
-
-auto _privok (const uint8_t_32& key) {
-	return secp256k1_ec_seckey_verify(ctx, key.data());
-}
-
 const auto ZERO = scalarFromHex("0000000000000000000000000000000000000000000000000000000000000000");
 const auto ONE = scalarFromHex("0000000000000000000000000000000000000000000000000000000000000001");
 const auto TWO = scalarFromHex("0000000000000000000000000000000000000000000000000000000000000002");
@@ -132,6 +107,35 @@ const auto UINT256_MAX = scalarFromHex("ffffffffffffffffffffffffffffffffffffffff
 
 struct AE { uint8_t_32 a = {}; bool e = false; };
 struct ABE { uint8_t_32 a; uint8_t_32 b; uint8_t_32 e = THROWS; };
+
+auto _privok (const uint8_t_32& key) {
+	return secp256k1_ec_seckey_verify(ctx, key.data());
+}
+auto _privadd (uint8_t_32 key, const uint8_t_32 tweak, bool& ok) {
+	ok = true;
+	ok &= secp256k1_ec_privkey_tweak_add(ctx, key.data(), tweak.data());
+	return key;
+}
+auto _privsub (uint8_t_32 key, uint8_t_32 tweak, bool& ok) {
+	ok = true;
+	ok &= secp256k1_ec_privkey_negate(ctx, tweak.data());
+	ok &= secp256k1_ec_privkey_tweak_add(ctx, key.data(), tweak.data());
+	return key;
+}
+
+template <typename F>
+void fverify (const char sign, const ABE& x, const F f) {
+// 	std::cerr << hexify(x.a) << ' ' << sign << ' ' << hexify(x.b) << ' ' << hexify(x.e) << std::endl;
+
+	bool ok;
+	const auto actual = f(x.a, x.b, ok);
+	if (x.e == THROWS) {
+		enforce(!ok, hexify(x.a) + ' ' + sign + ' ' + hexify(x.b) + " should throw");
+		return;
+	}
+	enforce(ok, hexify(x.a) + ' ' + sign + ' ' + hexify(x.b) + " should pass");
+	enforce(actual == x.e, hexify(x.a) + ' ' + sign + ' ' + hexify(x.b) + " should equal " + hexify(x.e) + " ... " + hexify(actual));
+};
 
 void generatePrivates (std::ostream& o) {
 	///////////////////////////////// isPrivate
@@ -164,7 +168,7 @@ void generatePrivates (std::ostream& o) {
 		bool ok;
 		const auto expected = _privadd(k, t, ok);
 		if (ok) pa.push_back({ k, t, expected });
-		else pa.push_back({ k, t });
+		else pa.push_back({ k, t, THROWS });
 	};
 
 	paPush(ONE, GROUP_ORDER); // bad tweak
@@ -190,7 +194,7 @@ void generatePrivates (std::ostream& o) {
 		bool ok;
 		const auto expected = _privsub(k, t, ok);
 		if (ok) ps.push_back({ k, t, expected });
-		else ps.push_back({ k, t });
+		else ps.push_back({ k, t, THROWS });
 	};
 
 	// visually inspected
@@ -206,25 +210,9 @@ void generatePrivates (std::ostream& o) {
 	}
 
 	// (re)verify
-	const auto fverify = [](const auto x, const auto f) {
-		bool ok;
-		const auto actual = f(x.a, x.b, ok);
-// 		std::cerr << hexify(x.a) << ' ' << hexify(x.b) << ' ' << ok << ' ' << (ok ? hexify(x.e) : "") << std::endl;
-		if (x.e == THROWS) {
-			enforce(!ok, hexify(x.a) + " + " + hexify(x.b) + " should throw");
-			return;
-		}
-		enforce(ok, hexify(x.a) + " + " + hexify(x.b) + " should pass");
-		enforce(actual == x.e, hexify(x.a) + " + " + hexify(x.b) + " should equal " + hexify(x.e) + " ... " + hexify(actual));
-	};
-
 	for (auto& x : p) enforce(_privok(x.a) == x.e, hexify(x.a) + (x.e ? " true" : " false"));
-	for (auto& x : pa) fverify(x, [](auto a, auto b, auto ok) {
-		return _privadd(a, b, ok);
-	});
-	for (auto& x : pa) fverify(x, [](auto a, auto b, auto ok) {
-		return _privsub(a, b, ok);
-	});
+	for (auto& x : pa) fverify('+', x, _privadd);
+	for (auto& x : ps) fverify('-', x, _privsub);
 
 	// dump JSON
 	o << "{";
