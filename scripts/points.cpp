@@ -6,9 +6,9 @@ template <typename A> struct IP { A a; bool e; std::string description = ""; };
 template <typename A> struct PFS { uint8_t_32 a; A e; };
 template <typename A> struct PA { A a; A b; A e; };
 template <typename A> struct PAS { A a; uint8_t_32 b; A e; };
-template <typename A> struct PC { A a; bool b; A e; };
+template <typename A> struct PC { uint8_t_vec a; bool b; uint8_t_vec e; };
 
-template <typename U, typename A, typename F>
+template <typename U, typename F, typename A = decltype(U::a)>
 void fverify1 (const std::string& prefix, const U& x, const F f, const A& THROWSQ) {
 	bool ok = true;
 	const auto actual = f(x.a, ok);
@@ -20,7 +20,7 @@ void fverify1 (const std::string& prefix, const U& x, const F f, const A& THROWS
 	enforce(actual == x.e, prefix + ' ' + hexify(x.a) + " should equal " + hexify(x.e) + " ... " + hexify(actual));
 };
 
-template <typename U, typename A, typename F>
+template <typename U, typename F, typename A = decltype(U::a)>
 void fverify2 (const std::string& prefix, const U& x, const F f, const A& THROWSQ) {
 	bool ok = true;
 	const auto actual = f(x.a, x.b, ok);
@@ -71,7 +71,7 @@ void test_ec_combine (std::vector<PA<A>>& pa, std::vector<PAS<A>>& pas, std::vec
 	}
 }
 
-template <typename A>
+template <typename A, bool COMPRESSED = (sizeof(A) == 65)>
 void generate (std::ostream& o, const A G) {
 	bool ok = true;
 	const auto G_LESS_1 = _pointFromScalar<A>(GROUP_ORDER_LESS_1, ok);
@@ -98,7 +98,7 @@ void generate (std::ostream& o, const A G) {
 	if (sizeof(A) == 65) {
 		ip.push_back({ fromHex<A>("0579be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10ab2e"), false, "Bad sequence prefix" });
 	} else {
-		ip.push_back({ fromHex<A>("0179be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"), true, "Bad sequence prefix" });
+		ip.push_back({ fromHex<A>("0179be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"), false, "Bad sequence prefix" });
 	}
 
 	for (size_t i = 0; i < 100; ++i) {
@@ -112,7 +112,8 @@ void generate (std::ostream& o, const A G) {
 	pa.push_back({ G_LESS_1, G_LESS_2, G_LESS_3 });
 	pa.push_back({ G_LESS_1, G_LESS_2, G_LESS_3 });
 
-	pa.push_back({ G_ONE, G_LESS_1, THROWSQ }); // == 0
+	// https://github.com/bitcoin-core/secp256k1/blob/452d8e4d2a2f9f1b5be6b02e18f1ba102e5ca0b4/src/tests.c#L3857
+	pa.push_back({ G_ONE, G_LESS_1, THROWSQ }); // == 0/infinity
 	pa.push_back({ G_ONE, G_LESS_2, G_LESS_1 }); // == -1
 	pa.push_back({ G_TWO, G_LESS_1, G_ONE }); // == 1
 	pa.push_back({ G_ONE, G, THROWSQ });
@@ -126,7 +127,7 @@ void generate (std::ostream& o, const A G) {
 	pas.push_back({ G_LESS_1, GROUP_ORDER_LESS_2, G_LESS_3 });
 	pas.push_back({ G_LESS_1, GROUP_ORDER_LESS_2, G_LESS_3 });
 
-	pas.push_back({ G_ONE, GROUP_ORDER_LESS_1, THROWSQ }); // == 0
+	pas.push_back({ G_ONE, GROUP_ORDER_LESS_1, THROWSQ }); // == 0/infinity
 	pas.push_back({ G_ONE, GROUP_ORDER_LESS_2, G_LESS_1 }); // == -1
 	pas.push_back({ G_TWO, GROUP_ORDER_LESS_1, G_ONE }); // == 1
 	pas.push_back({ G_ONE, GROUP_ORDER, THROWSQ });
@@ -142,8 +143,25 @@ void generate (std::ostream& o, const A G) {
 
 	///////////////////////////////// pointCompress
 	std::vector<PC<A>> pc;
+	pc.push_back({ vectorify(GENERATOR), true, vectorify(GENERATORC) });
+	pc.push_back({ vectorify(GENERATOR), false, vectorify(GENERATOR) });
+	pc.push_back({ vectorify(GENERATORC), true, vectorify(GENERATORC) });
+	pc.push_back({ vectorify(GENERATORC), false, vectorify(GENERATOR) });
+	pc.push_back({ uint8_t_vec(33, 0), false, {} });
+	pc.push_back({ uint8_t_vec(33, 0), true, {} });
+	pc.push_back({ uint8_t_vec(65, 0), false, {} });
+	pc.push_back({ uint8_t_vec(65, 0), true, {} });
 
-// 	pc.push_back({ P, compress, expected });
+	for (auto i = 1; i < 10; ++i) {
+		const auto iic = vectorify(_pointFromUInt32<uint8_t_33>(i, ok));
+		const auto ii = vectorify(_pointFromUInt32<uint8_t_65>(i, ok));
+		assert(ok);
+
+		pc.push_back({ iic, true, iic });
+		pc.push_back({ iic, false, ii });
+		pc.push_back({ ii, true, iic });
+		pc.push_back({ ii, false, ii });
+	}
 
 	///////////////////////////////// pointFromScalar
 	std::vector<PFS<A>> pfs;
@@ -166,8 +184,12 @@ void generate (std::ostream& o, const A G) {
 	test_ec_combine<A>(pa, pas, pfs);
 
 	for (auto& x : ip) enforce(_isPoint(x.a) == x.e, "expected " + hexify(x.a) + " as " + (x.e ? "valid" : "invalid"));
-	for (auto& x : pas) fverify2("pas", x, _pointAddScalar<A>, THROWSQ);
-	for (auto& x : pfs) fverify1("pfs", x, _pointFromScalar<A>, THROWSQ);
+	for (auto& x : pas) fverify2("pointAddScalar", x, _pointAddScalar<A>, THROWSQ);
+	for (auto& x : pfs) fverify1("pointFromScalar", x, _pointFromScalar<A>, THROWSQ);
+	for (auto& x : pc) {
+		if (x.b) fverify1("pointCompress", x, _pointCompress<uint8_t_33>, {});
+		else fverify1("pointCompress", x, _pointCompress<uint8_t_65>, {});
+	}
 
 	// dump JSON
 	o << "{";
@@ -179,6 +201,18 @@ void generate (std::ostream& o, const A G) {
 		if (!x.description.empty()) o << "\"description\": \"" << x.description << "\",";
 		o << "\"point\": \"" << hexify(x.a) << "\",";
 		o << "\"expected\": " << (x.e ? "true" : "false");
+		o << '}';
+	}
+	o << "], \"pointCompress\": [";
+	i = 0;
+	for (auto& x : pc) {
+		if (i++ > 0) o << ',';
+		o << '{';
+		o << "\"P\": \"" << hexify(x.a) << "\",";
+		o << "\"compressed\": " << (x.b ? "true" : "false");
+		o << "\"expected\": ";
+		if (x.e.empty()) o << "null";
+		else o << "\"" << hexify(x.e) << "\",";
 		o << '}';
 	}
 	o << "], \"pointFromScalar\": [";

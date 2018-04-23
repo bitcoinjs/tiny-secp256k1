@@ -5,6 +5,7 @@
 #include <cassert>
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 #include "hexxer.hpp"
 #include "../native/secp256k1/include/secp256k1.h"
@@ -12,6 +13,7 @@
 typedef std::array<uint8_t, 32> uint8_t_32;
 typedef std::array<uint8_t, 33> uint8_t_33;
 typedef std::array<uint8_t, 65> uint8_t_65;
+typedef std::vector<uint8_t> uint8_t_vec;
 
 auto enforce (const bool e, const std::string& message) {
 	if (e) {
@@ -29,6 +31,11 @@ std::string hexify (const R& range) {
 		ss << hexxer::encodeFirst(x) << hexxer::encodeSecond(x);
 	}
 	return ss.str();
+}
+
+template <typename A>
+auto vectorify (const A a) {
+	return uint8_t_vec(a.begin(), a.end());
 }
 
 auto randomScalar () {
@@ -148,6 +155,14 @@ auto _pointAdd (const A p, const A q, bool& ok) {
 	ok &= secp256k1_ec_pubkey_combine(ctx, &public_key, points, 2);
 
 	return _ec_pubkey_to_array<A>(public_key, ok);
+}
+
+template <typename A>
+uint8_t_vec _pointCompress (const uint8_t_vec p, bool& ok) {
+	assert(!p.empty());
+	secp256k1_pubkey public_key;
+	ok &= secp256k1_ec_pubkey_parse(ctx, &public_key, p.data(), p.size());
+	return vectorify(_ec_pubkey_to_array<A>(public_key, ok));
 }
 
 template <typename A>
