@@ -176,7 +176,7 @@ NAN_METHOD(ecdsaSign) {
 		asDataPointer(hash),
 		asDataPointer(d),
 		secp256k1_nonce_function_rfc6979,
-		NULL
+		nullptr
 	) == 0) return THROW_BAD_SIGNATURE;
 
 	unsigned char output[64];
