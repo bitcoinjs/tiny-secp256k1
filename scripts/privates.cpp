@@ -74,33 +74,26 @@ void generate (std::ostream& o) {
 	for (auto& x : pa) fverify('+', x, _privAdd);
 
 	// dump JSON
-	o << "{";
-	o << "\"isPrivate\": [";
-	auto i = 0;
-	for (auto& x : ip) {
-		if (i++ > 0) o << ',';
-		o << '{';
-		o << "\"priv\": \"" << hexify(x.a) << "\",";
-		o << "\"expected\": " << (x.e ? "true" : "false");
-		o << '}';
-	}
-	o << "], \"privateAdd\": [";
-	i = 0;
-	for (auto& x : pa) {
-		if (i++ > 0) o << ',';
-		o << '{';
-		o << "\"priv\": \"" << hexify(x.a) << "\",";
-		o << "\"tweak\": \"" << hexify(x.b) << "\",";
-		o << "\"expected\": ";
-		if (x.e == THROWS) o << "null";
-		else o << "\"" << hexify(x.e) << "\"";
-		o << '}';
-	}
-	o << "]}";
+	o << jsonifyO({
+		jsonp("isPrivate", jsonifyA(ip, [](auto x) {
+			return jsonifyO({
+				jsonp("priv", jsonify(x.a)),
+				jsonp("expected", jsonify(x.e))
+			});
+		})),
+		jsonp("privateAdd", jsonifyA(pa, [](auto x) {
+			return jsonifyO({
+				jsonp("priv", jsonify(x.a)),
+				jsonp("tweak", jsonify(x.b)),
+				jsonp("expected", x.e == THROWS ? "null" : jsonify(x.e))
+			});
+		}))
+	});
 }
 
 int main () {
 	_ec_init();
 	generate(std::cout);
+
 	return 0;
 }

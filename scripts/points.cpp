@@ -16,8 +16,8 @@ struct Fixtures {
 	A throws;
 };
 
-template <typename U, typename F, typename A = decltype(U::a)>
-void fverify1 (const std::string& prefix, const U& x, const F f, const A& THROWSQ) {
+template <typename X, typename F, typename A = decltype(X::a)>
+void fverify1 (const std::string& prefix, const X& x, const F f, const A& THROWSQ) {
 	bool ok = true;
 	const auto actual = f(x.a, ok);
 	if (x.e == THROWSQ) {
@@ -28,8 +28,8 @@ void fverify1 (const std::string& prefix, const U& x, const F f, const A& THROWS
 	enforce(actual == x.e, prefix + ' ' + hexify(x.a) + " should equal " + hexify(x.e) + " ... " + hexify(actual));
 };
 
-template <typename U, typename F, typename A = decltype(U::a)>
-void fverify2 (const std::string& prefix, const U& x, const F f, const A& THROWSQ) {
+template <typename X, typename F, typename A = decltype(X::a)>
+void fverify2 (const std::string& prefix, const X& x, const F f, const A& THROWSQ) {
 	bool ok = true;
 	const auto actual = f(x.a, x.b, ok);
 	if (x.e == THROWSQ) {
@@ -215,77 +215,66 @@ auto generate (const A G) {
 	return Fixtures<A>{ ip, pfs, pa, pas, THROWSQ };
 }
 
-template <typename X>
-void dumpPE (std::ostream& o, const X& xs, size_t i = 0) {
-	for (auto& x : xs) {
-		if (i++ > 0) o << ',';
-		o << '{';
-		if (!x.description.empty()) o << "\"description\": \"" << x.description << "\",";
-		o << "\"point\": \"" << hexify(x.a) << "\",";
-		o << "\"expected\": " << (x.e ? "true" : "false");
-		o << '}';
-	}
+template <typename T>
+auto jdE (const T& throws) {
+	return [=](auto x) {
+		return jsonifyO({
+			jsonp("d", jsonify(x.a)),
+			jsonp("expected", x.e == throws ? "null" : jsonify(x.e))
+		});
+	};
 }
 
-template <typename X, typename T>
-void dumpPdE (std::ostream& o, const X& xs, const T& throws, size_t i = 0) {
-	for (auto& x : xs) {
-		if (i++ > 0) o << ',';
-		o << '{';
-		o << "\"P\": \"" << hexify(x.a) << "\",";
-		o << "\"d\": \"" << hexify(x.b) << "\",";
-		o << "\"expected\": ";
-		if (x.e == throws) o << "null";
-		else o << "\"" << hexify(x.e) << "\"";
-		o << '}';
-	}
-}
-
-template <typename X, typename T>
-void dumpdE (std::ostream& o, const X& xs, const T& throws, size_t i = 0) {
-	for (auto& x : xs) {
-		if (i++ > 0) o << ',';
-		o << '{';
-		o << "\"d\": \"" << hexify(x.a) << "\",";
-		o << "\"expected\": ";
-		if (x.e == throws) o << "null";
-		else o << "\"" << hexify(x.e) << "\"";
-		o << '}';
-	}
+template <typename T>
+auto jPDE (const T& throws) {
+	return [=](auto x) {
+		return jsonifyO({
+			jsonp("P", jsonify(x.a)),
+			jsonp("d", jsonify(x.b)),
+			jsonp("expected", x.e == throws ? "null" : jsonify(x.e))
+		});
+	};
 }
 
 void dumpJSON (
 	std::ostream& o,
 	const Fixtures<uint8_t_33>& compressed,
 	const Fixtures<uint8_t_65>& uncompressed,
-	const std::vector<PC>& trans
+	const std::vector<PC>& pc
 ) {
-	// dump JSON
-	o << "{ \"isPoint\": [";
-	dumpPE(o, compressed.ip);
-	dumpPE(o, uncompressed.ip, compressed.ip.size());
-	o << "], \"pointAdd\": [";
-	dumpPdE(o, compressed.pa, compressed.throws);
-	dumpPdE(o, uncompressed.pa, uncompressed.throws, compressed.pa.size());
-	o << "], \"pointAddScalar\": [";
-	dumpPdE(o, compressed.pas, compressed.throws);
-	dumpPdE(o, uncompressed.pas, uncompressed.throws, compressed.pas.size());
-	o << "], \"pointFromScalar\": [";
-	dumpdE(o, compressed.pfs, compressed.throws);
-	dumpdE(o, uncompressed.pfs, uncompressed.throws, compressed.pfs.size());
-	o << "], \"pointCompress\": [";
-	size_t i = 0;
-	for (auto& x : trans) {
-		if (i++ > 0) o << ',';
-		o << '{';
-		o << "\"P\": \"" << hexify(x.a) << "\",";
-		o << "\"compress\": " << (x.b ? "true" : "false") << ',';
-		o << "\"expected\": ";
-		if (x.e.empty()) o << "null";
-		else o << "\"" << hexify(x.e) << "\"";
-		o << '}';
-	}
-	o << "]}";
+	const auto jPE = [](auto x) {
+		return jsonifyO({
+			jsonp("description", jsonify(x.description)),
+			jsonp("point", jsonify(x.a)),
+			jsonp("expected", jsonify(x.e))
+		});
+	};
+
+	o << jsonifyO({
+		jsonp("isPoint", jsonifyA({
+			jsonify_csv(compressed.ip, jPE),
+			jsonify_csv(uncompressed.ip, jPE)
+		})),
+		jsonp("pointAdd", jsonifyA({
+			jsonify_csv(compressed.pa, jPDE(compressed.throws)),
+			jsonify_csv(uncompressed.pa, jPDE(uncompressed.throws))
+		})),
+		jsonp("pointAddScalar", jsonifyA({
+			jsonify_csv(compressed.pas, jPDE(compressed.throws)),
+			jsonify_csv(uncompressed.pas, jPDE(uncompressed.throws))
+		})),
+		jsonp("pointFromScalar", jsonifyA({
+			jsonify_csv(compressed.pfs, jdE(compressed.throws)),
+			jsonify_csv(uncompressed.pfs, jdE(uncompressed.throws))
+		})),
+		jsonp("pointCompress", jsonifyA(pc, [](auto x) {
+			return jsonifyO({
+				jsonp("P", jsonify(x.a)),
+				jsonp("compress", jsonify(x.b)),
+				jsonp("expected", x.e.empty() ? "null" : jsonify(x.e))
+			});
+		}))
+	});
 }
 
 int main () {

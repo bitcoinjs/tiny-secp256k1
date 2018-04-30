@@ -7,8 +7,9 @@
 #include <sstream>
 #include <vector>
 
-#include "hexxer.hpp"
 #include "../native/secp256k1/include/secp256k1.h"
+#include "hexxer.hpp"
+#include "json.hpp"
 
 typedef std::array<uint8_t, 32> uint8_t_32;
 typedef std::array<uint8_t, 33> uint8_t_33;
@@ -22,15 +23,6 @@ auto enforce (const bool e, const std::string& message) {
 	}
 	std::cerr << message << std::endl;
 	assert(false);
-}
-
-template <typename R>
-std::string hexify (const R& range) {
-	std::stringstream ss;
-	for (auto& x : range) {
-		ss << hexxer::encodeFirst(x) << hexxer::encodeSecond(x);
-	}
-	return ss.str();
 }
 
 template <typename A>
