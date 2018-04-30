@@ -10,30 +10,6 @@ template <typename A> struct PA { A a; A b; A e; };
 template <typename A> struct PAS { A a; uint8_t_32 b; A e; };
 struct PC { uint8_t_vec a; bool b; uint8_t_vec e; };
 
-template <typename X, typename F, typename A = decltype(X::a)>
-void fverify1 (const std::string& prefix, const X& x, const F f, const A& THROWSQ) {
-	bool ok = true;
-	const auto actual = f(x.a, ok);
-	if (x.e == THROWSQ) {
-		enforce(!ok, prefix + ' ' + hexify(x.a) + " should throw");
-		return;
-	}
-	enforce(ok, prefix + ' ' + hexify(x.a) + ' ' + " should pass");
-	enforce(actual == x.e, prefix + ' ' + hexify(x.a) + " should equal " + hexify(x.e) + " ... " + hexify(actual));
-};
-
-template <typename X, typename F, typename A = decltype(X::a)>
-void fverify2 (const std::string& prefix, const X& x, const F f, const A& THROWSQ) {
-	bool ok = true;
-	const auto actual = f(x.a, x.b, ok);
-	if (x.e == THROWSQ) {
-		enforce(!ok, prefix + ' ' + hexify(x.a) + ' ' + hexify(x.b) + " should throw");
-		return;
-	}
-	enforce(ok, prefix + ' ' + hexify(x.a) + ' ' + hexify(x.b) + " should pass");
-	enforce(actual == x.e, prefix + ' ' + hexify(x.a) + ' ' + hexify(x.b) + " should equal " + hexify(x.e) + " ... " + hexify(actual));
-};
-
 // ref https://github.com/bitcoin-core/secp256k1/blob/6ad5cdb42a1a8257289a0423d644dcbdeab0f83c/src/tests.c#L2160
 //   iteratively verifies that (d + ...)G == (dG + ...G)
 template <typename A>
@@ -94,11 +70,6 @@ auto generatePC () {
 		pc.push_back({ iic, false, ii });
 		pc.push_back({ ii, true, iic });
 		pc.push_back({ ii, false, ii });
-	}
-
-	for (auto& x : pc) {
-		if (x.b) fverify1("pointCompress", x, _pointCompress<uint8_t_33>, {});
-		else fverify1("pointCompress", x, _pointCompress<uint8_t_65>, {});
 	}
 
 	return pc;
@@ -201,10 +172,6 @@ auto generate (const A G) {
 
 	// ref https://github.com/bitcoin-core/secp256k1/blob/6ad5cdb42a1a8257289a0423d644dcbdeab0f83c/src/tests.c#L2160
 	test_ec_combine<A>(pa, pas, pfs);
-
-	for (auto& x : ip) enforce(_isPoint(x.a) == x.e, "expected " + hexify(x.a) + " as " + (x.e ? "valid" : "invalid"));
-	for (auto& x : pas) fverify2("pointAddScalar", x, _pointAddScalar<A>, THROWSQ);
-	for (auto& x : pfs) fverify1("pointFromScalar", x, _pointFromScalar<A>, THROWSQ);
 
 	return std::make_tuple(ip, pa, pas, pfs, THROWSQ);
 }

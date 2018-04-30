@@ -18,15 +18,6 @@ typedef std::array<uint8_t, 64> uint8_t_64;
 typedef std::array<uint8_t, 65> uint8_t_65;
 typedef std::vector<uint8_t> uint8_t_vec;
 
-auto enforce (const bool e, const std::string& message) {
-	if (e) {
-// 		std::cout << message << " -- OK" << std::endl;
-		return;
-	}
-	std::cerr << message << std::endl;
-	assert(false);
-}
-
 template <typename A>
 auto vectorify (const A a) {
 	return uint8_t_vec(a.begin(), a.end());

@@ -4,18 +4,6 @@
 
 #include <tuple>
 
-template <typename X, typename F, typename A = decltype(X::a)>
-void fverify2 (const std::string& prefix, const X& x, const F f, const A& THROWSQ) {
-	bool ok = true;
-	const auto actual = f(x.a, x.b, ok);
-	if (x.e == THROWSQ) {
-		enforce(!ok, prefix + ' ' + hexify(x.a) + ' ' + hexify(x.b) + " should throw");
-		return;
-	}
-	enforce(ok, prefix + ' ' + hexify(x.a) + ' ' + hexify(x.b) + " should pass");
-	enforce(actual == x.e, prefix + ' ' + hexify(x.a) + ' ' + hexify(x.b) + " should equal " + hexify(x.e) + " ... " + hexify(actual));
-};
-
 struct S { uint8_t_32 d; uint8_t_32 m; uint8_t_64 e; std::string desc; };
 struct BS { uint8_t_32 d; uint8_t_32 m; std::string except; std::string desc; };
 struct BV { uint8_t_33 Q; uint8_t_32 m; uint8_t_64 s; std::string except; std::string desc; };

@@ -5,18 +5,6 @@
 struct IP { uint8_t_32 a = {}; bool e = false; };
 struct PA { uint8_t_32 a; uint8_t_32 b; uint8_t_32 e = THROWS; };
 
-template <typename F>
-void fverify (const char sign, const PA& x, const F f) {
-	bool ok = true;
-	const auto actual = f(x.a, x.b, ok);
-	if (x.e == THROWS) {
-		enforce(!ok, hexify(x.a) + ' ' + sign + ' ' + hexify(x.b) + " should throw");
-		return;
-	}
-	enforce(ok, hexify(x.a) + ' ' + sign + ' ' + hexify(x.b) + " should pass");
-	enforce(actual == x.e, hexify(x.a) + ' ' + sign + ' ' + hexify(x.b) + " should equal " + hexify(x.e) + " ... " + hexify(actual));
-};
-
 void generate (std::ostream& o) {
 	///////////////////////////////// isPrivate
 	std::vector<IP> ip;
@@ -68,10 +56,6 @@ void generate (std::ostream& o) {
 		paPush(randomPrivateHigh(), randomPrivateLow());
 		paPush(randomPrivateLow(), randomPrivateHigh());
 	}
-
-	// (re)verify
-	for (auto& x : ip) enforce(_isPriv(x.a) == x.e, hexify(x.a) + (x.e ? " true" : " false"));
-	for (auto& x : pa) fverify('+', x, _privAdd);
 
 	// dump JSON
 	o << jsonifyO({
