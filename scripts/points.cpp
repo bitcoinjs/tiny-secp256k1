@@ -9,6 +9,7 @@ template <typename A> struct PFS { uint8_t_32 a; A e; };
 template <typename A> struct PFSF { uint8_t_32 a; std::string except = ""; std::string desc = ""; };
 template <typename A> struct PA { A a; A b; A e; };
 template <typename A> struct PAS { A a; uint8_t_32 b; A e; };
+template <typename A> struct PASF { A a; uint8_t_32 b; std::string except = ""; std::string desc = ""; };
 struct PC { uint8_t_vec a; bool b; uint8_t_vec e; };
 
 // ref https://github.com/bitcoin-core/secp256k1/blob/6ad5cdb42a1a8257289a0423d644dcbdeab0f83c/src/tests.c#L2160
@@ -122,6 +123,8 @@ auto generate (const A G) {
 	pa.push_back({ G_ONE, G_LESS_2, G_LESS_1 }); // == -1
 	pa.push_back({ G_TWO, G_LESS_1, G_ONE }); // == 1
 	pa.push_back({ G_ONE, G, NULLQ });
+	pa.push_back({ G_ONE, G_ONE, G_TWO });
+	pa.push_back({ G_ONE, G_TWO, G_THREE });
 
 	for (size_t i = 0; i < 100; ++i) {
 		const auto a = _pointFromScalar<A>(randomPrivate(), ok);
@@ -136,15 +139,23 @@ auto generate (const A G) {
 
 	// #L3719, -1 + 0 == -1
 	pas.push_back({ G_LESS_1, ZERO, G_LESS_1 });
+	pas.push_back({ G_LESS_1, ONE, NULLQ }); // == 0/infinity
+	pas.push_back({ G_LESS_1, TWO, G_ONE });
+	pas.push_back({ G_LESS_1, THREE, G_TWO });
 	pas.push_back({ G_LESS_1, GROUP_ORDER_LESS_1, G_LESS_2 });
 	pas.push_back({ G_LESS_1, GROUP_ORDER_LESS_2, G_LESS_3 });
 	pas.push_back({ G_LESS_1, GROUP_ORDER_LESS_2, G_LESS_3 });
-
+	pas.push_back({ G_LESS_2, ONE, G_LESS_1 });
+	pas.push_back({ G_LESS_2, TWO, NULLQ });
+	pas.push_back({ G_LESS_2, THREE, G_ONE });
 	pas.push_back({ G_ONE, GROUP_ORDER_LESS_1, NULLQ }); // == 0/infinity
 	pas.push_back({ G_ONE, GROUP_ORDER_LESS_2, G_LESS_1 }); // == -1
 	pas.push_back({ G_TWO, GROUP_ORDER_LESS_1, G_ONE }); // == 1
-	pas.push_back({ G_ONE, GROUP_ORDER, NULLQ });
-	pas.push_back({ G_ONE, GROUP_ORDER_OVER_1, NULLQ });
+
+	std::vector<PASF<A>> pasf;
+	pasf.push_back({ fromUInt32<A>(0), ONE, "Expected Point", "Invalid Point" });
+	pasf.push_back({ G_ONE, GROUP_ORDER, "Expected Tweak", "Tweak >= G" });
+	pasf.push_back({ G_ONE, GROUP_ORDER_OVER_1, "Expected Tweak", "Tweak >= G" });
 
 	for (uint32_t i = 1; i < 5; ++i) {
 		bool ok;

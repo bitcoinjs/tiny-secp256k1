@@ -224,6 +224,16 @@ auto sha256 (const A& m) {
 	return h;
 }
 
+// we use 0xfefefefefefefe.... as a null placeholder
+template <typename A>
+auto Null () {
+	A a;
+	a.fill(0xfe);
+	return a;
+}
+template <typename A>
+auto isNull (const A& a) { return a == Null<A>(); }
+
 const auto ZERO = scalarFromHex("0000000000000000000000000000000000000000000000000000000000000000");
 const auto ONE = scalarFromHex("0000000000000000000000000000000000000000000000000000000000000001");
 const auto TWO = scalarFromHex("0000000000000000000000000000000000000000000000000000000000000002");
@@ -233,8 +243,6 @@ const auto GROUP_ORDER_LESS_3 = scalarFromHex("fffffffffffffffffffffffffffffffeb
 const auto GROUP_ORDER_LESS_2 = scalarFromHex("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd036413f");
 const auto GROUP_ORDER_LESS_1 = scalarFromHex("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140");
 const auto GROUP_ORDER_OVER_1 = scalarFromHex("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364142");
-const auto THROWS = scalarFromHex("fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe");
-const auto THROWS64 = signatureFromHex("fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe");
 const auto UINT256_MAX = scalarFromHex("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 const auto GENERATOR = point65FromHex("0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8");
 const auto GENERATORC = point33FromHex("0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798");

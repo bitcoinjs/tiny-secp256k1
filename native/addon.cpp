@@ -24,13 +24,22 @@ namespace {
 	}
 
 	template <typename T>
-	bool isUInt256 (const T& x) {
+	bool isScalar (const T& x) {
 		return node::Buffer::HasInstance(x) && node::Buffer::Length(x) == 32;
 	}
 
 	template <typename T>
+	bool isOrderScalar (const T& x) {
+		if (!isScalar<T>(x)) return false;
+		int overflow = 0;
+		secp256k1_scalar xx;
+		secp256k1_scalar_set_b32(&xx, x.data());
+		return !overflow;
+	}
+
+	template <typename T>
 	bool isPrivate (const T& x) {
-		if (!isUInt256<T>(x)) return false;
+		if (!isScalar<T>(x)) return false;
 		return secp256k1_ec_seckey_verify(secp256k1ctx, asDataPointer(x)) != 0;
 	}
 
@@ -106,7 +115,7 @@ NAN_METHOD(eccPointAddScalar) {
 
 	secp256k1_pubkey public_key;
 	if (!isPoint(p, public_key)) return THROW_BAD_POINT;
-	if (!isPrivate(tweak)) return THROW_BAD_TWEAK;
+	if (!isOrderScalar(tweak)) return THROW_BAD_TWEAK;
 
 	if (secp256k1_ec_pubkey_tweak_add(secp256k1ctx, &public_key, asDataPointer(tweak)) == 0) return RETURNV(Nan::Null());
 
@@ -150,7 +159,7 @@ NAN_METHOD(eccPrivateAdd) {
 	const auto d = info[0].As<v8::Object>();
 	const auto tweak = info[1].As<v8::Object>();
 	if (!isPrivate(d)) return THROW_BAD_PRIVATE;
-	if (!isPrivate(tweak)) return THROW_BAD_TWEAK; // required
+	if (!isOrderScalar(tweak)) return THROW_BAD_TWEAK;
 
 	unsigned char output[32];
 	memcpy(output, asDataPointer(d), 32);
@@ -166,7 +175,7 @@ NAN_METHOD(ecdsaSign) {
 
 	const auto hash = info[0].As<v8::Object>();
 	const auto d = info[1].As<v8::Object>();
-	if (!isUInt256(hash)) return THROW_BAD_HASH;
+	if (!isScalar(hash)) return THROW_BAD_HASH;
 	if (!isPrivate(d)) return THROW_BAD_PRIVATE;
 
 	secp256k1_ecdsa_signature signature;
@@ -197,7 +206,7 @@ NAN_METHOD(ecdsaVerify) {
 	secp256k1_pubkey public_key;
 	secp256k1_ecdsa_signature signature;
 
-	if (!isUInt256(hash)) return THROW_BAD_HASH;
+	if (!isScalar(hash)) return THROW_BAD_HASH;
 	if (!isPoint(p, public_key)) return THROW_BAD_POINT;
 	if (!isSignature(sig, signature)) return THROW_BAD_SIGNATURE;
 

@@ -3,7 +3,7 @@
 #include "utils.hpp"
 
 struct IP { uint8_t_32 a = {}; bool e = false; };
-struct PA { uint8_t_32 a; uint8_t_32 b; uint8_t_32 e = THROWS; };
+struct PA { uint8_t_32 a; uint8_t_32 b; uint8_t_32 e = Null<uint8_t_32>(); };
 
 void generate (std::ostream& o) {
 	///////////////////////////////// isPrivate
@@ -36,10 +36,10 @@ void generate (std::ostream& o) {
 		bool ok = true;
 		const auto expected = _privAdd(k, t, ok);
 		if (ok) pa.push_back({ k, t, expected });
-		else pa.push_back({ k, t, THROWS });
+		else pa.push_back({ k, t, Null<uint8_t_32>() });
 	};
 
-	pa.push_back({ ONE, GROUP_ORDER, THROWS }); // bad tweak
+	pa.push_back({ ONE, GROUP_ORDER, Null<uint8_t_32>() }); // bad tweak
 
 	// visually inspected
 	//   covers https://github.com/bitcoin-core/secp256k1/blob/6ad5cdb42a1a8257289a0423d644dcbdeab0f83c/src/tests.c
@@ -69,7 +69,7 @@ void generate (std::ostream& o) {
 			return jsonifyO({
 				jsonp("priv", jsonify(x.a)),
 				jsonp("tweak", jsonify(x.b)),
-				jsonp("expected", x.e == THROWS ? "null" : jsonify(x.e))
+				jsonp("expected", isNull(x.e) ? "null" : jsonify(x.e))
 			});
 		}))
 	});
