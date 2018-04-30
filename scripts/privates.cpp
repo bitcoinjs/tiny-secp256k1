@@ -2,11 +2,11 @@
 #include <vector>
 #include "utils.hpp"
 
-struct AE { uint8_t_32 a = {}; bool e = false; };
-struct ABE { uint8_t_32 a; uint8_t_32 b; uint8_t_32 e = THROWS; };
+struct IP { uint8_t_32 a = {}; bool e = false; };
+struct PA { uint8_t_32 a; uint8_t_32 b; uint8_t_32 e = THROWS; };
 
 template <typename F>
-void fverify (const char sign, const ABE& x, const F f) {
+void fverify (const char sign, const PA& x, const F f) {
 	bool ok = true;
 	const auto actual = f(x.a, x.b, ok);
 	if (x.e == THROWS) {
@@ -19,7 +19,7 @@ void fverify (const char sign, const ABE& x, const F f) {
 
 void generate (std::ostream& o) {
 	///////////////////////////////// isPrivate
-	std::vector<AE> ip;
+	std::vector<IP> ip;
 
 	// edge cases (verify)
 	//   from https://github.com/bitcoin-core/secp256k1/blob/6ad5cdb42a1a8257289a0423d644dcbdeab0f83c/src/tests.c
@@ -43,7 +43,7 @@ void generate (std::ostream& o) {
 	}
 
 	///////////////////////////////// privateAdd
-	std::vector<ABE> pa;
+	std::vector<PA> pa;
 	const auto paPush = [&](const auto k, const auto t) {
 		bool ok = true;
 		const auto expected = _privAdd(k, t, ok);

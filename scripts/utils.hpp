@@ -32,35 +32,45 @@ auto vectorify (const A a) {
 	return uint8_t_vec(a.begin(), a.end());
 }
 
-auto randomScalar () {
-	uint8_t_32 x;
-	arc4random_buf(x.data(), 32);
+template <typename A>
+auto random () {
+	A x;
+	arc4random_buf(x.data(), x.size());
 	return x;
 }
 
-auto randomScalarHigh () {
-	uint8_t_32 x;
+template <typename A>
+auto randomHigh () {
+	A x;
 	x.fill(0xff);
-	arc4random_buf(x.data(), 16);
+	arc4random_buf(x.data(), x.size() / 2);
 	return x;
 }
 
-auto randomScalarLow () {
-	uint8_t_32 x;
+template <typename A>
+auto randomLow () {
+	A x;
 	x.fill(0);
-	arc4random_buf(x.data() + 16, 16);
+	arc4random_buf(x.data() + x.size() / 2, x.size() / 2);
 	return x;
 }
 
-auto scalarFromUInt32 (const uint32_t i) {
-	uint8_t_32 x;
+template <typename A>
+auto fromUInt32 (const uint32_t i) {
+	A x;
 	x.fill(0);
-	x[28] = i >> 24;
-	x[29] = i >> 16;
-	x[30] = i >> 8;
-	x[31] = i & 0xff;
+	const auto s = x.size();
+	x.at(s - 4) = i >> 24;
+	x.at(s - 3) = i >> 16;
+	x.at(s - 2) = i >> 8;
+	x.at(s - 1) = i & 0xff;
 	return x;
 }
+
+auto randomScalar () { return random<uint8_t_32>(); }
+auto randomScalarHigh () { return randomHigh<uint8_t_32>(); }
+auto randomScalarLow () { return randomLow<uint8_t_32>(); }
+auto scalarFromUInt32 (const uint32_t i) { return fromUInt32<uint8_t_32>(i); }
 
 template <typename A>
 auto fromHex (const std::string& s) {
@@ -178,6 +188,12 @@ auto _pointFromUInt32 (const uint32_t i, bool& ok) {
 	return _ec_pubkey_to_array<A>(public_key, ok);
 }
 
+auto _signatureFromRS (const uint8_t_32 r, const uint8_t_32 s) {
+	uint8_t_64 rs;
+	std::copy(r.begin(), r.end(), rs.begin());
+	return rs;
+}
+
 auto _eccSign (const uint8_t_32 d, const uint8_t_32 message, bool& ok) {
 	uint8_t_64 output;
 	secp256k1_ecdsa_signature signature;
@@ -187,12 +203,16 @@ auto _eccSign (const uint8_t_32 d, const uint8_t_32 message, bool& ok) {
 }
 
 template <typename A>
-auto _eccVerify (const A& p, const uint8_t_32 message, const uint8_t_64 signature, bool& ok) {
+auto _eccVerify (const A& p, const uint8_t_32 message, const uint8_t_64 signature) {
 	secp256k1_pubkey public_key;
+	bool ok = true;
 	ok &= secp256k1_ec_pubkey_create(ctx, &public_key, p.data());
+	if (!ok) return false;
 
 	secp256k1_ecdsa_signature _signature;
 	ok &= secp256k1_ecdsa_signature_parse_compact(ctx, &_signature, signature.data());
+	if (!ok) return false;
+
 	ok &= secp256k1_ecdsa_verify(ctx, &_signature, message.data(), &public_key);
 	return ok;
 }

@@ -1,5 +1,7 @@
 #include <iostream>
+#include <tuple>
 #include <vector>
+
 #include "utils.hpp"
 
 template <typename A> struct IP { A a; bool e; std::string desc = ""; };
@@ -7,14 +9,6 @@ template <typename A> struct PFS { uint8_t_32 a; A e; };
 template <typename A> struct PA { A a; A b; A e; };
 template <typename A> struct PAS { A a; uint8_t_32 b; A e; };
 struct PC { uint8_t_vec a; bool b; uint8_t_vec e; };
-template <typename A>
-struct Fixtures {
-	std::vector<IP<A>> ip;
-	std::vector<PFS<A>> pfs;
-	std::vector<PA<A>> pa;
-	std::vector<PAS<A>> pas;
-	A throws;
-};
 
 template <typename X, typename F, typename A = decltype(X::a)>
 void fverify1 (const std::string& prefix, const X& x, const F f, const A& THROWSQ) {
@@ -212,7 +206,7 @@ auto generate (const A G) {
 	for (auto& x : pas) fverify2("pointAddScalar", x, _pointAddScalar<A>, THROWSQ);
 	for (auto& x : pfs) fverify1("pointFromScalar", x, _pointFromScalar<A>, THROWSQ);
 
-	return Fixtures<A>{ ip, pfs, pa, pas, THROWSQ };
+	return std::make_tuple(ip, pa, pas, pfs, THROWSQ);
 }
 
 template <typename T>
@@ -236,10 +230,11 @@ auto jPDE (const T& throws) {
 	};
 }
 
+template <typename A, typename B>
 void dumpJSON (
 	std::ostream& o,
-	const Fixtures<uint8_t_33>& compressed,
-	const Fixtures<uint8_t_65>& uncompressed,
+	const A& compressed,
+	const B& uncompressed,
 	const std::vector<PC>& pc
 ) {
 	const auto jPE = [](auto x) {
@@ -250,23 +245,25 @@ void dumpJSON (
 		if (!x.desc.empty()) kvs.push_back(jsonp("description", jsonify(x.desc)));
 		return jsonifyO(kvs);
 	};
+	const auto cthrows = std::get<4>(compressed);
+	const auto uthrows = std::get<4>(uncompressed);
 
 	o << jsonifyO({
 		jsonp("isPoint", jsonifyA({
-			jsonify_csv(compressed.ip, jPE),
-			jsonify_csv(uncompressed.ip, jPE)
+			jsonify_csv(std::get<0>(compressed), jPE),
+			jsonify_csv(std::get<0>(uncompressed), jPE)
 		})),
 		jsonp("pointAdd", jsonifyA({
-			jsonify_csv(compressed.pa, jPDE(compressed.throws)),
-			jsonify_csv(uncompressed.pa, jPDE(uncompressed.throws))
+			jsonify_csv(std::get<1>(compressed), jPDE(cthrows)),
+			jsonify_csv(std::get<1>(uncompressed), jPDE(uthrows))
 		})),
 		jsonp("pointAddScalar", jsonifyA({
-			jsonify_csv(compressed.pas, jPDE(compressed.throws)),
-			jsonify_csv(uncompressed.pas, jPDE(uncompressed.throws))
+			jsonify_csv(std::get<2>(compressed), jPDE(cthrows)),
+			jsonify_csv(std::get<2>(uncompressed), jPDE(uthrows))
 		})),
 		jsonp("pointFromScalar", jsonifyA({
-			jsonify_csv(compressed.pfs, jdE(compressed.throws)),
-			jsonify_csv(uncompressed.pfs, jdE(uncompressed.throws))
+			jsonify_csv(std::get<3>(compressed), jdE(cthrows)),
+			jsonify_csv(std::get<3>(uncompressed), jdE(uthrows))
 		})),
 		jsonp("pointCompress", jsonifyA(pc, [](auto x) {
 			return jsonifyO({
