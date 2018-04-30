@@ -1,1 +1,1 @@
-# secp256k1-tiny
+# tiny-secp256k1
