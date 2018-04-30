@@ -2,7 +2,7 @@
 #include <vector>
 #include "utils.hpp"
 
-template <typename A> struct IP { A a; bool e; std::string description = ""; };
+template <typename A> struct IP { A a; bool e; std::string desc = ""; };
 template <typename A> struct PFS { uint8_t_32 a; A e; };
 template <typename A> struct PA { A a; A b; A e; };
 template <typename A> struct PAS { A a; uint8_t_32 b; A e; };
@@ -243,11 +243,12 @@ void dumpJSON (
 	const std::vector<PC>& pc
 ) {
 	const auto jPE = [](auto x) {
-		return jsonifyO({
-			jsonp("description", jsonify(x.description)),
+		std::vector<std::string> kvs = {
 			jsonp("point", jsonify(x.a)),
 			jsonp("expected", jsonify(x.e))
-		});
+		};
+		if (!x.desc.empty()) kvs.push_back(jsonp("description", jsonify(x.desc)));
+		return jsonifyO(kvs);
 	};
 
 	o << jsonifyO({

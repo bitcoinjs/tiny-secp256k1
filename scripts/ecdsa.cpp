@@ -14,7 +14,7 @@ void fverify2 (const std::string& prefix, const X& x, const F f, const A& THROWS
 	enforce(actual == x.e, prefix + ' ' + hexify(x.a) + ' ' + hexify(x.b) + " should equal " + hexify(x.e) + " ... " + hexify(actual));
 };
 
-struct dmE { uint8_t_32 d; uint8_t_32 m; uint8_t_64 rs; };
+struct dmE { uint8_t_32 d; uint8_t_32 m; uint8_t_64 e; std::string desc; };
 
 // keys and messages from bitcoinjs-lib/ecdsa test fixtures
 // https://github.com/bitcoinjs/bitcoinjs-lib/blob/6b3c41a06c6e38ec79dc2f3389fa2362559b4a46/test/fixtures/ecdsa.json
@@ -40,39 +40,39 @@ const auto messages = std::vector<std::string>({
 
 auto generateSignatures () {
 	std::vector<dmE> signs;
-	const auto signPush = [&](const auto d, const auto m, const auto expected) {
+	const auto signPush = [&](const auto d, const auto m, const auto expected, const auto desc = "") {
 		bool ok = true;
 		const auto signature = _eccSign(d, m, ok);
 		assert(ok == expected);
-		if (ok) signs.push_back({ d, m, signature });
-		else signs.push_back({ d, m, THROWS64 });
+		if (ok) signs.push_back({ d, m, signature, desc });
+		else signs.push_back({ d, m, THROWS64, desc });
 	};
 
 	size_t i = 0;
 	for (const auto& message : messages) {
 		const auto fkey = scalarFromHex(fkeys[i++]);
 		const auto hash = sha256(message);
-		signPush(fkey, hash, true);
+		signPush(fkey, hash, true, message);
 	}
 
 	for (const auto& message : messages) {
-		signPush(randomPrivate(), sha256(message), true);
+		signPush(randomPrivate(), sha256(message), true, message);
 	}
 
-	signPush(ZERO, ZERO, false);
-	signPush(ZERO, UINT256_MAX, false);
-	signPush(ONE, ZERO, true);
-	signPush(ONE, UINT256_MAX, true);
-	signPush(GROUP_ORDER_LESS_1, ZERO, true);
-	signPush(GROUP_ORDER_LESS_1, UINT256_MAX, true);
-	signPush(GROUP_ORDER, ZERO, false);
-	signPush(GROUP_ORDER, UINT256_MAX, false);
-	signPush(GROUP_ORDER_OVER_1, ZERO, false);
-	signPush(GROUP_ORDER_OVER_1, UINT256_MAX, false);
+	signPush(ZERO, ZERO, false, "Bad private key");
+	signPush(ZERO, UINT256_MAX, false, "Bad private key");
+	signPush(ONE, ZERO, true, "Strange hash");
+	signPush(ONE, UINT256_MAX, true, "Strange hash");
+	signPush(GROUP_ORDER_LESS_1, ZERO, true, "Private key of G-1");
+	signPush(GROUP_ORDER_LESS_1, UINT256_MAX, true, "Private key of G-1");
+	signPush(GROUP_ORDER, ZERO, false, "Bad private key (G)");
+	signPush(GROUP_ORDER, UINT256_MAX, false, "Bad private key (G)");
+	signPush(GROUP_ORDER_OVER_1, ZERO, false, "Bad private key (G+1)");
+	signPush(GROUP_ORDER_OVER_1, UINT256_MAX, false, "Bad private key (G+1)");
 
 	// fuzz
 	for (int i = 0; i < 10000; i++) {
-		signPush(randomPrivate(), randomScalar(), true);
+		signPush(randomPrivate(), randomScalar(), true, "");
 	}
 
 	return signs;
@@ -80,12 +80,14 @@ auto generateSignatures () {
 
 void dumpJSON (std::ostream& o, const std::vector<dmE>& signs) {
 	o << jsonifyO({
-		jsonp("sign", jsonifyA(signs, [](auto x) {
-			return jsonifyO({
+		jsonp("sign", jsonifyA(signs, [&](auto x) {
+			std::vector<std::string> kvs = {
 				jsonp("d", jsonify(x.d)),
 				jsonp("m", jsonify(x.m)),
-				jsonp("signature", jsonify(x.rs))
-			});
+				jsonp("signature", x.e == THROWS64 ? "null" : jsonify(x.e))
+			};
+			if (!x.desc.empty()) kvs.push_back(jsonp("description", jsonify(x.desc)));
+			return jsonifyO(kvs);
 		}))
 	});
 }
