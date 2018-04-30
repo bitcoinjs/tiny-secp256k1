@@ -4,7 +4,7 @@
 
 #include <tuple>
 
-struct S { uint8_t_32 d; uint8_t_32 m; uint8_t_64 e; std::string desc; };
+struct S { uint8_t_32 d; uint8_t_32 m; uint8_t_64 e; std::string desc; bool v = true; };
 struct BS { uint8_t_32 d; uint8_t_32 m; std::string except; std::string desc; };
 struct BV { uint8_t_33 Q; uint8_t_32 m; uint8_t_64 s; std::string except; std::string desc; };
 
@@ -58,11 +58,23 @@ auto generateSignatures () {
 	for (int i = 0; i < 10000; i++) {
 		const auto rkey = randomPrivate();
 		const auto hash = randomScalar();
-		const auto sig = _eccSign(rkey, hash, ok);
-		s.push_back({ rkey, hash, sig, "" });
+		auto sig = _eccSign(rkey, hash, ok);
+		const auto P = _pointFromScalar<uint8_t_33>(rkey, ok);
+		assert(ok);
+		auto verified = ok;
+		assert(_eccVerify(P, hash, sig) == verified);
+
+		// flip a bit (aka, invalidate the signature)
+		if (randomUInt8() > 0x7f) {
+			const auto mask = 1 << (1 + (randomUInt8() % 6));
+			sig.at(randomUInt8() % 32) ^= mask;
+			assert(_eccVerify(P, hash, sig) == false);
+			verified = false;
+		}
+
+		s.push_back({ rkey, hash, sig, "", verified });
 	}
 
-	assert(ok);
 	return s;
 }
 
@@ -102,7 +114,8 @@ void dumpJSON (std::ostream& o, const T& t) {
 			std::vector<std::string> kvs = {
 				jsonp("d", jsonify(x.d)),
 				jsonp("m", jsonify(x.m)),
-				jsonp("signature", jsonify(x.e))
+				jsonp("signature", jsonify(x.e)),
+				jsonp("verifies", jsonify(x.v))
 			};
 			if (!x.desc.empty()) kvs.push_back(jsonp("description", jsonify(x.desc)));
 			return jsonifyO(kvs);

@@ -23,6 +23,12 @@ auto vectorify (const A a) {
 	return uint8_t_vec(a.begin(), a.end());
 }
 
+auto randomUInt8 () {
+	uint8_t x;
+	arc4random_buf(&x, sizeof(x));
+	return x;
+}
+
 template <typename A>
 auto random () {
 	A x;
@@ -197,7 +203,7 @@ template <typename A>
 auto _eccVerify (const A& p, const uint8_t_32 message, const uint8_t_64 signature) {
 	secp256k1_pubkey public_key;
 	bool ok = true;
-	ok &= secp256k1_ec_pubkey_create(ctx, &public_key, p.data());
+	ok &= secp256k1_ec_pubkey_parse(ctx, &public_key, p.data(), sizeof(A));
 	if (!ok) return false;
 
 	secp256k1_ecdsa_signature _signature;
