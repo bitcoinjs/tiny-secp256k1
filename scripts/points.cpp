@@ -6,6 +6,7 @@
 
 template <typename A> struct IP { A a; bool e; std::string desc = ""; };
 template <typename A> struct PFS { uint8_t_32 a; A e; };
+template <typename A> struct PFSF { uint8_t_32 a; std::string except = ""; std::string desc = ""; };
 template <typename A> struct PA { A a; A b; A e; };
 template <typename A> struct PAS { A a; uint8_t_32 b; A e; };
 struct PC { uint8_t_vec a; bool b; uint8_t_vec e; };
@@ -84,8 +85,8 @@ auto generate (const A G) {
 	const auto G_ONE = _pointFromUInt32<A>(1, ok);
 	const auto G_TWO = _pointFromUInt32<A>(2, ok);
 	const auto G_THREE = _pointFromUInt32<A>(3, ok);
-	auto THROWSQ = A();
-	THROWSQ.fill(0xff);
+	auto NULLQ = A();
+	NULLQ.fill(0xff);
 	assert(ok);
 
 	///////////////////////////////// isPoint
@@ -117,10 +118,10 @@ auto generate (const A G) {
 	pa.push_back({ G_LESS_1, G_LESS_2, G_LESS_3 });
 
 	// https://github.com/bitcoin-core/secp256k1/blob/452d8e4d2a2f9f1b5be6b02e18f1ba102e5ca0b4/src/tests.c#L3857
-	pa.push_back({ G_ONE, G_LESS_1, THROWSQ }); // == 0/infinity
+	pa.push_back({ G_ONE, G_LESS_1, NULLQ }); // == 0/infinity
 	pa.push_back({ G_ONE, G_LESS_2, G_LESS_1 }); // == -1
 	pa.push_back({ G_TWO, G_LESS_1, G_ONE }); // == 1
-	pa.push_back({ G_ONE, G, THROWSQ });
+	pa.push_back({ G_ONE, G, NULLQ });
 
 	for (size_t i = 0; i < 100; ++i) {
 		const auto a = _pointFromScalar<A>(randomPrivate(), ok);
@@ -139,11 +140,11 @@ auto generate (const A G) {
 	pas.push_back({ G_LESS_1, GROUP_ORDER_LESS_2, G_LESS_3 });
 	pas.push_back({ G_LESS_1, GROUP_ORDER_LESS_2, G_LESS_3 });
 
-	pas.push_back({ G_ONE, GROUP_ORDER_LESS_1, THROWSQ }); // == 0/infinity
+	pas.push_back({ G_ONE, GROUP_ORDER_LESS_1, NULLQ }); // == 0/infinity
 	pas.push_back({ G_ONE, GROUP_ORDER_LESS_2, G_LESS_1 }); // == -1
 	pas.push_back({ G_TWO, GROUP_ORDER_LESS_1, G_ONE }); // == 1
-	pas.push_back({ G_ONE, GROUP_ORDER, THROWSQ });
-	pas.push_back({ G_ONE, GROUP_ORDER_OVER_1, THROWSQ });
+	pas.push_back({ G_ONE, GROUP_ORDER, NULLQ });
+	pas.push_back({ G_ONE, GROUP_ORDER_OVER_1, NULLQ });
 
 	for (uint32_t i = 1; i < 5; ++i) {
 		bool ok;
@@ -155,44 +156,42 @@ auto generate (const A G) {
 
 	///////////////////////////////// pointFromScalar
 	std::vector<PFS<A>> pfs;
-	const auto pfsPush = [&](const auto s, const auto expected) {
-		bool ok = true;
-		const auto actual = _pointFromScalar<A>(s, ok);
-		assert(ok == expected);
-		if (ok) pfs.push_back({ s, actual });
-		else pfs.push_back({ s, THROWSQ });
-	};
+	pfs.push_back({ ONE, G_ONE }); // #L3153, #L3692, OK, > 0
+	pfs.push_back({ TWO, G_TWO });
+	pfs.push_back({ THREE, G_THREE });
+	pfs.push_back({ GROUP_ORDER_LESS_1, G_LESS_1 }); // #L3171, #L3710, OK == G - 1
+	pfs.push_back({ GROUP_ORDER_LESS_2, G_LESS_2 });
+	pfs.push_back({ GROUP_ORDER_LESS_3, G_LESS_3 });
 
-	pfsPush(ZERO, false); // #L3145, #L3684, fail, == 0
-	pfsPush(ONE, true); // #L3153, #L3692, OK, > 0
-	pfsPush(GROUP_ORDER_LESS_1, true); // #L3171, #L3710, OK == G - 1
-	pfsPush(GROUP_ORDER, false); // #L3115, #L3670, fail, == G
-	pfsPush(GROUP_ORDER_OVER_1, false); // #L3162, #L3701, fail, >= G
-	pfsPush(UINT256_MAX, false); // #L3131, #L3676, fail, > G
+	std::vector<PFSF<A>> pfsf;
+	pfsf.push_back({ ZERO, "Expected Private", "Private key == 0" }); // #L3145, #L3684, fail, == 0
+	pfsf.push_back({ GROUP_ORDER, "Expected Point", "Private key >= G" }); // #L3115, #L3670, fail, == G
+	pfsf.push_back({ GROUP_ORDER_OVER_1, "Expected Point", "Private key >= G" }); // #L3162, #L3701, fail, >= G
+	pfsf.push_back({ UINT256_MAX, "Expected Point", "Private key >= G" }); // #L3131, #L3676, fail, > G
 
 	// ref https://github.com/bitcoin-core/secp256k1/blob/6ad5cdb42a1a8257289a0423d644dcbdeab0f83c/src/tests.c#L2160
 	test_ec_combine<A>(pa, pas, pfs);
 
-	return std::make_tuple(ip, pa, pas, pfs, THROWSQ);
+	return std::make_tuple(ip, pa, pas, pfs, pfsf, NULLQ);
 }
 
 template <typename T>
-auto jdE (const T& throws) {
+auto jdE (const T& null) {
 	return [=](auto x) {
 		return jsonifyO({
 			jsonp("d", jsonify(x.a)),
-			jsonp("expected", x.e == throws ? "null" : jsonify(x.e))
+			jsonp("expected", x.e == null ? "null" : jsonify(x.e))
 		});
 	};
 }
 
 template <typename T>
-auto jPDE (const T& throws) {
+auto jPDE (const T& null) {
 	return [=](auto x) {
 		return jsonifyO({
 			jsonp("P", jsonify(x.a)),
 			jsonp("d", jsonify(x.b)),
-			jsonp("expected", x.e == throws ? "null" : jsonify(x.e))
+			jsonp("expected", x.e == null ? "null" : jsonify(x.e))
 		});
 	};
 }
@@ -204,6 +203,13 @@ void dumpJSON (
 	const B& uncompressed,
 	const std::vector<PC>& pc
 ) {
+	const auto jPFSF = [](auto x) {
+		return jsonifyO({
+			x.desc.empty() ? "" : jsonp("description", jsonify(x.desc)),
+			jsonp("d", jsonify(x.a)),
+			jsonp("exception", jsonify(x.except))
+		});
+	};
 	const auto jPE = [](auto x) {
 		std::vector<std::string> kvs = {
 			jsonp("point", jsonify(x.a)),
@@ -212,32 +218,40 @@ void dumpJSON (
 		if (!x.desc.empty()) kvs.push_back(jsonp("description", jsonify(x.desc)));
 		return jsonifyO(kvs);
 	};
-	const auto cthrows = std::get<4>(compressed);
-	const auto uthrows = std::get<4>(uncompressed);
+	const auto cnull = std::get<5>(compressed);
+	const auto unull = std::get<5>(uncompressed);
 
 	o << jsonifyO({
-		jsonp("isPoint", jsonifyA({
-			jsonify_csv(std::get<0>(compressed), jPE),
-			jsonify_csv(std::get<0>(uncompressed), jPE)
+		jsonp("valid", jsonifyO({
+			jsonp("isPoint", jsonifyA({
+				jsonify_csv(std::get<0>(compressed), jPE),
+				jsonify_csv(std::get<0>(uncompressed), jPE)
+			})),
+			jsonp("pointAdd", jsonifyA({
+				jsonify_csv(std::get<1>(compressed), jPDE(cnull)),
+				jsonify_csv(std::get<1>(uncompressed), jPDE(unull))
+			})),
+			jsonp("pointAddScalar", jsonifyA({
+				jsonify_csv(std::get<2>(compressed), jPDE(cnull)),
+				jsonify_csv(std::get<2>(uncompressed), jPDE(unull))
+			})),
+			jsonp("pointFromScalar", jsonifyA({
+				jsonify_csv(std::get<3>(compressed), jdE(cnull)),
+				jsonify_csv(std::get<3>(uncompressed), jdE(unull))
+			})),
+			jsonp("pointCompress", jsonifyA(pc, [](auto x) {
+				return jsonifyO({
+					jsonp("P", jsonify(x.a)),
+					jsonp("compress", jsonify(x.b)),
+					jsonp("expected", x.e.empty() ? "null" : jsonify(x.e))
+				});
+			}))
 		})),
-		jsonp("pointAdd", jsonifyA({
-			jsonify_csv(std::get<1>(compressed), jPDE(cthrows)),
-			jsonify_csv(std::get<1>(uncompressed), jPDE(uthrows))
-		})),
-		jsonp("pointAddScalar", jsonifyA({
-			jsonify_csv(std::get<2>(compressed), jPDE(cthrows)),
-			jsonify_csv(std::get<2>(uncompressed), jPDE(uthrows))
-		})),
-		jsonp("pointFromScalar", jsonifyA({
-			jsonify_csv(std::get<3>(compressed), jdE(cthrows)),
-			jsonify_csv(std::get<3>(uncompressed), jdE(uthrows))
-		})),
-		jsonp("pointCompress", jsonifyA(pc, [](auto x) {
-			return jsonifyO({
-				jsonp("P", jsonify(x.a)),
-				jsonp("compress", jsonify(x.b)),
-				jsonp("expected", x.e.empty() ? "null" : jsonify(x.e))
-			});
+		jsonp("invalid", jsonifyO({
+			jsonp("pointFromScalar", jsonifyA({
+				jsonify_csv(std::get<4>(compressed), jPFSF),
+				jsonify_csv(std::get<4>(uncompressed), jPFSF)
+			}))
 		}))
 	});
 }

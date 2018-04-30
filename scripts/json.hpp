@@ -38,8 +38,10 @@ auto jsonify_csv (const Range r, F f) {
 	size_t i = 0;
 	if (L != ' ') ss << L;
 	for (const auto& x : r) {
+		const auto fx = f(x);
+		if (fx.empty()) continue;
 		if (i++ > 0) ss << ',';
-		ss << f(x);
+		ss << fx;
 	}
 	if (R != ' ') ss << R;
 	return ss.str();

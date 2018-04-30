@@ -111,34 +111,31 @@ template <typename T>
 void dumpJSON (std::ostream& o, const T& t) {
 	o << jsonifyO({
 		jsonp("valid", jsonifyA(std::get<0>(t), [&](auto x) {
-			std::vector<std::string> kvs = {
+			return jsonifyO({
+				x.desc.empty() ? "" : jsonp("description", jsonify(x.desc)),
 				jsonp("d", jsonify(x.d)),
 				jsonp("m", jsonify(x.m)),
 				jsonp("signature", jsonify(x.e)),
 				jsonp("verifies", jsonify(x.v))
-			};
-			if (!x.desc.empty()) kvs.push_back(jsonp("description", jsonify(x.desc)));
-			return jsonifyO(kvs);
+			});
 		})),
 		jsonp("invalid", jsonifyO({
 			jsonp("sign", jsonifyA(std::get<1>(t), [&](auto x) {
-				std::vector<std::string> kvs = {
+				return jsonifyO({
+					x.desc.empty() ? "" : jsonp("description", jsonify(x.desc)),
 					jsonp("exception", jsonify(x.except)),
 					jsonp("d", jsonify(x.d)),
 					jsonp("m", jsonify(x.m))
-				};
-				if (!x.desc.empty()) kvs.push_back(jsonp("description", jsonify(x.desc)));
-				return jsonifyO(kvs);
+				});
 			})),
 			jsonp("verify", jsonifyA(std::get<2>(t), [&](auto x) {
-				std::vector<std::string> kvs = {
+				return jsonifyO({
+					x.desc.empty() ? "" : jsonp("description", jsonify(x.desc)),
 					jsonp("exception", jsonify(x.except)),
 					jsonp("Q", jsonify(x.Q)),
 					jsonp("m", jsonify(x.m)),
 					jsonp("signature", jsonify(x.s))
-				};
-				if (!x.desc.empty()) kvs.push_back(jsonp("description", jsonify(x.desc)));
-				return jsonifyO(kvs);
+				});
 			}))
 		}))
 	});
