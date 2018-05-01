@@ -14,8 +14,13 @@ let THROW_BAD_TWEAK = 'Expected Tweak'
 let THROW_BAD_HASH = 'Expected Hash'
 let THROW_BAD_SIGNATURE = 'Expected Signature'
 
-function isUInt256 (value) {
-  return Buffer.isBuffer(value) && value.length === 32
+function isScalar (x) {
+  return Buffer.isBuffer(x) && x.length === 32
+}
+
+function isOrderScalar (x) {
+  if (!isScalar(x)) return false
+  return x.compare(EC_UINT_MAX) < 0 // < n
 }
 
 function isPoint (q) {
@@ -28,10 +33,10 @@ function isPoint (q) {
   return false
 }
 
-function isPrivate (value) {
-  if (!isUInt256(value)) return false
-  return value.compare(EC_ZERO) > 0 && // > 0
-    value.compare(EC_UINT_MAX) < 0 // < n-1
+function isPrivate (x) {
+  if (!isScalar(x)) return false
+  return x.compare(EC_ZERO) > 0 && // > 0
+    x.compare(EC_UINT_MAX) < 0 // < n
 }
 
 function isSignature (value) {
@@ -50,7 +55,7 @@ function pointAdd (pA, pB, compressed) {
 
 function pointAddScalar (p, tweak, compressed) {
   if (!isPoint(p)) throw new TypeError(THROW_BAD_POINT)
-  if (!isPrivate(tweak)) throw new TypeError(THROW_BAD_TWEAK)
+  if (!isOrderScalar(tweak)) throw new TypeError(THROW_BAD_TWEAK)
   let q = ecurve.Point.decodeFrom(secp256k1, p)
   let u = q.multiply(tweak)
   if (secp256k1.isInfinity(u)) return null
@@ -69,10 +74,12 @@ function pointFromScalar (d, compressed) {
 
 function privateAdd (d, tweak) {
   if (!isPrivate(d)) throw new TypeError(THROW_BAD_PRIVATE)
-  if (!isPrivate(tweak)) throw new TypeError(THROW_BAD_TWEAK)
+  if (!isOrderScalar(tweak)) throw new TypeError(THROW_BAD_TWEAK)
   let dd = bigi.fromBuffer(d)
   let tt = bigi.fromBuffer(tweak)
-  return dd.add(tt).mod(secp256k1.n)
+  let dt = dd.add(tt).mod(secp256k1.n).toBuffer(32)
+  if (!isPrivate(dt)) return null
+  return dt
 }
 
 // https://tools.ietf.org/html/rfc6979#section-3.2
@@ -132,7 +139,7 @@ function deterministicGenerateK (hash, x, checkSig) {
 let N_OVER_TWO = secp256k1.n.shiftRight(1)
 
 function sign (hash, x) {
-  if (!isUInt256(hash)) throw new TypeError(THROW_BAD_HASH)
+  if (!isScalar(hash)) throw new TypeError(THROW_BAD_HASH)
   if (!isPrivate(x)) throw new TypeError(THROW_BAD_PRIVATE)
 
   let d = bigi.fromBuffer(x)
@@ -164,7 +171,7 @@ function sign (hash, x) {
 }
 
 function verify (hash, p, signature) {
-  if (!isUInt256(hash)) throw new TypeError(THROW_BAD_HASH)
+  if (!isScalar(hash)) throw new TypeError(THROW_BAD_HASH)
   if (!isPoint(p)) throw new TypeError(THROW_BAD_PRIVATE)
   if (!isSignature(signature)) throw new TypeError(THROW_BAD_SIGNATURE)
 
