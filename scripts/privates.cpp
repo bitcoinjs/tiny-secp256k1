@@ -69,7 +69,7 @@ void generate (std::ostream& o) {
 	const auto jPA = [](auto x) {
 		return jsonifyO({
 			x.desc.empty() ? "" : jsonp("description", jsonify(x.desc)),
-			jsonp("priv", jsonify(x.a)),
+			jsonp("d", jsonify(x.a)),
 			jsonp("tweak", jsonify(x.b)),
 			x.except.empty() ? jsonp("expected", isNull(x.e) ? "null" : jsonify(x.e)) : "",
 			x.except.empty() ? "" : jsonp("exception", jsonify(x.except))
@@ -80,7 +80,7 @@ void generate (std::ostream& o) {
 		jsonp("valid", jsonifyO({
 			jsonp("isPrivate", jsonifyA(ip, [](auto x) {
 				return jsonifyO({
-					jsonp("priv", jsonify(x.a)),
+					jsonp("d", jsonify(x.a)),
 					jsonp("expected", jsonify(x.e))
 				});
 			})),
