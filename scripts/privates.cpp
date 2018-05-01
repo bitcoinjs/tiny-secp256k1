@@ -22,8 +22,7 @@ void generate (std::ostream& o) {
 	for (size_t i = 0; i < 1000; ++i) {
 		ip.push_back({ randomPrivate(), true });
 	}
-	// fuzz (high key)
-	for (size_t i = 0; i < 10000; ++i) {
+	for (size_t i = 0; i < 1000; ++i) {
 		const auto key = randomScalarHigh();
 		const auto verified = secp256k1_ec_seckey_verify(ctx, key.data());
 
@@ -63,8 +62,8 @@ void generate (std::ostream& o) {
 	}
 
 	std::vector<PA> paf;
-	for (const auto x : generateBadPrivates()) paf.push_back({ x.d, ONE, {}, THROW_BAD_PRIVATE, x.desc });
-	for (const auto x : generateBadTweaks()) paf.push_back({ ONE, x.d, {}, THROW_BAD_TWEAK, x.desc });
+	for (const auto x : BAD_PRIVATES) paf.push_back({ x.d, ONE, {}, THROW_BAD_PRIVATE, x.desc });
+	for (const auto x : BAD_TWEAKS) paf.push_back({ ONE, x.d, {}, THROW_BAD_TWEAK, x.desc });
 
 	// dump JSON
 	const auto jPA = [](auto x) {

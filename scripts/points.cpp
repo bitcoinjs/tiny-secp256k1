@@ -82,9 +82,9 @@ auto generate (const A G) {
 	const auto G_ONE = _pointFromUInt32<A>(1, ok);
 	const auto G_TWO = _pointFromUInt32<A>(2, ok);
 	const auto G_THREE = _pointFromUInt32<A>(3, ok);
-	auto NULLQ = A();
-	NULLQ.fill(0xff);
 	assert(ok);
+	const auto BAD_POINTS = generateBadPoints<A>();
+	const auto NULLQ = Null<A>();
 
 	///////////////////////////////// isPoint
 	std::vector<IP<A>> ip;
@@ -96,12 +96,12 @@ auto generate (const A G) {
 	ip.push_back({ G_TWO, true });
 	ip.push_back({ G_THREE, true });
 
-	const auto badPoints = generateBadPoints<A>();
-	for (const auto x : badPoints) {
+	for (const auto x : BAD_POINTS) {
 		ip.push_back({ x.P, false, x.desc });
 	}
 
-	for (size_t i = 0; i < 100; ++i) {
+	// fuzz
+	for (size_t i = 0; i < 2000; ++i) {
 		ip.push_back({ _pointFromScalar<A>(randomPrivate(), ok), true });
 		assert(ok);
 	}
@@ -120,6 +120,7 @@ auto generate (const A G) {
 	pa.push_back({ G_ONE, G_ONE, G_TWO });
 	pa.push_back({ G_ONE, G_TWO, G_THREE });
 
+	// fuzz (high key)
 	for (size_t i = 0; i < 100; ++i) {
 		const auto a = _pointFromScalar<A>(randomPrivate(), ok);
 		const auto b = _pointFromScalar<A>(randomPrivate(), ok);
@@ -129,7 +130,7 @@ auto generate (const A G) {
 	}
 
 	std::vector<PA<A>> paf;
-	for (const auto x : badPoints) {
+	for (const auto x : BAD_POINTS) {
 		paf.push_back({ x.P, G_ONE, {}, THROW_BAD_POINT, x.desc });
 		paf.push_back({ G_ONE, x.P, {}, THROW_BAD_POINT, x.desc });
 	}
@@ -153,9 +154,8 @@ auto generate (const A G) {
 	pas.push_back({ G_TWO, GROUP_ORDER_LESS_1, G_ONE, "", "== 1" }); // == 1
 
 	std::vector<PAS<A>> pasf;
-	const auto badTweaks = generateBadTweaks();
-	for (const auto x : badPoints) pasf.push_back({ x.P, ONE, {}, THROW_BAD_POINT, x.desc });
-	for (const auto x : badTweaks) pasf.push_back({ G_ONE, x.d, {}, THROW_BAD_TWEAK, x.desc });
+	for (const auto x : BAD_POINTS) pasf.push_back({ x.P, ONE, {}, THROW_BAD_POINT, x.desc });
+	for (const auto x : BAD_TWEAKS) pasf.push_back({ G_ONE, x.d, {}, THROW_BAD_TWEAK, x.desc });
 
 	for (uint32_t i = 1; i < 5; ++i) {
 		bool ok = true;
@@ -175,8 +175,7 @@ auto generate (const A G) {
 	pfs.push_back({ GROUP_ORDER_LESS_3, G_LESS_3 });
 
 	std::vector<PFS<A>> pfsf;
-	const auto badPrivates = generateBadPrivates();
-	for (const auto x : badPrivates) pfsf.push_back({ x.d, {}, THROW_BAD_PRIVATE, x.desc });
+	for (const auto x : BAD_PRIVATES) pfsf.push_back({ x.d, {}, THROW_BAD_PRIVATE, x.desc });
 
 	// ref https://github.com/bitcoin-core/secp256k1/blob/6ad5cdb42a1a8257289a0423d644dcbdeab0f83c/src/tests.c#L2160
 	test_ec_combine<A>(pa, pas, pfs);
@@ -270,7 +269,6 @@ void dumpJSON (
 
 int main () {
 	_ec_init();
-
 	const auto c = generate<uint8_t_33>(GENERATORC);
 	const auto u = generate<uint8_t_65>(GENERATOR);
 	const auto t = generatePC();

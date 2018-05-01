@@ -24,9 +24,7 @@ auto vectorify (const A a) {
 }
 
 auto randomUInt8 () {
-	uint8_t x;
-	arc4random_buf(&x, sizeof(x));
-	return x;
+	return arc4random_uniform(0x255);
 }
 
 template <typename A>
@@ -259,22 +257,19 @@ const auto GENERATORC = point33FromHex("0279be667ef9dcbbac55a06295ce870b07029bfc
 struct BD { uint8_t_32 d; std::string desc = ""; };
 template <typename A> struct BP { A P; std::string desc = ""; };
 
-std::vector<BD> generateBadPrivates () {
-	return {
-		{ ZERO, "Private key == 0" },               // #L3145, #L3684, fail, == 0
-		{ GROUP_ORDER, "Private key >= G" },        // #L3115, #L3670, fail, == G
-		{ GROUP_ORDER_OVER_1, "Private key >= G" }, // #L3162, #L3701, fail, >= G
-		{ UINT256_MAX, "Private key >= G" }         // #L3131, #L3676, fail, > G
-	};
-}
-std::vector<BD> generateBadTweaks () {
-	// excludes exact complement of a key, assumed to be tested elsewhere
-	return {
-		{ GROUP_ORDER, "Tweak >= G" },
-		{ GROUP_ORDER_OVER_1, "Tweak >= G" },
-		{ UINT256_MAX, "Tweak >= G" }
-	};
-}
+const std::vector<BD> BAD_PRIVATES = {
+	{ ZERO, "Private key == 0" },               // #L3145, #L3684, fail, == 0
+	{ GROUP_ORDER, "Private key >= G" },        // #L3115, #L3670, fail, == G
+	{ GROUP_ORDER_OVER_1, "Private key >= G" }, // #L3162, #L3701, fail, >= G
+	{ UINT256_MAX, "Private key >= G" }         // #L3131, #L3676, fail, > G
+};
+
+// excludes exact complement of a key, assumed to be tested elsewhere
+const std::vector<BD> BAD_TWEAKS = {
+	{ GROUP_ORDER, "Tweak >= G" },
+	{ GROUP_ORDER_OVER_1, "Tweak >= G" },
+	{ UINT256_MAX, "Tweak >= G" }
+};
 
 // from https://github.com/cryptocoinjs/ecurve/blob/14d72f5f468d53ff33dc13c1c7af350a41d52aab/test/fixtures/point.json#L84
 template <typename A = uint8_t_33>
@@ -307,15 +302,13 @@ std::vector<BP<uint8_t_65>> generateBadPoints<uint8_t_65> () {
 	};
 }
 
-std::vector<BP<uint8_t_64>> generateBadSignatures () {
-	return {
-		{ _signatureFromRS(ZERO, ZERO), "Invalid r, s values (== 0)" },
-		{ _signatureFromRS(ZERO, ONE), "Invalid r value (== 0)" },
-		{ _signatureFromRS(ONE, ZERO), "Invalid s value (== 0)" },
-		{ _signatureFromRS(GROUP_ORDER, ONE), "Invalid r value (>= n)" },
-		{ _signatureFromRS(ONE, GROUP_ORDER), "Invalid s value (>= n)" }
-	};
-}
+const std::vector<BP<uint8_t_64>> BAD_SIGNATURES = {
+	{ _signatureFromRS(ZERO, ZERO), "Invalid r, s values (== 0)" },
+	{ _signatureFromRS(ZERO, ONE), "Invalid r value (== 0)" },
+	{ _signatureFromRS(ONE, ZERO), "Invalid s value (== 0)" },
+	{ _signatureFromRS(GROUP_ORDER, ONE), "Invalid r value (>= n)" },
+	{ _signatureFromRS(ONE, GROUP_ORDER), "Invalid s value (>= n)" }
+};
 
 const auto THROW_BAD_PRIVATE = "Expected Private";
 const auto THROW_BAD_POINT = "Expected Point";
