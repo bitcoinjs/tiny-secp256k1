@@ -1,5 +1,5 @@
-#include <memory>
-#include <node.h>
+#include <cstdlib>
+
 #include <nan.h>
 #include <secp256k1.h>
 
@@ -14,6 +14,11 @@
 secp256k1_context* secp256k1ctx;
 
 namespace {
+	const std::array<uint8_t, 32> GROUP_ORDER = {
+		0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe,
+		0xba, 0xae, 0xdc, 0xe6, 0xaf, 0x48, 0xa0, 0x3b, 0xbf, 0xd2, 0x5e, 0x8c, 0xd0, 0x36, 0x41, 0x41,
+	};
+
 	v8::Local<v8::Object> asBuffer (const unsigned char* data, const size_t length) {
 		return Nan::CopyBuffer(reinterpret_cast<const char*>(data), static_cast<uint32_t>(length)).ToLocalChecked();
 	}
@@ -31,10 +36,7 @@ namespace {
 	template <typename T>
 	bool isOrderScalar (const T& x) {
 		if (!isScalar<T>(x)) return false;
-		int overflow = 0;
-		secp256k1_scalar xx;
-		secp256k1_scalar_set_b32(&xx, x.data());
-		return !overflow;
+		return memcmp(asDataPointer(x), GROUP_ORDER.data(), 32) < 0;
 	}
 
 	template <typename T>
