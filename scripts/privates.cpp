@@ -1,6 +1,6 @@
 #include <iostream>
 #include <vector>
-#include "utils.hpp"
+#include "shared.hpp"
 
 struct IP { uint8_t_32 a = {}; bool e = false; };
 struct PA { uint8_t_32 a; uint8_t_32 b; uint8_t_32 e = Null<uint8_t_32>(); std::string except = ""; std::string desc = ""; };
@@ -63,11 +63,8 @@ void generate (std::ostream& o) {
 	}
 
 	std::vector<PA> paf;
-	paf.push_back({ ZERO, ONE, {}, "Expected Private", "Private key == 0" });
-	paf.push_back({ GROUP_ORDER, ONE, {}, "Expected Private", "Private key >= G" });
-	paf.push_back({ GROUP_ORDER_OVER_1, ONE, {}, "Expected Private", "Private key >= G" });
-	paf.push_back({ ONE, GROUP_ORDER, {}, "Expected Tweak", "Tweak >= G" });
-	paf.push_back({ ONE, GROUP_ORDER_OVER_1, {}, "Expected Tweak", "Tweak >= G" });
+	for (const auto x : generateBadPrivates()) paf.push_back({ x.d, ONE, {}, THROW_BAD_PRIVATE, x.desc });
+	for (const auto x : generateBadTweaks()) paf.push_back({ ONE, x.d, {}, THROW_BAD_TWEAK, x.desc });
 
 	// dump JSON
 	const auto jPA = [](auto x) {

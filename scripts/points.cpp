@@ -1,19 +1,12 @@
 #include <iostream>
 #include <tuple>
 #include <vector>
-
-#include "utils.hpp"
-
-template <typename A> struct IP { A a; bool e; std::string desc = ""; };
-template <typename A> struct PFS { uint8_t_32 a; A e; std::string except = ""; std::string desc = ""; };
-template <typename A> struct PA { A a; A b; A e; std::string desc = "";};
-template <typename A> struct PAS { A a; uint8_t_32 b; A e; std::string except = ""; std::string desc = ""; };
-struct PC { uint8_t_vec a; bool b; uint8_t_vec e; };
+#include "shared.hpp"
 
 // ref https://github.com/bitcoin-core/secp256k1/blob/6ad5cdb42a1a8257289a0423d644dcbdeab0f83c/src/tests.c#L2160
 //   iteratively verifies that (d + ...)G == (dG + ...G)
-template <typename A>
-void test_ec_combine (std::vector<PA<A>>& pa, std::vector<PAS<A>>& pas, std::vector<PFS<A>>& pfs) {
+template <typename A, typename B, typename C, typename D>
+void test_ec_combine (B& pa, C& pas, D& pfs) {
 	bool ok = true;
 	auto sum = ONE;
 	auto sumQ = _pointFromScalar<A>(sum, ok);
@@ -49,6 +42,7 @@ void test_ec_combine (std::vector<PA<A>>& pa, std::vector<PAS<A>>& pas, std::vec
 	}
 }
 
+struct PC { uint8_t_vec a; bool b; uint8_t_vec e; };
 auto generatePC () {
 	std::vector<PC> pc;
 	pc.push_back({ vectorify(GENERATOR), true, vectorify(GENERATORC) });
@@ -75,6 +69,10 @@ auto generatePC () {
 	return pc;
 }
 
+template <typename A> struct IP { A a; bool e; std::string desc = ""; };
+template <typename A> struct PA { A a; A b; A e; std::string except = ""; std::string desc = ""; };
+template <typename A> struct PAS { A a; uint8_t_32 b; A e; std::string except = ""; std::string desc = ""; };
+template <typename A> struct PFS { uint8_t_32 a; A e; std::string except = ""; std::string desc = ""; };
 template <typename A>
 auto generate (const A G) {
 	bool ok = true;
@@ -98,11 +96,9 @@ auto generate (const A G) {
 	ip.push_back({ G_TWO, true });
 	ip.push_back({ G_THREE, true });
 
-	// from https://github.com/cryptocoinjs/ecurve/blob/14d72f5f468d53ff33dc13c1c7af350a41d52aab/test/fixtures/point.json#L84
-	if (sizeof(A) == 65) {
-		ip.push_back({ fromHex<A>("0579be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10ab2e"), false, "Bad sequence prefix" });
-	} else {
-		ip.push_back({ fromHex<A>("0179be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"), false, "Bad sequence prefix" });
+	const auto badPoints = generateBadPoints<A>();
+	for (const auto x : badPoints) {
+		ip.push_back({ x.P, false, x.desc });
 	}
 
 	for (size_t i = 0; i < 100; ++i) {
@@ -132,6 +128,12 @@ auto generate (const A G) {
 		pa.push_back({ a, b, e });
 	}
 
+	std::vector<PA<A>> paf;
+	for (const auto x : badPoints) {
+		paf.push_back({ x.P, G_ONE, {}, THROW_BAD_POINT, x.desc });
+		paf.push_back({ G_ONE, x.P, {}, THROW_BAD_POINT, x.desc });
+	}
+
 	///////////////////////////////// pointAddScalar
 	std::vector<PAS<A>> pas;
 
@@ -151,9 +153,9 @@ auto generate (const A G) {
 	pas.push_back({ G_TWO, GROUP_ORDER_LESS_1, G_ONE, "", "== 1" }); // == 1
 
 	std::vector<PAS<A>> pasf;
-	pasf.push_back({ fromUInt32<A>(0), ONE, {}, "Expected Point", "Invalid Point" });
-	pasf.push_back({ G_ONE, GROUP_ORDER, {}, "Expected Tweak", "Tweak >= G" });
-	pasf.push_back({ G_ONE, GROUP_ORDER_OVER_1, {}, "Expected Tweak", "Tweak >= G" });
+	const auto badTweaks = generateBadTweaks();
+	for (const auto x : badPoints) pasf.push_back({ x.P, ONE, {}, THROW_BAD_POINT, x.desc });
+	for (const auto x : badTweaks) pasf.push_back({ G_ONE, x.d, {}, THROW_BAD_TWEAK, x.desc });
 
 	for (uint32_t i = 1; i < 5; ++i) {
 		bool ok = true;
@@ -173,15 +175,13 @@ auto generate (const A G) {
 	pfs.push_back({ GROUP_ORDER_LESS_3, G_LESS_3 });
 
 	std::vector<PFS<A>> pfsf;
-	pfsf.push_back({ ZERO, {}, "Expected Private", "Private key == 0" }); // #L3145, #L3684, fail, == 0
-	pfsf.push_back({ GROUP_ORDER, {}, "Expected Point", "Private key >= G" }); // #L3115, #L3670, fail, == G
-	pfsf.push_back({ GROUP_ORDER_OVER_1, {}, "Expected Point", "Private key >= G" }); // #L3162, #L3701, fail, >= G
-	pfsf.push_back({ UINT256_MAX, {}, "Expected Point", "Private key >= G" }); // #L3131, #L3676, fail, > G
+	const auto badPrivates = generateBadPrivates();
+	for (const auto x : badPrivates) pfsf.push_back({ x.d, {}, THROW_BAD_PRIVATE, x.desc });
 
 	// ref https://github.com/bitcoin-core/secp256k1/blob/6ad5cdb42a1a8257289a0423d644dcbdeab0f83c/src/tests.c#L2160
 	test_ec_combine<A>(pa, pas, pfs);
 
-	return std::make_tuple(ip, pa, pas, pasf, pfs, pfsf);
+	return std::make_tuple(ip, pa, paf, pas, pasf, pfs, pfsf);
 }
 
 template <typename A, typename B>
@@ -203,7 +203,8 @@ void dumpJSON (
 			x.desc.empty() ? "" : jsonp("description", jsonify(x.desc)),
 			jsonp("P", jsonify(x.a)),
 			jsonp("Q", jsonify(x.b)),
-			jsonp("expected", jsonify(x.e))
+			x.except.empty() ? jsonp("expected", isNull(x.e) ? "null" : jsonify(x.e)) : "",
+			x.except.empty() ? "" : jsonp("exception", jsonify(x.except)),
 		});
 	};
 	const auto jPAS = [](auto x) {
@@ -235,12 +236,12 @@ void dumpJSON (
 				jsonify_csv(std::get<1>(uncompressed), jPA)
 			})),
 			jsonp("pointAddScalar", jsonifyA({
-				jsonify_csv(std::get<2>(compressed), jPAS),
-				jsonify_csv(std::get<2>(uncompressed), jPAS)
+				jsonify_csv(std::get<3>(compressed), jPAS),
+				jsonify_csv(std::get<3>(uncompressed), jPAS)
 			})),
 			jsonp("pointFromScalar", jsonifyA({
-				jsonify_csv(std::get<4>(compressed), jPFS),
-				jsonify_csv(std::get<4>(uncompressed), jPFS)
+				jsonify_csv(std::get<5>(compressed), jPFS),
+				jsonify_csv(std::get<5>(uncompressed), jPFS)
 			})),
 			jsonp("pointCompress", jsonifyA(pc, [](auto x) {
 				return jsonifyO({
@@ -251,13 +252,17 @@ void dumpJSON (
 			}))
 		})),
 		jsonp("invalid", jsonifyO({
+			jsonp("pointAdd", jsonifyA({
+				jsonify_csv(std::get<2>(compressed), jPA),
+				jsonify_csv(std::get<2>(uncompressed), jPA)
+			})),
 			jsonp("pointAddScalar", jsonifyA({
-				jsonify_csv(std::get<3>(compressed), jPAS),
-				jsonify_csv(std::get<3>(uncompressed), jPAS)
+				jsonify_csv(std::get<4>(compressed), jPAS),
+				jsonify_csv(std::get<4>(uncompressed), jPAS)
 			})),
 			jsonp("pointFromScalar", jsonifyA({
-				jsonify_csv(std::get<5>(compressed), jPFS),
-				jsonify_csv(std::get<5>(uncompressed), jPFS)
+				jsonify_csv(std::get<6>(compressed), jPFS),
+				jsonify_csv(std::get<6>(uncompressed), jPFS)
 			}))
 		}))
 	});

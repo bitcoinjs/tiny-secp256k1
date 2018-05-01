@@ -185,10 +185,19 @@ auto _pointFromUInt32 (const uint32_t i, bool& ok) {
 	return _ec_pubkey_to_array<A>(public_key, ok);
 }
 
+template <typename A>
+auto _pointFromXY (const uint8_t_32 x, const uint8_t_32 y, const uint8_t prefix = 0x04) {
+	A p = { prefix };
+	std::copy(x.begin(), x.end(), p.begin() + 1);
+	std::copy(y.begin(), y.end(), p.begin() + 1 + 32);
+	return p;
+}
+
 auto _signatureFromRS (const uint8_t_32 r, const uint8_t_32 s) {
-	uint8_t_64 rs;
-	std::copy(r.begin(), r.end(), rs.begin());
-	return rs;
+	uint8_t_64 sig;
+	std::copy(r.begin(), r.end(), sig.begin());
+	std::copy(s.begin(), s.end(), sig.begin() + 32);
+	return sig;
 }
 
 auto _eccSign (const uint8_t_32 d, const uint8_t_32 message, bool& ok) {
@@ -246,3 +255,70 @@ const auto GROUP_ORDER_OVER_1 = scalarFromHex("fffffffffffffffffffffffffffffffeb
 const auto UINT256_MAX = scalarFromHex("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 const auto GENERATOR = point65FromHex("0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8");
 const auto GENERATORC = point33FromHex("0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798");
+
+struct BD { uint8_t_32 d; std::string desc = ""; };
+template <typename A> struct BP { A P; std::string desc = ""; };
+
+std::vector<BD> generateBadPrivates () {
+	return {
+		{ ZERO, "Private key == 0" },               // #L3145, #L3684, fail, == 0
+		{ GROUP_ORDER, "Private key >= G" },        // #L3115, #L3670, fail, == G
+		{ GROUP_ORDER_OVER_1, "Private key >= G" }, // #L3162, #L3701, fail, >= G
+		{ UINT256_MAX, "Private key >= G" }         // #L3131, #L3676, fail, > G
+	};
+}
+std::vector<BD> generateBadTweaks () {
+	// excludes exact complement of a key, assumed to be tested elsewhere
+	return {
+		{ GROUP_ORDER, "Tweak >= G" },
+		{ GROUP_ORDER_OVER_1, "Tweak >= G" },
+		{ UINT256_MAX, "Tweak >= G" }
+	};
+}
+
+// from https://github.com/cryptocoinjs/ecurve/blob/14d72f5f468d53ff33dc13c1c7af350a41d52aab/test/fixtures/point.json#L84
+template <typename A = uint8_t_33>
+std::vector<BP<A>> generateBadPoints () {
+	return {
+		{ _pointFromXY<A>(ONE, ONE, 0x01), "Bad sequence prefix" },
+		{ _pointFromXY<A>(ONE, ONE, 0x04), "Bad sequence prefix" },
+		{ _pointFromXY<A>(ONE, ONE, 0x05), "Bad sequence prefix" },
+		{ _pointFromXY<A>(ZERO, ONE), "Bad X coordinate (== 0)" },
+		{ _pointFromXY<A>(GROUP_ORDER, ONE), "Bad X coordinate (>= G)" },
+		{ _pointFromXY<A>(GROUP_ORDER_OVER_1, ONE), "Bad X coordinate (>= G)" }
+	};
+}
+
+template <>
+std::vector<BP<uint8_t_65>> generateBadPoints<uint8_t_65> () {
+	using A = uint8_t_65;
+	return {
+		{ _pointFromXY<A>(ONE, ONE, 0x01), "Bad sequence prefix" },
+		{ _pointFromXY<A>(ONE, ONE, 0x02), "Bad sequence prefix" },
+		{ _pointFromXY<A>(ONE, ONE, 0x03), "Bad sequence prefix" },
+		{ _pointFromXY<A>(ONE, ONE, 0x05), "Bad sequence prefix" },
+		{ _pointFromXY<A>(ZERO, ONE), "Bad X coordinate (== 0)" },
+		{ _pointFromXY<A>(ONE, ZERO), "Bad Y coordinate (== 0)" },
+		{ _pointFromXY<A>(ZERO, ZERO), "Bad X/Y coordinate (== 0)" },
+		{ _pointFromXY<A>(GROUP_ORDER, ONE), "Bad X coordinate (>= G)" },
+		{ _pointFromXY<A>(ONE, GROUP_ORDER), "Bad Y coordinate (>= G)" },
+		{ _pointFromXY<A>(GROUP_ORDER_OVER_1, ONE), "Bad X coordinate (>= G)" },
+		{ _pointFromXY<A>(ONE, GROUP_ORDER_OVER_1), "Bad Y coordinate (>= G)" }
+	};
+}
+
+std::vector<BP<uint8_t_64>> generateBadSignatures () {
+	return {
+		{ _signatureFromRS(ZERO, ZERO), "Invalid r, s values (== 0)" },
+		{ _signatureFromRS(ZERO, ONE), "Invalid r value (== 0)" },
+		{ _signatureFromRS(ONE, ZERO), "Invalid s value (== 0)" },
+		{ _signatureFromRS(GROUP_ORDER, ONE), "Invalid r value (>= n)" },
+		{ _signatureFromRS(ONE, GROUP_ORDER), "Invalid s value (>= n)" }
+	};
+}
+
+const auto THROW_BAD_PRIVATE = "Expected Private";
+const auto THROW_BAD_POINT = "Expected Point";
+const auto THROW_BAD_TWEAK = "Expected Tweak";
+const auto THROW_BAD_HASH = "Expected Hash";
+const auto THROW_BAD_SIGNATURE = "Expected Signature";

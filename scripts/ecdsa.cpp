@@ -1,12 +1,7 @@
 #include <iostream>
-#include <vector>
-#include "utils.hpp"
-
 #include <tuple>
-
-struct S { uint8_t_32 d; uint8_t_32 m; uint8_t_64 e; std::string desc; bool v = true; };
-struct BS { uint8_t_32 d; uint8_t_32 m; std::string except; std::string desc; };
-struct BV { uint8_t_33 Q; uint8_t_32 m; uint8_t_64 s; std::string except; std::string desc; };
+#include <vector>
+#include "shared.hpp"
 
 // keys and messages from bitcoinjs-lib/ecdsa test fixtures
 // https://github.com/bitcoinjs/bitcoinjs-lib/blob/6b3c41a06c6e38ec79dc2f3389fa2362559b4a46/test/fixtures/ecdsa.json
@@ -30,7 +25,8 @@ const auto messages = std::vector<std::string>({
 	"The question of whether computers can think is like the question of whether submarines can swim.",
 });
 
-auto generateSignatures () {
+struct S { uint8_t_32 d; uint8_t_32 m; uint8_t_64 e; std::string desc; bool v = true; };
+auto generateSigns () {
 	bool ok = true;
 	std::vector<S> s;
 
@@ -78,32 +74,23 @@ auto generateSignatures () {
 	return s;
 }
 
-auto generateBadSignatures () {
+struct BS { uint8_t_32 d; uint8_t_32 m; std::string except; std::string desc = ""; };
+auto generateBadSigns () {
 	std::vector<BS> bs;
-	bs.push_back({ ZERO, ZERO, "Expected Private", "Private key == 0" });
-	bs.push_back({ ZERO, UINT256_MAX, "Expected Private", "Private key == 0" });
-	bs.push_back({ GROUP_ORDER, ZERO, "Expected Private", "Private key >= G" });
-	bs.push_back({ GROUP_ORDER, UINT256_MAX, "Expected Private", "Private key >= G" });
-	bs.push_back({ GROUP_ORDER_OVER_1, ZERO, "Expected Private", "Private key >= G" });
-	bs.push_back({ GROUP_ORDER_OVER_1, UINT256_MAX, "Expected Private", "Private key >= G" });
-	bs.push_back({ UINT256_MAX, ZERO, "Expected Private", "Private key >= G" });
-	bs.push_back({ UINT256_MAX, UINT256_MAX, "Expected Private", "Private key >= G" });
+	for (auto x : generateBadPrivates()) bs.push_back({ x.d, ONE, THROW_BAD_PRIVATE, x.desc });
 	return bs;
 }
 
+template <typename A> struct BV { A Q; uint8_t_32 m; uint8_t_64 s; std::string except; std::string desc = ""; };
 template <typename A>
 auto generateBadVerify () {
 	bool ok = true;
 	const auto G_ONE = _pointFromUInt32<A>(1, ok);
 	assert(ok);
 
-	std::vector<BV> bv;
-	bv.push_back({ fromUInt32<A>(0), THREE, _signatureFromRS(ZERO, ZERO), "Expected Point", "Invalid Point" });
-	bv.push_back({ G_ONE, THREE, _signatureFromRS(ZERO, ZERO), "Expected Signature", "Invalid r, s values (== 0)" });
-	bv.push_back({ G_ONE, THREE, _signatureFromRS(ZERO, ONE), "Expected Signature", "Invalid r value (== 0)" });
-	bv.push_back({ G_ONE, THREE, _signatureFromRS(ONE, ZERO), "Expected Signature", "Invalid s value (== 0)" });
-	bv.push_back({ G_ONE, THREE, _signatureFromRS(GROUP_ORDER, ONE), "Expected Signature", "Invalid r value (>= n)" });
-	bv.push_back({ G_ONE, THREE, _signatureFromRS(ONE, GROUP_ORDER), "Expected Signature", "Invalid s value (>= n)" });
+	std::vector<BV<A>> bv;
+	for (auto x : generateBadPoints<A>()) bv.push_back({ x.P, THREE, _signatureFromRS(ONE, ONE), THROW_BAD_POINT, x.desc });
+	for (auto x : generateBadSignatures()) bv.push_back({ G_ONE, THREE, x.P, THROW_BAD_SIGNATURE, x.desc });
 	return bv;
 }
 
@@ -143,8 +130,8 @@ void dumpJSON (std::ostream& o, const T& t) {
 
 int main () {
 	_ec_init();
-	const auto s = generateSignatures();
-	const auto bs = generateBadSignatures();
+	const auto s = generateSigns();
+	const auto bs = generateBadSigns();
 	const auto bv = generateBadVerify<uint8_t_33>();
 
 	dumpJSON(std::cout, std::make_tuple(s, bs, bv));
