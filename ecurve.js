@@ -4,7 +4,9 @@ let ecurve = require('ecurve')
 let secp256k1 = ecurve.getCurveByName('secp256k1')
 
 let EC_ZERO = Buffer.from('0000000000000000000000000000000000000000000000000000000000000000', 'hex')
-let EC_UINT_MAX = Buffer.from('fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141', 'hex')
+let EC_GROUP_ORDER = Buffer.from('fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141', 'hex')
+let EC_P = Buffer.from('fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f', 'hex')
+
 let ONE1 = Buffer.alloc(1, 1)
 let ZERO1 = Buffer.alloc(1, 0)
 
@@ -20,7 +22,7 @@ function isScalar (x) {
 
 function isOrderScalar (x) {
   if (!isScalar(x)) return false
-  return x.compare(EC_UINT_MAX) < 0 // < n
+  return x.compare(EC_GROUP_ORDER) < 0 // < G
 }
 
 function isPoint (p) {
@@ -28,7 +30,12 @@ function isPoint (p) {
   if (p.length < 33) return false
 
   let t = p[0]
+  let x = p.slice(1, 33)
+  if (x.compare(EC_P) >= 0) return false
   if ((t === 0x02 || t === 0x03) && p.length === 33) return true
+
+  let y = p.slice(33)
+  if (y.compare(EC_P) >= 0) return false
   if (t === 0x04 && p.length === 65) return true
   return false
 }
@@ -45,7 +52,7 @@ function isPointCompressed (p) {
 function isPrivate (x) {
   if (!isScalar(x)) return false
   return x.compare(EC_ZERO) > 0 && // > 0
-    x.compare(EC_UINT_MAX) < 0 // < n
+    x.compare(EC_GROUP_ORDER) < 0 // < G
 }
 
 function isSignature (value) {
