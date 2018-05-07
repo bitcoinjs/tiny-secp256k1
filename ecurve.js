@@ -23,14 +23,23 @@ function isOrderScalar (x) {
   return x.compare(EC_UINT_MAX) < 0 // < n
 }
 
-function isPoint (q) {
-  if (!Buffer.isBuffer(q)) return false
-  if (q.length < 33) return false
+function isPoint (p) {
+  if (!Buffer.isBuffer(p)) return false
+  if (p.length < 33) return false
 
-  let t = q[0]
-  if ((t === 0x02 || t === 0x03) && q.length === 33) return true
-  if (t === 0x04 && q.length === 65) return true
+  let t = p[0]
+  if ((t === 0x02 || t === 0x03) && p.length === 33) return true
+  if (t === 0x04 && p.length === 65) return true
   return false
+}
+
+function __isPointCompressed (p) {
+  return p[0] !== 0x04
+}
+
+function isPointCompressed (p) {
+  if (!isPoint(p)) return false
+  return __isPointCompressed(p)
 }
 
 function isPrivate (x) {
@@ -43,42 +52,66 @@ function isSignature (value) {
   return Buffer.isBuffer(value) && value.length === 64
 }
 
-function pointAdd (pA, pB, compressed) {
+function assumeCompression (value, pubkey) {
+  if (value === undefined && pubkey !== undefined) return __isPointCompressed(pubkey)
+  if (value === undefined) return true
+  return value
+}
+
+function pointAdd (pA, pB, __compressed) {
   if (!isPoint(pA)) throw new TypeError(THROW_BAD_POINT)
   if (!isPoint(pB)) throw new TypeError(THROW_BAD_POINT)
+
   let a = ecurve.Point.decodeFrom(secp256k1, pA)
   let b = ecurve.Point.decodeFrom(secp256k1, pB)
   let p = a.add(b)
   if (secp256k1.isInfinity(p)) return null
+
+  let compressed = assumeCompression(__compressed, pA)
   return p.getEncoded(compressed)
 }
 
-function pointAddScalar (p, tweak, compressed) {
+function pointAddScalar (p, tweak, __compressed) {
   if (!isPoint(p)) throw new TypeError(THROW_BAD_POINT)
   if (!isOrderScalar(tweak)) throw new TypeError(THROW_BAD_TWEAK)
-  let q = ecurve.Point.decodeFrom(secp256k1, p)
-  let u = q.multiply(tweak)
-  if (secp256k1.isInfinity(u)) return null
-  return u.getEncoded(compressed)
+
+  let pp = ecurve.Point.decodeFrom(secp256k1, p)
+  let q = pp.multiply(tweak)
+  if (secp256k1.isInfinity(q)) return null
+
+  let compressed = assumeCompression(__compressed, pp)
+  return p.getEncoded(compressed)
 }
 
 function pointCompress (p, compressed) {
   if (!isPoint(p)) throw new TypeError(THROW_BAD_POINT)
-  let q = ecurve.Point.decodeFrom(secp256k1, p)
-  return q.getEncoded(compressed)
+
+  let pp = ecurve.Point.decodeFrom(secp256k1, p)
+  if (secp256k1.isInfinity(p)) throw new TypeError(THROW_BAD_POINT)
+
+  return pp.getEncoded(compressed)
 }
 
-function pointFromScalar (d, compressed) {
-  return secp256k1.G.multiply(d).getEncoded(compressed)
+function pointFromScalar (d, __compressed) {
+  if (!isPrivate(d)) throw new TypeError(THROW_BAD_PRIVATE)
+
+  let dd = bigi.fromBuffer(d)
+  let p = secp256k1.G.multiply(dd)
+  if (secp256k1.isInfinity(p)) return null
+
+  let compressed = assumeCompression(__compressed)
+  return p.getEncoded(compressed)
 }
 
 function privateAdd (d, tweak) {
   if (!isPrivate(d)) throw new TypeError(THROW_BAD_PRIVATE)
   if (!isOrderScalar(tweak)) throw new TypeError(THROW_BAD_TWEAK)
+
   let dd = bigi.fromBuffer(d)
   let tt = bigi.fromBuffer(tweak)
   let dt = dd.add(tt).mod(secp256k1.n).toBuffer(32)
   if (!isPrivate(dt)) return null
+
   return dt
 }
 
@@ -217,6 +250,7 @@ function verify (hash, p, signature) {
 
 module.exports = {
   isPoint,
+  isPointCompressed,
   isPrivate,
   pointAdd,
   pointAddScalar,
