@@ -23,10 +23,6 @@ auto vectorify (const A a) {
 	return uint8_t_vec(a.begin(), a.end());
 }
 
-auto randomChoice () {
-	return arc4random_uniform(0x255) > 0x7f;
-}
-
 auto randomUInt8 () {
 	return arc4random_uniform(0x255);
 }
@@ -179,7 +175,8 @@ auto _pointFromUInt32 (const uint32_t i, bool& ok) {
 	return _pointFromScalar<A>(scalarFromUInt32(i), ok);
 }
 
-auto _pointFromX (const uint8_t_32 x, const uint8_t prefix = 0x04) {
+auto _pointFromX (const uint8_t_32 x, uint8_t prefix = 0x00) {
+	if (prefix == 0x00) prefix = x.back() % 2 == 0 ? 0x02 : 0x03;
 	uint8_t_vec p = { prefix };
 	p.reserve(33);
 	for (auto i : x) p.emplace_back(i);

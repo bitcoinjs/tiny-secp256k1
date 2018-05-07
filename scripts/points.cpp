@@ -4,7 +4,6 @@
 #include "shared.hpp"
 
 using V = uint8_t_vec;
-template <typename A> auto v (const A a) { return vectorify(a); }
 
 // ref https://github.com/bitcoin-core/secp256k1/blob/6ad5cdb42a1a8257289a0423d644dcbdeab0f83c/src/tests.c#L2160
 //   iteratively verifies that (d + ...)G == (dG + ...G)
@@ -62,7 +61,7 @@ auto generate () {
 	const auto G_TWO = _pointFromUInt32<A>(2, ok);
 	const auto G_THREE = _pointFromUInt32<A>(3, ok);
 	assert(ok);
-	const auto NULLQ = v(Null<A>());
+	const auto NULLQ = vectorify(Null<A>());
 	const auto BAD_POINTS_C = generateBadPoints<uint8_t_33>();
 	const auto BAD_POINTS = generateBadPoints<uint8_t_65>();
 
@@ -81,9 +80,8 @@ auto generate () {
 
 	// fuzz
 	for (size_t i = 0; i < 1000; ++i) {
-		ip.push_back({ _pointFromScalar<uint8_t_33>(randomPrivate(), ok), true });
+		ip.push_back({ _pointFromScalar<uint8_t_33>(randomPrivate(), ok), true }); assert(ok);
 	}
-	assert(ok);
 
 	for (size_t i = 0; i < 1000; ++i) {
 		ip.push_back({ _pointFromScalar<uint8_t_65>(randomPrivate(), ok), true });
@@ -155,6 +153,21 @@ auto generate () {
 	for (auto i = 1; i < 10; ++i) {
 		const auto iic = vectorify(_pointFromUInt32<uint8_t_33>(i, ok)); assert(ok);
 		const auto ii = vectorify(_pointFromUInt32<uint8_t_65>(i, ok)); assert(ok);
+
+		pc.push_back({ iic, true, iic });
+		pc.push_back({ iic, false, ii });
+		pc.push_back({ ii, true, iic });
+		pc.push_back({ ii, false, ii });
+	}
+
+	// fuzz
+	for (size_t i = 0; i < 50; ++i) {
+		const auto ii = _pointFromScalar<uint8_t_65>(randomPrivate(), ok);
+		assert(ok);
+
+		uint8_t_32 iix;
+		std::copy(ii.begin() + 1, ii.begin() + 33, iix.begin());
+		const auto iic = _pointFromX(iix);
 
 		pc.push_back({ iic, true, iic });
 		pc.push_back({ iic, false, ii });
