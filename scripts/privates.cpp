@@ -7,16 +7,17 @@ struct PA { uint8_t_32 a; uint8_t_32 b; uint8_t_32 e = Null<uint8_t_32>(); std::
 
 void generate (std::ostream& o) {
 	///////////////////////////////// isPrivate
-	std::vector<IP> ip;
 
 	// edge cases (verify)
 	//   from https://github.com/bitcoin-core/secp256k1/blob/6ad5cdb42a1a8257289a0423d644dcbdeab0f83c/src/tests.c
-	ip.push_back({ ZERO, false }); // #L3145, fail, == 0
-	ip.push_back({ ONE, true }); // #L3153, OK, > 0
-	ip.push_back({ GROUP_ORDER_LESS_1, true }); // #L3171, OK == G - 1
-	ip.push_back({ GROUP_ORDER, false }); // #L3115, fail, == G
-	ip.push_back({ GROUP_ORDER_OVER_1, false }); // #L3162, fail, >= G
-	ip.push_back({ UINT256_MAX, false }); // #L3131, fail, > G
+	std::vector<IP> ip = {
+		{ ZERO, false }, // #L3145, fail, == 0
+		{ ONE, true }, // #L3153, OK, > 0
+		{ GROUP_ORDER_LESS_1, true }, // #L3171, OK == G - 1
+		{ GROUP_ORDER, false }, // #L3115, fail, == G
+		{ GROUP_ORDER_OVER_1, false }, // #L3162, fail, >= G
+		{ UINT256_MAX, false }, // #L3131, fail, > G
+	};
 
 	// fuzz
 	for (size_t i = 0; i < 1000; ++i) {
@@ -62,8 +63,8 @@ void generate (std::ostream& o) {
 	}
 
 	std::vector<PA> paf;
-	for (const auto x : BAD_PRIVATES) paf.push_back({ x.d, ONE, {}, THROW_BAD_PRIVATE, x.desc });
-	for (const auto x : BAD_TWEAKS) paf.push_back({ ONE, x.d, {}, THROW_BAD_TWEAK, x.desc });
+	for (const auto x : BAD_PRIVATES) paf.push_back({ x.a, ONE, {}, THROW_BAD_PRIVATE, x.desc });
+	for (const auto x : BAD_TWEAKS) paf.push_back({ ONE, x.a, {}, THROW_BAD_TWEAK, x.desc });
 
 	// dump JSON
 	const auto jPA = [](auto x) {

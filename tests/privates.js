@@ -2,10 +2,7 @@ let ecurve = require('../ecurve')
 //  let elliptic = require('elliptic') // for reference
 let native = require('bindings')('secp256k1')
 let tape = require('tape')
-
-//  let fpoints = require('./fixtures/points.json')
 let fprivates = require('./fixtures/privates.json')
-//  let fecdsa = require('./fixtures/ecdsa.json')
 
 function test (binding) {
   tape('isPrivate', (t) => {

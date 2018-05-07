@@ -76,21 +76,22 @@ auto generateSigns () {
 struct BS { uint8_t_32 d; uint8_t_32 m; std::string except; std::string desc = ""; };
 auto generateBadSigns () {
 	std::vector<BS> bs;
-	for (auto x : BAD_PRIVATES) bs.push_back({ x.d, ONE, THROW_BAD_PRIVATE, x.desc });
+	for (auto x : BAD_PRIVATES) bs.push_back({ x.a, ONE, THROW_BAD_PRIVATE, x.desc });
 	return bs;
 }
 
-template <typename A> struct BV { A Q; uint8_t_32 m; uint8_t_64 s; std::string except; std::string desc = ""; };
-template <typename A>
+struct BV { uint8_t_vec Q; uint8_t_32 m; uint8_t_64 s; std::string except; std::string desc = ""; };
 auto generateBadVerify () {
 	bool ok = true;
-	const auto G_ONE = _pointFromUInt32<A>(1, ok);
+	const auto G_ONE = _pointFromUInt32<uint8_t_33>(1, ok);
 	assert(ok);
-	const auto BAD_POINTS = generateBadPoints<A>();
+	const auto BAD_POINTS = generateBadPoints<uint8_t_65>();
+	const auto BAD_POINTS_C = generateBadPoints<uint8_t_33>();
 
-	std::vector<BV<A>> bv;
-	for (auto x : BAD_POINTS) bv.push_back({ x.P, THREE, _signatureFromRS(ONE, ONE), THROW_BAD_POINT, x.desc });
-	for (auto x : BAD_SIGNATURES) bv.push_back({ G_ONE, THREE, x.P, THROW_BAD_SIGNATURE, x.desc });
+	std::vector<BV> bv;
+	for (auto x : BAD_POINTS) bv.push_back({ x.a, THREE, _signatureFromRS(ONE, ONE), THROW_BAD_POINT, x.desc });
+	for (auto x : BAD_POINTS_C) bv.push_back({ x.a, THREE, _signatureFromRS(ONE, ONE), THROW_BAD_POINT, x.desc });
+	for (auto x : BAD_SIGNATURES) bv.push_back({ G_ONE, THREE, x.a, THROW_BAD_SIGNATURE, x.desc });
 	return bv;
 }
 
@@ -132,7 +133,7 @@ int main () {
 	_ec_init();
 	const auto s = generateSigns();
 	const auto bs = generateBadSigns();
-	const auto bv = generateBadVerify<uint8_t_33>();
+	const auto bv = generateBadVerify();
 
 	dumpJSON(std::cout, std::make_tuple(s, bs, bv));
 

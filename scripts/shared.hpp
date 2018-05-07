@@ -23,6 +23,10 @@ auto vectorify (const A a) {
 	return uint8_t_vec(a.begin(), a.end());
 }
 
+auto randomChoice () {
+	return arc4random_uniform(0x255) > 0x7f;
+}
+
 auto randomUInt8 () {
 	return arc4random_uniform(0x255);
 }
@@ -80,10 +84,13 @@ auto fromHex (const std::string& s) {
 	return x;
 }
 
+auto pointFromHex (const std::string& s) {
+	if (s.size() == 66) return vectorify(fromHex<uint8_t_33>(s));
+	if (s.size() == 130) return vectorify(fromHex<uint8_t_65>(s));
+	assert(false);
+}
 auto scalarFromHex (const std::string& s) { return fromHex<uint8_t_32>(s); }
 auto signatureFromHex (const std::string& s) { return fromHex<uint8_t_64>(s); }
-auto point33FromHex (const std::string& s) { return fromHex<uint8_t_33>(s); }
-auto point65FromHex (const std::string& s) { return fromHex<uint8_t_65>(s); }
 
 secp256k1_context* ctx = nullptr;
 
@@ -109,8 +116,8 @@ auto randomPrivateLow () {
 }
 
 // utility functions
-auto _isPriv (const uint8_t_32& key) {
-	return secp256k1_ec_seckey_verify(ctx, key.data());
+void _ec_init () {
+	ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
 }
 
 auto _privAdd (uint8_t_32 key, const uint8_t_32 tweak, bool& ok) {
@@ -118,76 +125,72 @@ auto _privAdd (uint8_t_32 key, const uint8_t_32 tweak, bool& ok) {
 	return key;
 }
 
-void _ec_init () {
-	ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
-}
-
 template <typename A>
-auto _ec_pubkey_to_array (const secp256k1_pubkey& public_key, bool& ok) {
-	if (!ok) return A{};
+uint8_t_vec _ec_pubkey_to_vec (const secp256k1_pubkey& public_key, bool& ok) {
+	static_assert(sizeof(A) == 33 || sizeof(A) == 65);
+	if (!ok) return {};
 	A out;
-	size_t outlen = sizeof(A);
+	size_t outlen = out.size();
 	ok &= secp256k1_ec_pubkey_serialize(ctx, out.data(), &outlen, &public_key,
 		sizeof(A) == 33 ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED);
-	return out;
+	return vectorify<A>(out);
 }
 
-template <typename A>
-auto _isPoint (const A p) {
-	secp256k1_pubkey a;
-	return secp256k1_ec_pubkey_parse(ctx, &a, p.data(), sizeof(A));
-}
-
-template <typename A>
-auto _pointAdd (const A p, const A q, bool& ok) {
+template <typename A, typename V>
+auto _pointAdd (const V p, const V q, bool& ok) {
 	secp256k1_pubkey a, b;
-	ok &= secp256k1_ec_pubkey_parse(ctx, &a, p.data(), sizeof(A));
-	ok &= secp256k1_ec_pubkey_parse(ctx, &b, q.data(), sizeof(A));
+	ok &= secp256k1_ec_pubkey_parse(ctx, &a, p.data(), p.size());
+	ok &= secp256k1_ec_pubkey_parse(ctx, &b, q.data(), q.size());
 
 	const secp256k1_pubkey* points[] = { &a, &b };
 	secp256k1_pubkey public_key;
 	ok &= secp256k1_ec_pubkey_combine(ctx, &public_key, points, 2);
 
-	return _ec_pubkey_to_array<A>(public_key, ok);
+	return _ec_pubkey_to_vec<A>(public_key, ok);
 }
 
-template <typename A>
-uint8_t_vec _pointCompress (const uint8_t_vec p, bool& ok) {
+uint8_t_vec _pointFlip (const uint8_t_vec& p) {
 	assert(!p.empty());
+
+	secp256k1_pubkey public_key;
+	bool ok = secp256k1_ec_pubkey_parse(ctx, &public_key, p.data(), p.size());
+	const auto r = _ec_pubkey_to_vec<uint8_t_65>(public_key, ok);
+	assert(ok);
+	return std::move(r);
+}
+
+template <typename A, typename V>
+auto _pointAddScalar (const V p, const uint8_t_32 d, bool& ok) {
 	secp256k1_pubkey public_key;
 	ok &= secp256k1_ec_pubkey_parse(ctx, &public_key, p.data(), p.size());
-	return vectorify(_ec_pubkey_to_array<A>(public_key, ok));
-}
-
-template <typename A>
-A _pointAddScalar (const A p, const uint8_t_32 d, bool& ok) {
-	secp256k1_pubkey public_key;
-	ok &= secp256k1_ec_pubkey_parse(ctx, &public_key, p.data(), sizeof(A));
 	ok &= secp256k1_ec_pubkey_tweak_add(ctx, &public_key, d.data());
-	return _ec_pubkey_to_array<A>(public_key, ok);
+	return _ec_pubkey_to_vec<A>(public_key, ok);
 }
 
 template <typename A>
 auto _pointFromScalar (const uint8_t_32 s, bool& ok) {
 	secp256k1_pubkey public_key;
 	ok &= secp256k1_ec_pubkey_create(ctx, &public_key, s.data());
-	return _ec_pubkey_to_array<A>(public_key, ok);
+	return _ec_pubkey_to_vec<A>(public_key, ok);
 }
 
 template <typename A>
 auto _pointFromUInt32 (const uint32_t i, bool& ok) {
-	const auto s = scalarFromUInt32(i);
-
-	secp256k1_pubkey public_key;
-	ok &= secp256k1_ec_pubkey_create(ctx, &public_key, s.data());
-	return _ec_pubkey_to_array<A>(public_key, ok);
+	return _pointFromScalar<A>(scalarFromUInt32(i), ok);
 }
 
-template <typename A>
+auto _pointFromX (const uint8_t_32 x, const uint8_t prefix = 0x04) {
+	uint8_t_vec p = { prefix };
+	p.reserve(33);
+	for (auto i : x) p.emplace_back(i);
+	return p;
+}
+
 auto _pointFromXY (const uint8_t_32 x, const uint8_t_32 y, const uint8_t prefix = 0x04) {
-	A p = { prefix };
-	std::copy(x.begin(), x.end(), p.begin() + 1);
-	std::copy(y.begin(), y.end(), p.begin() + 1 + 32);
+	uint8_t_vec p = { prefix };
+	p.reserve(65);
+	for (auto i : x) p.emplace_back(i);
+	for (auto i : y) p.emplace_back(i);
 	return p;
 }
 
@@ -210,7 +213,7 @@ template <typename A>
 auto _eccVerify (const A& p, const uint8_t_32 message, const uint8_t_64 signature) {
 	secp256k1_pubkey public_key;
 	bool ok = true;
-	ok &= secp256k1_ec_pubkey_parse(ctx, &public_key, p.data(), sizeof(A));
+	ok &= secp256k1_ec_pubkey_parse(ctx, &public_key, p.data(), p.size());
 	if (!ok) return false;
 
 	secp256k1_ecdsa_signature _signature;
@@ -239,7 +242,10 @@ auto Null () {
 	return a;
 }
 template <typename A>
-auto isNull (const A& a) { return a == Null<A>(); }
+auto isNull (const A& a) {
+	for (auto x : a) if (x != 0xfe) return false;
+	return true;
+}
 
 const auto ZERO = scalarFromHex("0000000000000000000000000000000000000000000000000000000000000000");
 const auto ONE = scalarFromHex("0000000000000000000000000000000000000000000000000000000000000001");
@@ -251,13 +257,12 @@ const auto GROUP_ORDER_LESS_2 = scalarFromHex("fffffffffffffffffffffffffffffffeb
 const auto GROUP_ORDER_LESS_1 = scalarFromHex("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140");
 const auto GROUP_ORDER_OVER_1 = scalarFromHex("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364142");
 const auto UINT256_MAX = scalarFromHex("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-const auto GENERATOR = point65FromHex("0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8");
-const auto GENERATORC = point33FromHex("0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798");
+const auto G = pointFromHex("0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798");
+const auto GC = pointFromHex("0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8");
 
-struct BD { uint8_t_32 d; std::string desc = ""; };
-template <typename A> struct BP { A P; std::string desc = ""; };
+template <typename A> struct B { A a; std::string desc = ""; };
 
-const std::vector<BD> BAD_PRIVATES = {
+const std::vector<B<uint8_t_32>> BAD_PRIVATES = {
 	{ ZERO, "Private key == 0" },               // #L3145, #L3684, fail, == 0
 	{ GROUP_ORDER, "Private key >= G" },        // #L3115, #L3670, fail, == G
 	{ GROUP_ORDER_OVER_1, "Private key >= G" }, // #L3162, #L3701, fail, >= G
@@ -265,50 +270,51 @@ const std::vector<BD> BAD_PRIVATES = {
 };
 
 // excludes exact complement of a key, assumed to be tested elsewhere
-const std::vector<BD> BAD_TWEAKS = {
+const std::vector<B<uint8_t_32>> BAD_TWEAKS = {
 	{ GROUP_ORDER, "Tweak >= G" },
 	{ GROUP_ORDER_OVER_1, "Tweak >= G" },
 	{ UINT256_MAX, "Tweak >= G" }
 };
 
-// from https://github.com/cryptocoinjs/ecurve/blob/14d72f5f468d53ff33dc13c1c7af350a41d52aab/test/fixtures/point.json#L84
-template <typename A = uint8_t_33>
-std::vector<BP<A>> generateBadPoints () {
-	return {
-		{ _pointFromXY<A>(ONE, ONE, 0x01), "Bad sequence prefix" },
-		{ _pointFromXY<A>(ONE, ONE, 0x04), "Bad sequence prefix" },
-		{ _pointFromXY<A>(ONE, ONE, 0x05), "Bad sequence prefix" },
-		{ _pointFromXY<A>(ZERO, ONE), "Bad X coordinate (== 0)" },
-		{ _pointFromXY<A>(GROUP_ORDER, ONE), "Bad X coordinate (>= G)" },
-		{ _pointFromXY<A>(GROUP_ORDER_OVER_1, ONE), "Bad X coordinate (>= G)" }
-	};
-}
-
-template <>
-std::vector<BP<uint8_t_65>> generateBadPoints<uint8_t_65> () {
-	using A = uint8_t_65;
-	return {
-		{ _pointFromXY<A>(ONE, ONE, 0x01), "Bad sequence prefix" },
-		{ _pointFromXY<A>(ONE, ONE, 0x02), "Bad sequence prefix" },
-		{ _pointFromXY<A>(ONE, ONE, 0x03), "Bad sequence prefix" },
-		{ _pointFromXY<A>(ONE, ONE, 0x05), "Bad sequence prefix" },
-		{ _pointFromXY<A>(ZERO, ONE), "Bad X coordinate (== 0)" },
-		{ _pointFromXY<A>(ONE, ZERO), "Bad Y coordinate (== 0)" },
-		{ _pointFromXY<A>(ZERO, ZERO), "Bad X/Y coordinate (== 0)" },
-		{ _pointFromXY<A>(GROUP_ORDER, ONE), "Bad X coordinate (>= G)" },
-		{ _pointFromXY<A>(ONE, GROUP_ORDER), "Bad Y coordinate (>= G)" },
-		{ _pointFromXY<A>(GROUP_ORDER_OVER_1, ONE), "Bad X coordinate (>= G)" },
-		{ _pointFromXY<A>(ONE, GROUP_ORDER_OVER_1), "Bad Y coordinate (>= G)" }
-	};
-}
-
-const std::vector<BP<uint8_t_64>> BAD_SIGNATURES = {
+const std::vector<B<uint8_t_64>> BAD_SIGNATURES = {
 	{ _signatureFromRS(ZERO, ZERO), "Invalid r, s values (== 0)" },
 	{ _signatureFromRS(ZERO, ONE), "Invalid r value (== 0)" },
 	{ _signatureFromRS(ONE, ZERO), "Invalid s value (== 0)" },
 	{ _signatureFromRS(GROUP_ORDER, ONE), "Invalid r value (>= n)" },
 	{ _signatureFromRS(ONE, GROUP_ORDER), "Invalid s value (>= n)" }
 };
+
+// from https://github.com/cryptocoinjs/ecurve/blob/14d72f5f468d53ff33dc13c1c7af350a41d52aab/test/fixtures/point.json#L84
+template <typename A = uint8_t_33>
+std::vector<B<uint8_t_vec>> generateBadPoints () {
+	return {
+		{ _pointFromX(ONE, 0x01), "Bad sequence prefix" },
+		{ _pointFromX(ONE, 0x04), "Bad sequence prefix" },
+		{ _pointFromX(ONE, 0x05), "Bad sequence prefix" },
+		{ _pointFromX(ZERO), "Bad X coordinate (== 0)" },
+		{ _pointFromX(GROUP_ORDER), "Bad X coordinate (>= G)" },
+		{ _pointFromX(GROUP_ORDER_OVER_1), "Bad X coordinate (>= G)" },
+	};
+}
+
+template <>
+std::vector<B<uint8_t_vec>> generateBadPoints<uint8_t_65> () {
+	return {
+		{ _pointFromXY(ONE, ONE, 0x01), "Bad sequence prefix" },
+		{ _pointFromXY(ONE, ONE, 0x02), "Bad sequence prefix" },
+		{ _pointFromXY(ONE, ONE, 0x03), "Bad sequence prefix" },
+		{ _pointFromXY(ONE, ONE, 0x05), "Bad sequence prefix" },
+		{ _pointFromXY(ZERO, ONE), "Bad X coordinate (== 0)" },
+		{ _pointFromXY(ONE, ZERO), "Bad Y coordinate (== 0)" },
+		{ _pointFromXY(ZERO, ZERO, 0x02), "Bad X/Y coordinate (== 0)" },
+		{ _pointFromXY(ZERO, ZERO, 0x03), "Bad X/Y coordinate (== 0)" },
+		{ _pointFromXY(ZERO, ZERO, 0x04), "Bad X/Y coordinate (== 0)" },
+		{ _pointFromXY(GROUP_ORDER, ONE), "Bad X coordinate (>= G)" },
+		{ _pointFromXY(ONE, GROUP_ORDER), "Bad Y coordinate (>= G)" },
+		{ _pointFromXY(GROUP_ORDER_OVER_1, ONE), "Bad X coordinate (>= G)" },
+		{ _pointFromXY(ONE, GROUP_ORDER_OVER_1), "Bad Y coordinate (>= G)" }
+	};
+}
 
 const auto THROW_BAD_PRIVATE = "Expected Private";
 const auto THROW_BAD_POINT = "Expected Point";
