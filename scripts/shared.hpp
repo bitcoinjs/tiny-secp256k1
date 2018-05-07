@@ -1,7 +1,6 @@
 #pragma once
 
 #include <array>
-#include <bsd/stdlib.h>
 #include <cassert>
 #include <iostream>
 #include <openssl/sha.h>
@@ -23,30 +22,42 @@ auto vectorify (const A a) {
 	return uint8_t_vec(a.begin(), a.end());
 }
 
+namespace {
+	uint32_t s = 0xdeadbeef;
+	uint32_t xorshift32() {
+		s ^= s << 13;
+		s ^= s >> 17;
+		s ^= s << 5;
+		return s;
+	}
+}
+
 auto randomUInt8 () {
-	return arc4random_uniform(0x255);
+	return xorshift32() % 255;
 }
 
 template <typename A>
 auto random () {
-	A x;
-	arc4random_buf(x.data(), x.size());
-	return x;
+	A a;
+	for (auto& x : a) x = randomUInt8();
+	return a;
 }
 
 template <typename A>
 auto randomHigh () {
-	A x;
-	x.fill(0xff);
-	arc4random_buf(x.data(), x.size() / 2);
+	auto x = random<A>();
+	for (auto i = x.size() / 2; i < x.size(); ++i) {
+		x.at(i) = 0xff;
+	}
 	return x;
 }
 
 template <typename A>
 auto randomLow () {
-	A x;
-	x.fill(0);
-	arc4random_buf(x.data() + x.size() / 2, x.size() / 2);
+	auto x = random<A>();
+	for (auto i = 0ul; i < x.size() / 2; ++i) {
+		x.at(i) = 0;
+	}
 	return x;
 }
 
