@@ -18,6 +18,7 @@
         "expected": true
       },
       {
+        "description": "X == P - 1",
         "P": "02fffffffffffffffffffffffffffffffffffffffffffffffffffffffeeffffc2e",
         "expected": true
       },
@@ -38,6 +39,7 @@
         "expected": true
       },
       {
+        "description": "X == P - 1",
         "P": "04fffffffffffffffffffffffffffffffffffffffffffffffffffffffeeffffc2ea0981151316a5be677beb8ab97d4a15eba3e4638bfdc86038afffe1f445f4496",
         "expected": true
       },

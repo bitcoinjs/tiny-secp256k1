@@ -71,7 +71,7 @@ auto generate () {
 		{ G_ONE, true },
 		{ G_TWO, true },
 		{ G_THREE, true },
-		{ _pointFromX(P_LESS_1), true }
+		{ _pointFromX(P_LESS_1), true, "X == P - 1" }
 	};
 	const auto _ip = ip; // prevent trashing ip while adding
 	for (auto& x : _ip) ip.push_back({ _pointFlip(x.a), x.e, x.desc });
