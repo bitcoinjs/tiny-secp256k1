@@ -54,16 +54,16 @@ auto generateSigns () {
 		const auto rkey = randomPrivate();
 		const auto hash = randomScalar();
 		auto sig = _eccSign(rkey, hash, ok);
-		const auto P = _pointFromScalar<uint8_t_33>(rkey, ok);
+		const auto Q = _pointFromScalar<uint8_t_33>(rkey, ok);
 		assert(ok);
 		auto verified = ok;
-		assert(_eccVerify(P, hash, sig) == verified);
+		assert(_eccVerify(Q, hash, sig) == verified);
 
 		// flip a bit (invalidate the signature)
 		if (randomUInt8() > 0x7f) {
 			const auto mask = 1 << (1 + (randomUInt8() % 6));
 			sig.at(randomUInt8() % 32) ^= mask;
-			assert(_eccVerify(P, hash, sig) == false);
+			assert(_eccVerify(Q, hash, sig) == false);
 			verified = false;
 		}
 

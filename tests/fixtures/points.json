@@ -18,6 +18,10 @@
         "expected": true
       },
       {
+        "P": "02fffffffffffffffffffffffffffffffffffffffffffffffffffffffeeffffc2e",
+        "expected": true
+      },
+      {
         "P": "0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8",
         "expected": true
       },
@@ -31,6 +35,10 @@
       },
       {
         "P": "04f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9388f7b0f632de8140fe337e62a37f3566500a99934c2231b6cb9fd7584b8e672",
+        "expected": true
+      },
+      {
+        "P": "04fffffffffffffffffffffffffffffffffffffffffffffffffffffffeeffffc2ea0981151316a5be677beb8ab97d4a15eba3e4638bfdc86038afffe1f445f4496",
         "expected": true
       },
       {
@@ -65,37 +73,27 @@
       },
       {
         "description": "Bad X/Y coordinate (== 0)",
-        "P": "0200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-        "expected": false
-      },
-      {
-        "description": "Bad X/Y coordinate (== 0)",
-        "P": "0300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-        "expected": false
-      },
-      {
-        "description": "Bad X/Y coordinate (== 0)",
         "P": "0400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
         "expected": false
       },
       {
-        "description": "Bad X coordinate (>= G)",
-        "P": "04fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd03641410000000000000000000000000000000000000000000000000000000000000001",
+        "description": "Bad X coordinate (== P)",
+        "P": "04fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f0000000000000000000000000000000000000000000000000000000000000001",
         "expected": false
       },
       {
-        "description": "Bad Y coordinate (>= G)",
-        "P": "040000000000000000000000000000000000000000000000000000000000000001fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141",
+        "description": "Bad Y coordinate (== P)",
+        "P": "040000000000000000000000000000000000000000000000000000000000000001fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f",
         "expected": false
       },
       {
-        "description": "Bad X coordinate (>= G)",
-        "P": "04fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd03641420000000000000000000000000000000000000000000000000000000000000001",
+        "description": "Bad X coordinate (> P)",
+        "P": "04fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc300000000000000000000000000000000000000000000000000000000000000001",
         "expected": false
       },
       {
-        "description": "Bad Y coordinate (>= G)",
-        "P": "040000000000000000000000000000000000000000000000000000000000000001fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364142",
+        "description": "Bad Y coordinate (> P)",
+        "P": "040000000000000000000000000000000000000000000000000000000000000001fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc30",
         "expected": false
       },
       {
@@ -119,13 +117,23 @@
         "expected": false
       },
       {
-        "description": "Bad X coordinate (>= G)",
-        "P": "03fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141",
+        "description": "Bad X coordinate (== 0)",
+        "P": "030000000000000000000000000000000000000000000000000000000000000000",
         "expected": false
       },
       {
-        "description": "Bad X coordinate (>= G)",
-        "P": "02fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364142",
+        "description": "Bad X coordinate (== P)",
+        "P": "02fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f",
+        "expected": false
+      },
+      {
+        "description": "Bad X coordinate (== P)",
+        "P": "03fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f",
+        "expected": false
+      },
+      {
+        "description": "Bad X coordinate (> P)",
+        "P": "03fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc30",
         "expected": false
       },
       {
@@ -9090,19 +9098,19 @@
         "expected": "040d84e33ad147ed2ec5bf3263496ba0b4f3a2bccfc28f76a1dd01f1171604fc26701973cb12b5efaa4fea4fda75682f704db28440625c9745f17513991a9ee36b"
       },
       {
-        "P": "03a836f92423b6bba2d9e8518a92c8c0ed8f8dbf48e0be53bd2fd511bdbb369389",
+        "P": "02a836f92423b6bba2d9e8518a92c8c0ed8f8dbf48e0be53bd2fd511bdbb369389",
         "compress": true,
-        "expected": "03a836f92423b6bba2d9e8518a92c8c0ed8f8dbf48e0be53bd2fd511bdbb369389"
+        "expected": "02a836f92423b6bba2d9e8518a92c8c0ed8f8dbf48e0be53bd2fd511bdbb369389"
       },
       {
-        "P": "03a836f92423b6bba2d9e8518a92c8c0ed8f8dbf48e0be53bd2fd511bdbb369389",
+        "P": "02a836f92423b6bba2d9e8518a92c8c0ed8f8dbf48e0be53bd2fd511bdbb369389",
         "compress": false,
         "expected": "04a836f92423b6bba2d9e8518a92c8c0ed8f8dbf48e0be53bd2fd511bdbb3693897dae17295266b5751bced1cc23c0c42046db08acf9accb363e3987a4e6baa552"
       },
       {
         "P": "04a836f92423b6bba2d9e8518a92c8c0ed8f8dbf48e0be53bd2fd511bdbb3693897dae17295266b5751bced1cc23c0c42046db08acf9accb363e3987a4e6baa552",
         "compress": true,
-        "expected": "03a836f92423b6bba2d9e8518a92c8c0ed8f8dbf48e0be53bd2fd511bdbb369389"
+        "expected": "02a836f92423b6bba2d9e8518a92c8c0ed8f8dbf48e0be53bd2fd511bdbb369389"
       },
       {
         "P": "04a836f92423b6bba2d9e8518a92c8c0ed8f8dbf48e0be53bd2fd511bdbb3693897dae17295266b5751bced1cc23c0c42046db08acf9accb363e3987a4e6baa552",
@@ -9130,19 +9138,19 @@
         "expected": "04d5b51f17e1b96c2ffe66913577ce51284901a56e0a95536decbb00049ef01dd4c5b713901ae198bc31fd29f9c23ccb374a7b0e7c7e06bfb5e3fb72180bb1b71f"
       },
       {
-        "P": "03a2763b8363da08689ca0604ec90ad8ee60283ee8de0af620b1ea8b456b6452eb",
+        "P": "02a2763b8363da08689ca0604ec90ad8ee60283ee8de0af620b1ea8b456b6452eb",
         "compress": true,
-        "expected": "03a2763b8363da08689ca0604ec90ad8ee60283ee8de0af620b1ea8b456b6452eb"
+        "expected": "02a2763b8363da08689ca0604ec90ad8ee60283ee8de0af620b1ea8b456b6452eb"
       },
       {
-        "P": "03a2763b8363da08689ca0604ec90ad8ee60283ee8de0af620b1ea8b456b6452eb",
+        "P": "02a2763b8363da08689ca0604ec90ad8ee60283ee8de0af620b1ea8b456b6452eb",
         "compress": false,
         "expected": "04a2763b8363da08689ca0604ec90ad8ee60283ee8de0af620b1ea8b456b6452eb405959adc483a46d7e8144ba5d8a764ad6378e360a6af739b2f1166e99a09aa9"
       },
       {
         "P": "04a2763b8363da08689ca0604ec90ad8ee60283ee8de0af620b1ea8b456b6452eb405959adc483a46d7e8144ba5d8a764ad6378e360a6af739b2f1166e99a09aa9",
         "compress": true,
-        "expected": "03a2763b8363da08689ca0604ec90ad8ee60283ee8de0af620b1ea8b456b6452eb"
+        "expected": "02a2763b8363da08689ca0604ec90ad8ee60283ee8de0af620b1ea8b456b6452eb"
       },
       {
         "P": "04a2763b8363da08689ca0604ec90ad8ee60283ee8de0af620b1ea8b456b6452eb405959adc483a46d7e8144ba5d8a764ad6378e360a6af739b2f1166e99a09aa9",
@@ -9170,19 +9178,19 @@
         "expected": "049ac4339ae95ab8988a4c5f5dc7a8cac65b0018883946661f601402ae907c7b28812914b4f85255e5ee9b070f3972aa9f38fcf4ec2165f3e1bd8960816b9d7fdb"
       },
       {
-        "P": "0325676177363605d2009d908b4f2acd99920fb11f69886ca373b7c22cb6587469",
+        "P": "0225676177363605d2009d908b4f2acd99920fb11f69886ca373b7c22cb6587469",
         "compress": true,
-        "expected": "0325676177363605d2009d908b4f2acd99920fb11f69886ca373b7c22cb6587469"
+        "expected": "0225676177363605d2009d908b4f2acd99920fb11f69886ca373b7c22cb6587469"
       },
       {
-        "P": "0325676177363605d2009d908b4f2acd99920fb11f69886ca373b7c22cb6587469",
+        "P": "0225676177363605d2009d908b4f2acd99920fb11f69886ca373b7c22cb6587469",
         "compress": false,
         "expected": "0425676177363605d2009d908b4f2acd99920fb11f69886ca373b7c22cb6587469a239291fc7b808bc1960eb3cc7ff88cedaa2bb481b4dde9e22abad8e8a3cd394"
       },
       {
         "P": "0425676177363605d2009d908b4f2acd99920fb11f69886ca373b7c22cb6587469a239291fc7b808bc1960eb3cc7ff88cedaa2bb481b4dde9e22abad8e8a3cd394",
         "compress": true,
-        "expected": "0325676177363605d2009d908b4f2acd99920fb11f69886ca373b7c22cb6587469"
+        "expected": "0225676177363605d2009d908b4f2acd99920fb11f69886ca373b7c22cb6587469"
       },
       {
         "P": "0425676177363605d2009d908b4f2acd99920fb11f69886ca373b7c22cb6587469a239291fc7b808bc1960eb3cc7ff88cedaa2bb481b4dde9e22abad8e8a3cd394",
@@ -9190,19 +9198,19 @@
         "expected": "0425676177363605d2009d908b4f2acd99920fb11f69886ca373b7c22cb6587469a239291fc7b808bc1960eb3cc7ff88cedaa2bb481b4dde9e22abad8e8a3cd394"
       },
       {
-        "P": "03eca20bac3c75a18682816e17675c7aff736ea7954899dde6106c79bf9e4d55d9",
+        "P": "02eca20bac3c75a18682816e17675c7aff736ea7954899dde6106c79bf9e4d55d9",
         "compress": true,
-        "expected": "03eca20bac3c75a18682816e17675c7aff736ea7954899dde6106c79bf9e4d55d9"
+        "expected": "02eca20bac3c75a18682816e17675c7aff736ea7954899dde6106c79bf9e4d55d9"
       },
       {
-        "P": "03eca20bac3c75a18682816e17675c7aff736ea7954899dde6106c79bf9e4d55d9",
+        "P": "02eca20bac3c75a18682816e17675c7aff736ea7954899dde6106c79bf9e4d55d9",
         "compress": false,
         "expected": "04eca20bac3c75a18682816e17675c7aff736ea7954899dde6106c79bf9e4d55d9ca15b3ab249226199db430b571cf4b785a3be03d1a3cfc4fcb07b5e12130ba0d"
       },
       {
         "P": "04eca20bac3c75a18682816e17675c7aff736ea7954899dde6106c79bf9e4d55d9ca15b3ab249226199db430b571cf4b785a3be03d1a3cfc4fcb07b5e12130ba0d",
         "compress": true,
-        "expected": "03eca20bac3c75a18682816e17675c7aff736ea7954899dde6106c79bf9e4d55d9"
+        "expected": "02eca20bac3c75a18682816e17675c7aff736ea7954899dde6106c79bf9e4d55d9"
       },
       {
         "P": "04eca20bac3c75a18682816e17675c7aff736ea7954899dde6106c79bf9e4d55d9ca15b3ab249226199db430b571cf4b785a3be03d1a3cfc4fcb07b5e12130ba0d",
@@ -9210,19 +9218,19 @@
         "expected": "04eca20bac3c75a18682816e17675c7aff736ea7954899dde6106c79bf9e4d55d9ca15b3ab249226199db430b571cf4b785a3be03d1a3cfc4fcb07b5e12130ba0d"
       },
       {
-        "P": "03bff352a06117415d92e245dd36ea34f4d615bb0b7d6cd8c1627664947a7daf95",
+        "P": "02bff352a06117415d92e245dd36ea34f4d615bb0b7d6cd8c1627664947a7daf95",
         "compress": true,
-        "expected": "03bff352a06117415d92e245dd36ea34f4d615bb0b7d6cd8c1627664947a7daf95"
+        "expected": "02bff352a06117415d92e245dd36ea34f4d615bb0b7d6cd8c1627664947a7daf95"
       },
       {
-        "P": "03bff352a06117415d92e245dd36ea34f4d615bb0b7d6cd8c1627664947a7daf95",
+        "P": "02bff352a06117415d92e245dd36ea34f4d615bb0b7d6cd8c1627664947a7daf95",
         "compress": false,
         "expected": "04bff352a06117415d92e245dd36ea34f4d615bb0b7d6cd8c1627664947a7daf9518941e0fee587f95b4c62240c43164cf89838e56ddd464ceb1ae42ce1df49a64"
       },
       {
         "P": "04bff352a06117415d92e245dd36ea34f4d615bb0b7d6cd8c1627664947a7daf9518941e0fee587f95b4c62240c43164cf89838e56ddd464ceb1ae42ce1df49a64",
         "compress": true,
-        "expected": "03bff352a06117415d92e245dd36ea34f4d615bb0b7d6cd8c1627664947a7daf95"
+        "expected": "02bff352a06117415d92e245dd36ea34f4d615bb0b7d6cd8c1627664947a7daf95"
       },
       {
         "P": "04bff352a06117415d92e245dd36ea34f4d615bb0b7d6cd8c1627664947a7daf9518941e0fee587f95b4c62240c43164cf89838e56ddd464ceb1ae42ce1df49a64",
@@ -9230,19 +9238,19 @@
         "expected": "04bff352a06117415d92e245dd36ea34f4d615bb0b7d6cd8c1627664947a7daf9518941e0fee587f95b4c62240c43164cf89838e56ddd464ceb1ae42ce1df49a64"
       },
       {
-        "P": "0382c9aba3a124baf987639b20621a047a6b7c121cea7f03eb6aee0d2cf34926e7",
+        "P": "0282c9aba3a124baf987639b20621a047a6b7c121cea7f03eb6aee0d2cf34926e7",
         "compress": true,
-        "expected": "0382c9aba3a124baf987639b20621a047a6b7c121cea7f03eb6aee0d2cf34926e7"
+        "expected": "0282c9aba3a124baf987639b20621a047a6b7c121cea7f03eb6aee0d2cf34926e7"
       },
       {
-        "P": "0382c9aba3a124baf987639b20621a047a6b7c121cea7f03eb6aee0d2cf34926e7",
+        "P": "0282c9aba3a124baf987639b20621a047a6b7c121cea7f03eb6aee0d2cf34926e7",
         "compress": false,
         "expected": "0482c9aba3a124baf987639b20621a047a6b7c121cea7f03eb6aee0d2cf34926e7bc7446ad7b6128265270e1cac8a4d7681b11e247635b7dd91460160da8c56065"
       },
       {
         "P": "0482c9aba3a124baf987639b20621a047a6b7c121cea7f03eb6aee0d2cf34926e7bc7446ad7b6128265270e1cac8a4d7681b11e247635b7dd91460160da8c56065",
         "compress": true,
-        "expected": "0382c9aba3a124baf987639b20621a047a6b7c121cea7f03eb6aee0d2cf34926e7"
+        "expected": "0282c9aba3a124baf987639b20621a047a6b7c121cea7f03eb6aee0d2cf34926e7"
       },
       {
         "P": "0482c9aba3a124baf987639b20621a047a6b7c121cea7f03eb6aee0d2cf34926e7bc7446ad7b6128265270e1cac8a4d7681b11e247635b7dd91460160da8c56065",
@@ -9370,19 +9378,19 @@
         "expected": "0470f1ab1647140063dba01efaf53c4e0242721e54a412ea8a45d6d077c0e98bb2b06178cc6c9211ba694321862a2b60f9dd344461550b59d56a9364ea940bbe02"
       },
       {
-        "P": "03dc74061d863c0e486bdb24b9064de48e8e6d8e9899626539e124ea12b07f3667",
+        "P": "02dc74061d863c0e486bdb24b9064de48e8e6d8e9899626539e124ea12b07f3667",
         "compress": true,
-        "expected": "03dc74061d863c0e486bdb24b9064de48e8e6d8e9899626539e124ea12b07f3667"
+        "expected": "02dc74061d863c0e486bdb24b9064de48e8e6d8e9899626539e124ea12b07f3667"
       },
       {
-        "P": "03dc74061d863c0e486bdb24b9064de48e8e6d8e9899626539e124ea12b07f3667",
+        "P": "02dc74061d863c0e486bdb24b9064de48e8e6d8e9899626539e124ea12b07f3667",
         "compress": false,
         "expected": "04dc74061d863c0e486bdb24b9064de48e8e6d8e9899626539e124ea12b07f3667163768e186b51cfaf617174c4e4fc19f79d8a827ad7969a09859116c0bbdc684"
       },
       {
         "P": "04dc74061d863c0e486bdb24b9064de48e8e6d8e9899626539e124ea12b07f3667163768e186b51cfaf617174c4e4fc19f79d8a827ad7969a09859116c0bbdc684",
         "compress": true,
-        "expected": "03dc74061d863c0e486bdb24b9064de48e8e6d8e9899626539e124ea12b07f3667"
+        "expected": "02dc74061d863c0e486bdb24b9064de48e8e6d8e9899626539e124ea12b07f3667"
       },
       {
         "P": "04dc74061d863c0e486bdb24b9064de48e8e6d8e9899626539e124ea12b07f3667163768e186b51cfaf617174c4e4fc19f79d8a827ad7969a09859116c0bbdc684",
@@ -9390,19 +9398,19 @@
         "expected": "04dc74061d863c0e486bdb24b9064de48e8e6d8e9899626539e124ea12b07f3667163768e186b51cfaf617174c4e4fc19f79d8a827ad7969a09859116c0bbdc684"
       },
       {
-        "P": "033af91366eec2f5ea6a0d8563ed9e1571b9617b05f352e249b55ac99f9a3b4089",
+        "P": "023af91366eec2f5ea6a0d8563ed9e1571b9617b05f352e249b55ac99f9a3b4089",
         "compress": true,
-        "expected": "033af91366eec2f5ea6a0d8563ed9e1571b9617b05f352e249b55ac99f9a3b4089"
+        "expected": "023af91366eec2f5ea6a0d8563ed9e1571b9617b05f352e249b55ac99f9a3b4089"
       },
       {
-        "P": "033af91366eec2f5ea6a0d8563ed9e1571b9617b05f352e249b55ac99f9a3b4089",
+        "P": "023af91366eec2f5ea6a0d8563ed9e1571b9617b05f352e249b55ac99f9a3b4089",
         "compress": false,
         "expected": "043af91366eec2f5ea6a0d8563ed9e1571b9617b05f352e249b55ac99f9a3b4089476bcef267bca93e11cdeb9650ebe9afc276b74420bf9112330ca406d826da2b"
       },
       {
         "P": "043af91366eec2f5ea6a0d8563ed9e1571b9617b05f352e249b55ac99f9a3b4089476bcef267bca93e11cdeb9650ebe9afc276b74420bf9112330ca406d826da2b",
         "compress": true,
-        "expected": "033af91366eec2f5ea6a0d8563ed9e1571b9617b05f352e249b55ac99f9a3b4089"
+        "expected": "023af91366eec2f5ea6a0d8563ed9e1571b9617b05f352e249b55ac99f9a3b4089"
       },
       {
         "P": "043af91366eec2f5ea6a0d8563ed9e1571b9617b05f352e249b55ac99f9a3b4089476bcef267bca93e11cdeb9650ebe9afc276b74420bf9112330ca406d826da2b",
@@ -9430,19 +9438,19 @@
         "expected": "044e858f26dbaa09258de8f0c7426982e4dadbba81ccb482e80815cef33560a94a6a5a107c74559f46a202cd290d1fdf18531932d4e2d48afbff61b1f523931211"
       },
       {
-        "P": "030ca31c5483cf96f70475975180b3b5834efc3a173cf104b412b2f79102dffab7",
+        "P": "020ca31c5483cf96f70475975180b3b5834efc3a173cf104b412b2f79102dffab7",
         "compress": true,
-        "expected": "030ca31c5483cf96f70475975180b3b5834efc3a173cf104b412b2f79102dffab7"
+        "expected": "020ca31c5483cf96f70475975180b3b5834efc3a173cf104b412b2f79102dffab7"
       },
       {
-        "P": "030ca31c5483cf96f70475975180b3b5834efc3a173cf104b412b2f79102dffab7",
+        "P": "020ca31c5483cf96f70475975180b3b5834efc3a173cf104b412b2f79102dffab7",
         "compress": false,
         "expected": "040ca31c5483cf96f70475975180b3b5834efc3a173cf104b412b2f79102dffab70c97a2a25cf40c347fce7fdf9b6c76f94932403042615e978b5065455bccbe1f"
       },
       {
         "P": "040ca31c5483cf96f70475975180b3b5834efc3a173cf104b412b2f79102dffab70c97a2a25cf40c347fce7fdf9b6c76f94932403042615e978b5065455bccbe1f",
         "compress": true,
-        "expected": "030ca31c5483cf96f70475975180b3b5834efc3a173cf104b412b2f79102dffab7"
+        "expected": "020ca31c5483cf96f70475975180b3b5834efc3a173cf104b412b2f79102dffab7"
       },
       {
         "P": "040ca31c5483cf96f70475975180b3b5834efc3a173cf104b412b2f79102dffab70c97a2a25cf40c347fce7fdf9b6c76f94932403042615e978b5065455bccbe1f",
@@ -9450,19 +9458,19 @@
         "expected": "040ca31c5483cf96f70475975180b3b5834efc3a173cf104b412b2f79102dffab70c97a2a25cf40c347fce7fdf9b6c76f94932403042615e978b5065455bccbe1f"
       },
       {
-        "P": "0348ddfabbf1167780f9bd85bab0ebcf95144219667fc8252576e0f62f195a803b",
+        "P": "0248ddfabbf1167780f9bd85bab0ebcf95144219667fc8252576e0f62f195a803b",
         "compress": true,
-        "expected": "0348ddfabbf1167780f9bd85bab0ebcf95144219667fc8252576e0f62f195a803b"
+        "expected": "0248ddfabbf1167780f9bd85bab0ebcf95144219667fc8252576e0f62f195a803b"
       },
       {
-        "P": "0348ddfabbf1167780f9bd85bab0ebcf95144219667fc8252576e0f62f195a803b",
+        "P": "0248ddfabbf1167780f9bd85bab0ebcf95144219667fc8252576e0f62f195a803b",
         "compress": false,
         "expected": "0448ddfabbf1167780f9bd85bab0ebcf95144219667fc8252576e0f62f195a803b4ecea8d2adc53649b5666583fae339d415c2638956dc949a5799ab9fc8b011c6"
       },
       {
         "P": "0448ddfabbf1167780f9bd85bab0ebcf95144219667fc8252576e0f62f195a803b4ecea8d2adc53649b5666583fae339d415c2638956dc949a5799ab9fc8b011c6",
         "compress": true,
-        "expected": "0348ddfabbf1167780f9bd85bab0ebcf95144219667fc8252576e0f62f195a803b"
+        "expected": "0248ddfabbf1167780f9bd85bab0ebcf95144219667fc8252576e0f62f195a803b"
       },
       {
         "P": "0448ddfabbf1167780f9bd85bab0ebcf95144219667fc8252576e0f62f195a803b4ecea8d2adc53649b5666583fae339d415c2638956dc949a5799ab9fc8b011c6",
@@ -9570,19 +9578,19 @@
         "expected": "04843036e33642b3e5a19ccb4515b9e0cb378bf489529b33e4853654750ff662f438c808a63ec1aabe076ffa2dbbac7ec837608b7de14b1b175798137309efa6a6"
       },
       {
-        "P": "0343f14ec569a98c4d75a5fc5feac198edd6756c9c667b3058849b16ce68d1d5a7",
+        "P": "0243f14ec569a98c4d75a5fc5feac198edd6756c9c667b3058849b16ce68d1d5a7",
         "compress": true,
-        "expected": "0343f14ec569a98c4d75a5fc5feac198edd6756c9c667b3058849b16ce68d1d5a7"
+        "expected": "0243f14ec569a98c4d75a5fc5feac198edd6756c9c667b3058849b16ce68d1d5a7"
       },
       {
-        "P": "0343f14ec569a98c4d75a5fc5feac198edd6756c9c667b3058849b16ce68d1d5a7",
+        "P": "0243f14ec569a98c4d75a5fc5feac198edd6756c9c667b3058849b16ce68d1d5a7",
         "compress": false,
         "expected": "0443f14ec569a98c4d75a5fc5feac198edd6756c9c667b3058849b16ce68d1d5a71c8daa22bfa03f8cf11ff113bb789c58edbd481e080c519ae8705db2cc972263"
       },
       {
         "P": "0443f14ec569a98c4d75a5fc5feac198edd6756c9c667b3058849b16ce68d1d5a71c8daa22bfa03f8cf11ff113bb789c58edbd481e080c519ae8705db2cc972263",
         "compress": true,
-        "expected": "0343f14ec569a98c4d75a5fc5feac198edd6756c9c667b3058849b16ce68d1d5a7"
+        "expected": "0243f14ec569a98c4d75a5fc5feac198edd6756c9c667b3058849b16ce68d1d5a7"
       },
       {
         "P": "0443f14ec569a98c4d75a5fc5feac198edd6756c9c667b3058849b16ce68d1d5a71c8daa22bfa03f8cf11ff113bb789c58edbd481e080c519ae8705db2cc972263",
@@ -9610,19 +9618,19 @@
         "expected": "047321e50764e5c2b5adcf95dc73c1658bd8d83596a92ac683ce630e8d78816cf67ccb440f2f6f0490e0063208d00baeae38e1dc6a88cddd597bb6193d94da9bd2"
       },
       {
-        "P": "03e14dbc3d713ab8497045e13e7b6e1696b830e823e2bfe40e83b987ff860cb3af",
+        "P": "02e14dbc3d713ab8497045e13e7b6e1696b830e823e2bfe40e83b987ff860cb3af",
         "compress": true,
-        "expected": "03e14dbc3d713ab8497045e13e7b6e1696b830e823e2bfe40e83b987ff860cb3af"
+        "expected": "02e14dbc3d713ab8497045e13e7b6e1696b830e823e2bfe40e83b987ff860cb3af"
       },
       {
-        "P": "03e14dbc3d713ab8497045e13e7b6e1696b830e823e2bfe40e83b987ff860cb3af",
+        "P": "02e14dbc3d713ab8497045e13e7b6e1696b830e823e2bfe40e83b987ff860cb3af",
         "compress": false,
         "expected": "04e14dbc3d713ab8497045e13e7b6e1696b830e823e2bfe40e83b987ff860cb3af30ab02abada28cace3480a1667277d18b5ef71f9d806a2a9bb18febbfb41580c"
       },
       {
         "P": "04e14dbc3d713ab8497045e13e7b6e1696b830e823e2bfe40e83b987ff860cb3af30ab02abada28cace3480a1667277d18b5ef71f9d806a2a9bb18febbfb41580c",
         "compress": true,
-        "expected": "03e14dbc3d713ab8497045e13e7b6e1696b830e823e2bfe40e83b987ff860cb3af"
+        "expected": "02e14dbc3d713ab8497045e13e7b6e1696b830e823e2bfe40e83b987ff860cb3af"
       },
       {
         "P": "04e14dbc3d713ab8497045e13e7b6e1696b830e823e2bfe40e83b987ff860cb3af30ab02abada28cace3480a1667277d18b5ef71f9d806a2a9bb18febbfb41580c",
@@ -9650,19 +9658,19 @@
         "expected": "04291a1734594ed5a825be67edef1e7f5cd063261150398561b6a1822e3fc813ac53df3d4c62c94b0cfb35bc5c9569093245b32bdd9668084c4e584211e2796054"
       },
       {
-        "P": "0364d144fc81ebeff3d39b0b8010e728b808e77aaa0e1ffa81769c244619f7831d",
+        "P": "0264d144fc81ebeff3d39b0b8010e728b808e77aaa0e1ffa81769c244619f7831d",
         "compress": true,
-        "expected": "0364d144fc81ebeff3d39b0b8010e728b808e77aaa0e1ffa81769c244619f7831d"
+        "expected": "0264d144fc81ebeff3d39b0b8010e728b808e77aaa0e1ffa81769c244619f7831d"
       },
       {
-        "P": "0364d144fc81ebeff3d39b0b8010e728b808e77aaa0e1ffa81769c244619f7831d",
+        "P": "0264d144fc81ebeff3d39b0b8010e728b808e77aaa0e1ffa81769c244619f7831d",
         "compress": false,
         "expected": "0464d144fc81ebeff3d39b0b8010e728b808e77aaa0e1ffa81769c244619f7831ddf04ccf4deffe1ab831c5319b90c19966157ee37025c0c8cf1130b785b29ce73"
       },
       {
         "P": "0464d144fc81ebeff3d39b0b8010e728b808e77aaa0e1ffa81769c244619f7831ddf04ccf4deffe1ab831c5319b90c19966157ee37025c0c8cf1130b785b29ce73",
         "compress": true,
-        "expected": "0364d144fc81ebeff3d39b0b8010e728b808e77aaa0e1ffa81769c244619f7831d"
+        "expected": "0264d144fc81ebeff3d39b0b8010e728b808e77aaa0e1ffa81769c244619f7831d"
       },
       {
         "P": "0464d144fc81ebeff3d39b0b8010e728b808e77aaa0e1ffa81769c244619f7831ddf04ccf4deffe1ab831c5319b90c19966157ee37025c0c8cf1130b785b29ce73",
@@ -9670,19 +9678,19 @@
         "expected": "0464d144fc81ebeff3d39b0b8010e728b808e77aaa0e1ffa81769c244619f7831ddf04ccf4deffe1ab831c5319b90c19966157ee37025c0c8cf1130b785b29ce73"
       },
       {
-        "P": "0365836b93c1d76ef94d5a5bd93b433549309358f31814f89711d280a0aa6581f5",
+        "P": "0265836b93c1d76ef94d5a5bd93b433549309358f31814f89711d280a0aa6581f5",
         "compress": true,
-        "expected": "0365836b93c1d76ef94d5a5bd93b433549309358f31814f89711d280a0aa6581f5"
+        "expected": "0265836b93c1d76ef94d5a5bd93b433549309358f31814f89711d280a0aa6581f5"
       },
       {
-        "P": "0365836b93c1d76ef94d5a5bd93b433549309358f31814f89711d280a0aa6581f5",
+        "P": "0265836b93c1d76ef94d5a5bd93b433549309358f31814f89711d280a0aa6581f5",
         "compress": false,
         "expected": "0465836b93c1d76ef94d5a5bd93b433549309358f31814f89711d280a0aa6581f51248ca119164ac5375cd0011f32b9e49f479cb7e159dad70b35f09abfd1249a1"
       },
       {
         "P": "0465836b93c1d76ef94d5a5bd93b433549309358f31814f89711d280a0aa6581f51248ca119164ac5375cd0011f32b9e49f479cb7e159dad70b35f09abfd1249a1",
         "compress": true,
-        "expected": "0365836b93c1d76ef94d5a5bd93b433549309358f31814f89711d280a0aa6581f5"
+        "expected": "0265836b93c1d76ef94d5a5bd93b433549309358f31814f89711d280a0aa6581f5"
       },
       {
         "P": "0465836b93c1d76ef94d5a5bd93b433549309358f31814f89711d280a0aa6581f51248ca119164ac5375cd0011f32b9e49f479cb7e159dad70b35f09abfd1249a1",
@@ -9710,19 +9718,19 @@
         "expected": "04fd26844a7df3cbff5146e0a4e67a14cc39c018d61eb3855a8a9561e0a3699e2cbd36787d4382dfaf37193b5159b252393c07058124558ada46799835fcc39d33"
       },
       {
-        "P": "03ca7628d2a503d8cf40c2a71dff519e23c964ef90d5da06387e66a2bd149f81d3",
+        "P": "02ca7628d2a503d8cf40c2a71dff519e23c964ef90d5da06387e66a2bd149f81d3",
         "compress": true,
-        "expected": "03ca7628d2a503d8cf40c2a71dff519e23c964ef90d5da06387e66a2bd149f81d3"
+        "expected": "02ca7628d2a503d8cf40c2a71dff519e23c964ef90d5da06387e66a2bd149f81d3"
       },
       {
-        "P": "03ca7628d2a503d8cf40c2a71dff519e23c964ef90d5da06387e66a2bd149f81d3",
+        "P": "02ca7628d2a503d8cf40c2a71dff519e23c964ef90d5da06387e66a2bd149f81d3",
         "compress": false,
         "expected": "04ca7628d2a503d8cf40c2a71dff519e23c964ef90d5da06387e66a2bd149f81d35681644528f6b4029e323d1f7348f62388c29720c1384fb907b747a90e786ec4"
       },
       {
         "P": "04ca7628d2a503d8cf40c2a71dff519e23c964ef90d5da06387e66a2bd149f81d35681644528f6b4029e323d1f7348f62388c29720c1384fb907b747a90e786ec4",
         "compress": true,
-        "expected": "03ca7628d2a503d8cf40c2a71dff519e23c964ef90d5da06387e66a2bd149f81d3"
+        "expected": "02ca7628d2a503d8cf40c2a71dff519e23c964ef90d5da06387e66a2bd149f81d3"
       },
       {
         "P": "04ca7628d2a503d8cf40c2a71dff519e23c964ef90d5da06387e66a2bd149f81d35681644528f6b4029e323d1f7348f62388c29720c1384fb907b747a90e786ec4",
@@ -9750,19 +9758,19 @@
         "expected": "04f5bceb92352c6d0fd6dbe14e16af7fbbbacafea89c0579a98b1db997a97a45305bc1709f58ad9104034a47ed561b34597b6ad9cac86d601bcb566199b8abaa11"
       },
       {
-        "P": "03e9785e6d9b38862fa0e54fc644d5ff2e02f62e84e1c505df516508a770388e4f",
+        "P": "02e9785e6d9b38862fa0e54fc644d5ff2e02f62e84e1c505df516508a770388e4f",
         "compress": true,
-        "expected": "03e9785e6d9b38862fa0e54fc644d5ff2e02f62e84e1c505df516508a770388e4f"
+        "expected": "02e9785e6d9b38862fa0e54fc644d5ff2e02f62e84e1c505df516508a770388e4f"
       },
       {
-        "P": "03e9785e6d9b38862fa0e54fc644d5ff2e02f62e84e1c505df516508a770388e4f",
+        "P": "02e9785e6d9b38862fa0e54fc644d5ff2e02f62e84e1c505df516508a770388e4f",
         "compress": false,
         "expected": "04e9785e6d9b38862fa0e54fc644d5ff2e02f62e84e1c505df516508a770388e4f6ccdaefbe07d8a61358817b63648a354627c7c62e6468a94ea2b29002736111f"
       },
       {
         "P": "04e9785e6d9b38862fa0e54fc644d5ff2e02f62e84e1c505df516508a770388e4f6ccdaefbe07d8a61358817b63648a354627c7c62e6468a94ea2b29002736111f",
         "compress": true,
-        "expected": "03e9785e6d9b38862fa0e54fc644d5ff2e02f62e84e1c505df516508a770388e4f"
+        "expected": "02e9785e6d9b38862fa0e54fc644d5ff2e02f62e84e1c505df516508a770388e4f"
       },
       {
         "P": "04e9785e6d9b38862fa0e54fc644d5ff2e02f62e84e1c505df516508a770388e4f6ccdaefbe07d8a61358817b63648a354627c7c62e6468a94ea2b29002736111f",
@@ -9830,19 +9838,19 @@
         "expected": "0412c08e60f4a89c843396bd4e6c7f03d1adcb138b76340244b55c31be3caceb3e93fdedf140258deb492b4e99babe096c8abc95bcfd4cd36a5f37c43e67e80e52"
       },
       {
-        "P": "03294fc3ea8f610d08910dddba66b891addcfac185ec9109b78679ae4e19ee6b07",
+        "P": "02294fc3ea8f610d08910dddba66b891addcfac185ec9109b78679ae4e19ee6b07",
         "compress": true,
-        "expected": "03294fc3ea8f610d08910dddba66b891addcfac185ec9109b78679ae4e19ee6b07"
+        "expected": "02294fc3ea8f610d08910dddba66b891addcfac185ec9109b78679ae4e19ee6b07"
       },
       {
-        "P": "03294fc3ea8f610d08910dddba66b891addcfac185ec9109b78679ae4e19ee6b07",
+        "P": "02294fc3ea8f610d08910dddba66b891addcfac185ec9109b78679ae4e19ee6b07",
         "compress": false,
         "expected": "04294fc3ea8f610d08910dddba66b891addcfac185ec9109b78679ae4e19ee6b0796ef6b02a328003099bd262f110a409a87f8f337e8bbd517a19035cceb9ab94c"
       },
       {
         "P": "04294fc3ea8f610d08910dddba66b891addcfac185ec9109b78679ae4e19ee6b0796ef6b02a328003099bd262f110a409a87f8f337e8bbd517a19035cceb9ab94c",
         "compress": true,
-        "expected": "03294fc3ea8f610d08910dddba66b891addcfac185ec9109b78679ae4e19ee6b07"
+        "expected": "02294fc3ea8f610d08910dddba66b891addcfac185ec9109b78679ae4e19ee6b07"
       },
       {
         "P": "04294fc3ea8f610d08910dddba66b891addcfac185ec9109b78679ae4e19ee6b0796ef6b02a328003099bd262f110a409a87f8f337e8bbd517a19035cceb9ab94c",
@@ -9870,19 +9878,19 @@
         "expected": "04313ba6d136fbd5f0a303dc1eddfca7719a15e9c8f7f2d25f3efd22483b6740c0349671825172fff1d83e126a10b8814c56e176c073c09fe58ebb2d39a3cb8676"
       },
       {
-        "P": "037efb6e17707d68f3448850c744bd466b51c4013e1f9190c7dd8184ba74f9fdcd",
+        "P": "027efb6e17707d68f3448850c744bd466b51c4013e1f9190c7dd8184ba74f9fdcd",
         "compress": true,
-        "expected": "037efb6e17707d68f3448850c744bd466b51c4013e1f9190c7dd8184ba74f9fdcd"
+        "expected": "027efb6e17707d68f3448850c744bd466b51c4013e1f9190c7dd8184ba74f9fdcd"
       },
       {
-        "P": "037efb6e17707d68f3448850c744bd466b51c4013e1f9190c7dd8184ba74f9fdcd",
+        "P": "027efb6e17707d68f3448850c744bd466b51c4013e1f9190c7dd8184ba74f9fdcd",
         "compress": false,
         "expected": "047efb6e17707d68f3448850c744bd466b51c4013e1f9190c7dd8184ba74f9fdcdca8494acca01e5baadfbed8b07e299f115620d457034e9c3f410ae253573213a"
       },
       {
         "P": "047efb6e17707d68f3448850c744bd466b51c4013e1f9190c7dd8184ba74f9fdcdca8494acca01e5baadfbed8b07e299f115620d457034e9c3f410ae253573213a",
         "compress": true,
-        "expected": "037efb6e17707d68f3448850c744bd466b51c4013e1f9190c7dd8184ba74f9fdcd"
+        "expected": "027efb6e17707d68f3448850c744bd466b51c4013e1f9190c7dd8184ba74f9fdcd"
       },
       {
         "P": "047efb6e17707d68f3448850c744bd466b51c4013e1f9190c7dd8184ba74f9fdcdca8494acca01e5baadfbed8b07e299f115620d457034e9c3f410ae253573213a",
@@ -9930,19 +9938,19 @@
         "expected": "04028a38699f7c5893bcb259814702c5ac2c1e6c767a265dd4a8126922b863bc00a31ebe6ac949ebe80a4106c8522c44cbed8ff65db1ef2ba9997093a9790186a9"
       },
       {
-        "P": "0380264097d536130b9bb42988bb9c9aedc140b86ab72d5d38fade31d9a4171dc9",
+        "P": "0280264097d536130b9bb42988bb9c9aedc140b86ab72d5d38fade31d9a4171dc9",
         "compress": true,
-        "expected": "0380264097d536130b9bb42988bb9c9aedc140b86ab72d5d38fade31d9a4171dc9"
+        "expected": "0280264097d536130b9bb42988bb9c9aedc140b86ab72d5d38fade31d9a4171dc9"
       },
       {
-        "P": "0380264097d536130b9bb42988bb9c9aedc140b86ab72d5d38fade31d9a4171dc9",
+        "P": "0280264097d536130b9bb42988bb9c9aedc140b86ab72d5d38fade31d9a4171dc9",
         "compress": false,
         "expected": "0480264097d536130b9bb42988bb9c9aedc140b86ab72d5d38fade31d9a4171dc9211051bbc80364082f92662ae100c22122dde45403cd933f5710bc89d40918ee"
       },
       {
         "P": "0480264097d536130b9bb42988bb9c9aedc140b86ab72d5d38fade31d9a4171dc9211051bbc80364082f92662ae100c22122dde45403cd933f5710bc89d40918ee",
         "compress": true,
-        "expected": "0380264097d536130b9bb42988bb9c9aedc140b86ab72d5d38fade31d9a4171dc9"
+        "expected": "0280264097d536130b9bb42988bb9c9aedc140b86ab72d5d38fade31d9a4171dc9"
       },
       {
         "P": "0480264097d536130b9bb42988bb9c9aedc140b86ab72d5d38fade31d9a4171dc9211051bbc80364082f92662ae100c22122dde45403cd933f5710bc89d40918ee",
@@ -9970,19 +9978,19 @@
         "expected": "04ff17a8689d9e7a031a5f970476744533ace2579efffa2ce3e148b41205a159ee4466c3d933bbd827f69017afa1384a009e588823265359440079365941502b57"
       },
       {
-        "P": "034bc3263ff0ae28687e030bd9327b1a801ad5837ff1da6b9e49c9bac8fee26dc5",
+        "P": "024bc3263ff0ae28687e030bd9327b1a801ad5837ff1da6b9e49c9bac8fee26dc5",
         "compress": true,
-        "expected": "034bc3263ff0ae28687e030bd9327b1a801ad5837ff1da6b9e49c9bac8fee26dc5"
+        "expected": "024bc3263ff0ae28687e030bd9327b1a801ad5837ff1da6b9e49c9bac8fee26dc5"
       },
       {
-        "P": "034bc3263ff0ae28687e030bd9327b1a801ad5837ff1da6b9e49c9bac8fee26dc5",
+        "P": "024bc3263ff0ae28687e030bd9327b1a801ad5837ff1da6b9e49c9bac8fee26dc5",
         "compress": false,
         "expected": "044bc3263ff0ae28687e030bd9327b1a801ad5837ff1da6b9e49c9bac8fee26dc58fb919f6eea5df25a18b74a4cec8415c76bd0b9e31e3605e5a7204b2fe439024"
       },
       {
         "P": "044bc3263ff0ae28687e030bd9327b1a801ad5837ff1da6b9e49c9bac8fee26dc58fb919f6eea5df25a18b74a4cec8415c76bd0b9e31e3605e5a7204b2fe439024",
         "compress": true,
-        "expected": "034bc3263ff0ae28687e030bd9327b1a801ad5837ff1da6b9e49c9bac8fee26dc5"
+        "expected": "024bc3263ff0ae28687e030bd9327b1a801ad5837ff1da6b9e49c9bac8fee26dc5"
       },
       {
         "P": "044bc3263ff0ae28687e030bd9327b1a801ad5837ff1da6b9e49c9bac8fee26dc58fb919f6eea5df25a18b74a4cec8415c76bd0b9e31e3605e5a7204b2fe439024",
@@ -9990,19 +9998,19 @@
         "expected": "044bc3263ff0ae28687e030bd9327b1a801ad5837ff1da6b9e49c9bac8fee26dc58fb919f6eea5df25a18b74a4cec8415c76bd0b9e31e3605e5a7204b2fe439024"
       },
       {
-        "P": "036e56e86cc9a62578039da51442418de92c24580996b91458b6e81ec100abe28b",
+        "P": "026e56e86cc9a62578039da51442418de92c24580996b91458b6e81ec100abe28b",
         "compress": true,
-        "expected": "036e56e86cc9a62578039da51442418de92c24580996b91458b6e81ec100abe28b"
+        "expected": "026e56e86cc9a62578039da51442418de92c24580996b91458b6e81ec100abe28b"
       },
       {
-        "P": "036e56e86cc9a62578039da51442418de92c24580996b91458b6e81ec100abe28b",
+        "P": "026e56e86cc9a62578039da51442418de92c24580996b91458b6e81ec100abe28b",
         "compress": false,
         "expected": "046e56e86cc9a62578039da51442418de92c24580996b91458b6e81ec100abe28bcac073477cd27acbf12663cc6ac5ba46ab29feaa7924d05fa5f40bb4b7f7e608"
       },
       {
         "P": "046e56e86cc9a62578039da51442418de92c24580996b91458b6e81ec100abe28bcac073477cd27acbf12663cc6ac5ba46ab29feaa7924d05fa5f40bb4b7f7e608",
         "compress": true,
-        "expected": "036e56e86cc9a62578039da51442418de92c24580996b91458b6e81ec100abe28b"
+        "expected": "026e56e86cc9a62578039da51442418de92c24580996b91458b6e81ec100abe28b"
       },
       {
         "P": "046e56e86cc9a62578039da51442418de92c24580996b91458b6e81ec100abe28bcac073477cd27acbf12663cc6ac5ba46ab29feaa7924d05fa5f40bb4b7f7e608",
@@ -10050,19 +10058,19 @@
         "expected": "04187540819f763de7782939a71255ff97712a25c83e2a5e49c5725dcb6914a1b87abdbcc24e2524fe17ccf86ae57aedf5ef6fe08e336cf9498e39a6cfe1387217"
       },
       {
-        "P": "03d5747c593533e620dc7b576febd13fb758525670eeb42006166fcfbaf273bb41",
+        "P": "02d5747c593533e620dc7b576febd13fb758525670eeb42006166fcfbaf273bb41",
         "compress": true,
-        "expected": "03d5747c593533e620dc7b576febd13fb758525670eeb42006166fcfbaf273bb41"
+        "expected": "02d5747c593533e620dc7b576febd13fb758525670eeb42006166fcfbaf273bb41"
       },
       {
-        "P": "03d5747c593533e620dc7b576febd13fb758525670eeb42006166fcfbaf273bb41",
+        "P": "02d5747c593533e620dc7b576febd13fb758525670eeb42006166fcfbaf273bb41",
         "compress": false,
         "expected": "04d5747c593533e620dc7b576febd13fb758525670eeb42006166fcfbaf273bb416f32cb9ea9d5403e4bdb5ca38037e169e95004324c0786c5ab5ee32050cc0213"
       },
       {
         "P": "04d5747c593533e620dc7b576febd13fb758525670eeb42006166fcfbaf273bb416f32cb9ea9d5403e4bdb5ca38037e169e95004324c0786c5ab5ee32050cc0213",
         "compress": true,
-        "expected": "03d5747c593533e620dc7b576febd13fb758525670eeb42006166fcfbaf273bb41"
+        "expected": "02d5747c593533e620dc7b576febd13fb758525670eeb42006166fcfbaf273bb41"
       },
       {
         "P": "04d5747c593533e620dc7b576febd13fb758525670eeb42006166fcfbaf273bb416f32cb9ea9d5403e4bdb5ca38037e169e95004324c0786c5ab5ee32050cc0213",
@@ -10213,30 +10221,6 @@
       },
       {
         "description": "Bad X/Y coordinate (== 0)",
-        "P": "0200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-        "Q": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
-        "exception": "Expected Point"
-      },
-      {
-        "description": "Bad X/Y coordinate (== 0)",
-        "P": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
-        "Q": "0200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-        "exception": "Expected Point"
-      },
-      {
-        "description": "Bad X/Y coordinate (== 0)",
-        "P": "0300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-        "Q": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
-        "exception": "Expected Point"
-      },
-      {
-        "description": "Bad X/Y coordinate (== 0)",
-        "P": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
-        "Q": "0300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-        "exception": "Expected Point"
-      },
-      {
-        "description": "Bad X/Y coordinate (== 0)",
         "P": "0400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
         "Q": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         "exception": "Expected Point"
@@ -10248,51 +10232,51 @@
         "exception": "Expected Point"
       },
       {
-        "description": "Bad X coordinate (>= G)",
-        "P": "04fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd03641410000000000000000000000000000000000000000000000000000000000000001",
+        "description": "Bad X coordinate (== P)",
+        "P": "04fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f0000000000000000000000000000000000000000000000000000000000000001",
         "Q": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         "exception": "Expected Point"
       },
       {
-        "description": "Bad X coordinate (>= G)",
+        "description": "Bad X coordinate (== P)",
         "P": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
-        "Q": "04fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd03641410000000000000000000000000000000000000000000000000000000000000001",
+        "Q": "04fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f0000000000000000000000000000000000000000000000000000000000000001",
         "exception": "Expected Point"
       },
       {
-        "description": "Bad Y coordinate (>= G)",
-        "P": "040000000000000000000000000000000000000000000000000000000000000001fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141",
+        "description": "Bad Y coordinate (== P)",
+        "P": "040000000000000000000000000000000000000000000000000000000000000001fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f",
         "Q": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         "exception": "Expected Point"
       },
       {
-        "description": "Bad Y coordinate (>= G)",
+        "description": "Bad Y coordinate (== P)",
         "P": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
-        "Q": "040000000000000000000000000000000000000000000000000000000000000001fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141",
+        "Q": "040000000000000000000000000000000000000000000000000000000000000001fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f",
         "exception": "Expected Point"
       },
       {
-        "description": "Bad X coordinate (>= G)",
-        "P": "04fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd03641420000000000000000000000000000000000000000000000000000000000000001",
+        "description": "Bad X coordinate (> P)",
+        "P": "04fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc300000000000000000000000000000000000000000000000000000000000000001",
         "Q": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         "exception": "Expected Point"
       },
       {
-        "description": "Bad X coordinate (>= G)",
+        "description": "Bad X coordinate (> P)",
         "P": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
-        "Q": "04fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd03641420000000000000000000000000000000000000000000000000000000000000001",
+        "Q": "04fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc300000000000000000000000000000000000000000000000000000000000000001",
         "exception": "Expected Point"
       },
       {
-        "description": "Bad Y coordinate (>= G)",
-        "P": "040000000000000000000000000000000000000000000000000000000000000001fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364142",
+        "description": "Bad Y coordinate (> P)",
+        "P": "040000000000000000000000000000000000000000000000000000000000000001fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc30",
         "Q": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         "exception": "Expected Point"
       },
       {
-        "description": "Bad Y coordinate (>= G)",
+        "description": "Bad Y coordinate (> P)",
         "P": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
-        "Q": "040000000000000000000000000000000000000000000000000000000000000001fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364142",
+        "Q": "040000000000000000000000000000000000000000000000000000000000000001fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc30",
         "exception": "Expected Point"
       },
       {
@@ -10344,27 +10328,51 @@
         "exception": "Expected Point"
       },
       {
-        "description": "Bad X coordinate (>= G)",
-        "P": "03fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141",
+        "description": "Bad X coordinate (== 0)",
+        "P": "030000000000000000000000000000000000000000000000000000000000000000",
         "Q": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         "exception": "Expected Point"
       },
       {
-        "description": "Bad X coordinate (>= G)",
+        "description": "Bad X coordinate (== 0)",
         "P": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
-        "Q": "03fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141",
+        "Q": "030000000000000000000000000000000000000000000000000000000000000000",
         "exception": "Expected Point"
       },
       {
-        "description": "Bad X coordinate (>= G)",
-        "P": "02fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364142",
+        "description": "Bad X coordinate (== P)",
+        "P": "02fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f",
         "Q": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         "exception": "Expected Point"
       },
       {
-        "description": "Bad X coordinate (>= G)",
+        "description": "Bad X coordinate (== P)",
         "P": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
-        "Q": "02fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364142",
+        "Q": "02fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad X coordinate (== P)",
+        "P": "03fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f",
+        "Q": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad X coordinate (== P)",
+        "P": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+        "Q": "03fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad X coordinate (> P)",
+        "P": "03fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc30",
+        "Q": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad X coordinate (> P)",
+        "P": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+        "Q": "03fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc30",
         "exception": "Expected Point"
       }
     ],
@@ -10407,43 +10415,31 @@
       },
       {
         "description": "Bad X/Y coordinate (== 0)",
-        "P": "0200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-        "d": "0000000000000000000000000000000000000000000000000000000000000001",
-        "exception": "Expected Point"
-      },
-      {
-        "description": "Bad X/Y coordinate (== 0)",
-        "P": "0300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-        "d": "0000000000000000000000000000000000000000000000000000000000000001",
-        "exception": "Expected Point"
-      },
-      {
-        "description": "Bad X/Y coordinate (== 0)",
         "P": "0400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
         "d": "0000000000000000000000000000000000000000000000000000000000000001",
         "exception": "Expected Point"
       },
       {
-        "description": "Bad X coordinate (>= G)",
-        "P": "04fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd03641410000000000000000000000000000000000000000000000000000000000000001",
+        "description": "Bad X coordinate (== P)",
+        "P": "04fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f0000000000000000000000000000000000000000000000000000000000000001",
         "d": "0000000000000000000000000000000000000000000000000000000000000001",
         "exception": "Expected Point"
       },
       {
-        "description": "Bad Y coordinate (>= G)",
-        "P": "040000000000000000000000000000000000000000000000000000000000000001fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141",
+        "description": "Bad Y coordinate (== P)",
+        "P": "040000000000000000000000000000000000000000000000000000000000000001fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f",
         "d": "0000000000000000000000000000000000000000000000000000000000000001",
         "exception": "Expected Point"
       },
       {
-        "description": "Bad X coordinate (>= G)",
-        "P": "04fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd03641420000000000000000000000000000000000000000000000000000000000000001",
+        "description": "Bad X coordinate (> P)",
+        "P": "04fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc300000000000000000000000000000000000000000000000000000000000000001",
         "d": "0000000000000000000000000000000000000000000000000000000000000001",
         "exception": "Expected Point"
       },
       {
-        "description": "Bad Y coordinate (>= G)",
-        "P": "040000000000000000000000000000000000000000000000000000000000000001fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364142",
+        "description": "Bad Y coordinate (> P)",
+        "P": "040000000000000000000000000000000000000000000000000000000000000001fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc30",
         "d": "0000000000000000000000000000000000000000000000000000000000000001",
         "exception": "Expected Point"
       },
@@ -10472,14 +10468,26 @@
         "exception": "Expected Point"
       },
       {
-        "description": "Bad X coordinate (>= G)",
-        "P": "03fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141",
+        "description": "Bad X coordinate (== 0)",
+        "P": "030000000000000000000000000000000000000000000000000000000000000000",
         "d": "0000000000000000000000000000000000000000000000000000000000000001",
         "exception": "Expected Point"
       },
       {
-        "description": "Bad X coordinate (>= G)",
-        "P": "02fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364142",
+        "description": "Bad X coordinate (== P)",
+        "P": "02fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f",
+        "d": "0000000000000000000000000000000000000000000000000000000000000001",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad X coordinate (== P)",
+        "P": "03fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f",
+        "d": "0000000000000000000000000000000000000000000000000000000000000001",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad X coordinate (> P)",
+        "P": "03fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc30",
         "d": "0000000000000000000000000000000000000000000000000000000000000001",
         "exception": "Expected Point"
       },
@@ -10541,43 +10549,31 @@
       },
       {
         "description": "Bad X/Y coordinate (== 0)",
-        "P": "0200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-        "compress": true,
-        "exception": "Expected Point"
-      },
-      {
-        "description": "Bad X/Y coordinate (== 0)",
-        "P": "0300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-        "compress": true,
-        "exception": "Expected Point"
-      },
-      {
-        "description": "Bad X/Y coordinate (== 0)",
         "P": "0400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
         "compress": true,
         "exception": "Expected Point"
       },
       {
-        "description": "Bad X coordinate (>= G)",
-        "P": "04fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd03641410000000000000000000000000000000000000000000000000000000000000001",
+        "description": "Bad X coordinate (== P)",
+        "P": "04fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f0000000000000000000000000000000000000000000000000000000000000001",
         "compress": true,
         "exception": "Expected Point"
       },
       {
-        "description": "Bad Y coordinate (>= G)",
-        "P": "040000000000000000000000000000000000000000000000000000000000000001fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141",
+        "description": "Bad Y coordinate (== P)",
+        "P": "040000000000000000000000000000000000000000000000000000000000000001fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f",
         "compress": true,
         "exception": "Expected Point"
       },
       {
-        "description": "Bad X coordinate (>= G)",
-        "P": "04fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd03641420000000000000000000000000000000000000000000000000000000000000001",
+        "description": "Bad X coordinate (> P)",
+        "P": "04fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc300000000000000000000000000000000000000000000000000000000000000001",
         "compress": true,
         "exception": "Expected Point"
       },
       {
-        "description": "Bad Y coordinate (>= G)",
-        "P": "040000000000000000000000000000000000000000000000000000000000000001fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364142",
+        "description": "Bad Y coordinate (> P)",
+        "P": "040000000000000000000000000000000000000000000000000000000000000001fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc30",
         "compress": true,
         "exception": "Expected Point"
       },
@@ -10606,14 +10602,26 @@
         "exception": "Expected Point"
       },
       {
-        "description": "Bad X coordinate (>= G)",
-        "P": "03fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141",
+        "description": "Bad X coordinate (== 0)",
+        "P": "030000000000000000000000000000000000000000000000000000000000000000",
         "compress": true,
         "exception": "Expected Point"
       },
       {
-        "description": "Bad X coordinate (>= G)",
-        "P": "02fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364142",
+        "description": "Bad X coordinate (== P)",
+        "P": "02fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f",
+        "compress": true,
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad X coordinate (== P)",
+        "P": "03fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f",
+        "compress": true,
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad X coordinate (> P)",
+        "P": "03fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc30",
         "compress": true,
         "exception": "Expected Point"
       }

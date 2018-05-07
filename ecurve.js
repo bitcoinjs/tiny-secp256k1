@@ -87,7 +87,7 @@ function pointCompress (p, compressed) {
   if (!isPoint(p)) throw new TypeError(THROW_BAD_POINT)
 
   let pp = ecurve.Point.decodeFrom(secp256k1, p)
-  if (secp256k1.isInfinity(p)) throw new TypeError(THROW_BAD_POINT)
+  if (secp256k1.isInfinity(pp)) throw new TypeError(THROW_BAD_POINT)
 
   return pp.getEncoded(compressed)
 }

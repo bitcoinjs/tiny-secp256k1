@@ -161,8 +161,13 @@ uint8_t_vec _pointFlip (const uint8_t_vec& p) {
 
 	secp256k1_pubkey public_key;
 	bool ok = secp256k1_ec_pubkey_parse(ctx, &public_key, p.data(), p.size());
-	const auto r = _ec_pubkey_to_vec<uint8_t_65>(public_key, ok);
 	assert(ok);
+
+	uint8_t_vec r;
+	if (p.size() == 33) r = _ec_pubkey_to_vec<uint8_t_65>(public_key, ok);
+	else r = _ec_pubkey_to_vec<uint8_t_33>(public_key, ok);
+	assert(ok);
+
 	return std::move(r);
 }
 
@@ -186,8 +191,7 @@ auto _pointFromUInt32 (const uint32_t i, bool& ok) {
 	return _pointFromScalar<A>(scalarFromUInt32(i), ok);
 }
 
-auto _pointFromX (const uint8_t_32 x, uint8_t prefix = 0x00) {
-	if (prefix == 0x00) prefix = x.back() % 2 == 0 ? 0x02 : 0x03;
+auto _pointFromX (const uint8_t_32 x, uint8_t prefix = 0x02) {
 	uint8_t_vec p = { prefix };
 	p.reserve(33);
 	for (auto i : x) p.emplace_back(i);
@@ -267,6 +271,9 @@ const auto GROUP_ORDER_OVER_1 = scalarFromHex("fffffffffffffffffffffffffffffffeb
 const auto UINT256_MAX = scalarFromHex("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 const auto G = pointFromHex("0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798");
 const auto GC = pointFromHex("0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8");
+const auto P_LESS_1 = scalarFromHex("fffffffffffffffffffffffffffffffffffffffffffffffffffffffeeffffc2e");
+const auto P = scalarFromHex("fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
+const auto P_OVER_1 = scalarFromHex("fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc30");
 
 template <typename A> struct B { A a; std::string desc = ""; };
 
@@ -300,8 +307,10 @@ std::vector<B<uint8_t_vec>> generateBadPoints () {
 		{ _pointFromX(ONE, 0x04), "Bad sequence prefix" },
 		{ _pointFromX(ONE, 0x05), "Bad sequence prefix" },
 		{ _pointFromX(ZERO), "Bad X coordinate (== 0)" },
-		{ _pointFromX(GROUP_ORDER), "Bad X coordinate (>= G)" },
-		{ _pointFromX(GROUP_ORDER_OVER_1), "Bad X coordinate (>= G)" },
+		{ _pointFromX(ZERO, 0x03), "Bad X coordinate (== 0)" },
+		{ _pointFromX(P), "Bad X coordinate (== P)" },
+		{ _pointFromX(P, 0x03), "Bad X coordinate (== P)" },
+		{ _pointFromX(P_OVER_1, 0x03), "Bad X coordinate (> P)" },
 	};
 }
 
@@ -314,13 +323,11 @@ std::vector<B<uint8_t_vec>> generateBadPoints<uint8_t_65> () {
 		{ _pointFromXY(ONE, ONE, 0x05), "Bad sequence prefix" },
 		{ _pointFromXY(ZERO, ONE), "Bad X coordinate (== 0)" },
 		{ _pointFromXY(ONE, ZERO), "Bad Y coordinate (== 0)" },
-		{ _pointFromXY(ZERO, ZERO, 0x02), "Bad X/Y coordinate (== 0)" },
-		{ _pointFromXY(ZERO, ZERO, 0x03), "Bad X/Y coordinate (== 0)" },
 		{ _pointFromXY(ZERO, ZERO, 0x04), "Bad X/Y coordinate (== 0)" },
-		{ _pointFromXY(GROUP_ORDER, ONE), "Bad X coordinate (>= G)" },
-		{ _pointFromXY(ONE, GROUP_ORDER), "Bad Y coordinate (>= G)" },
-		{ _pointFromXY(GROUP_ORDER_OVER_1, ONE), "Bad X coordinate (>= G)" },
-		{ _pointFromXY(ONE, GROUP_ORDER_OVER_1), "Bad Y coordinate (>= G)" }
+		{ _pointFromXY(P, ONE), "Bad X coordinate (== P)" },
+		{ _pointFromXY(ONE, P), "Bad Y coordinate (== P)" },
+		{ _pointFromXY(P_OVER_1, ONE), "Bad X coordinate (> P)" },
+		{ _pointFromXY(ONE, P_OVER_1), "Bad Y coordinate (> P)" },
 	};
 }
 

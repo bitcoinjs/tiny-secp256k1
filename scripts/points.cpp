@@ -20,13 +20,13 @@ void test_ec_combine (B& pa, C& pas, D& pfs) {
 		assert(ok);
 
 		// dG + ...G
-		const auto P = _pointAdd<A>(sumQ, Q, ok);
+		const auto V = _pointAdd<A>(sumQ, Q, ok);
 		assert(ok);
 
 		// (d + ...)G
 		const auto U = _pointAddScalar<A>(sumQ, d, ok);
 		assert(ok);
-		assert(P == U);
+		assert(V == U);
 
 		// (d + ...)G
 		sum = _privAdd(sum, d, ok);
@@ -34,13 +34,13 @@ void test_ec_combine (B& pa, C& pas, D& pfs) {
 
 		const auto R = _pointFromScalar<A>(sum, ok);
 		assert(ok);
-		assert(P == R);
+		assert(V == R);
 
-		pa.push_back({ sumQ, Q, P });
-		pas.push_back({ sumQ, d, P });
-		pfs.push_back({ sum, P });
+		pa.push_back({ sumQ, Q, V });
+		pas.push_back({ sumQ, d, V });
+		pfs.push_back({ sum, V });
 
-		sumQ = P;
+		sumQ = V;
 	}
 }
 
@@ -70,10 +70,10 @@ auto generate () {
 		{ G, true },
 		{ G_ONE, true },
 		{ G_TWO, true },
-		{ G_THREE, true }
+		{ G_THREE, true },
+		{ _pointFromX(P_LESS_1), true }
 	};
 	const auto _ip = ip; // prevent trashing ip while adding
-
 	for (auto& x : _ip) ip.push_back({ _pointFlip(x.a), x.e, x.desc });
 	for (const auto x : BAD_POINTS) ip.push_back({ x.a, false, x.desc });
 	for (const auto x : BAD_POINTS_C) ip.push_back({ x.a, false, x.desc });

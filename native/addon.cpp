@@ -53,8 +53,9 @@ namespace {
 		return secp256k1_ec_pubkey_parse(secp256k1ctx, &pubkey, asDataPointer(x), node::Buffer::Length(x)) != 0;
 	}
 
-	bool __isPointCompressed (const secp256k1_pubkey& pubkey) {
-		return pubkey.data[0] != SECP256K1_TAG_PUBKEY_UNCOMPRESSED;
+	template <typename A>
+	bool __isPointCompressed (const A& x) {
+		return node::Buffer::Length(x) == 33;
 	}
 
 	template <typename T>
@@ -71,9 +72,16 @@ namespace {
 		return asBuffer(output, output_length);
 	}
 
+	template <size_t index, typename I, typename A>
+	unsigned int assumeCompression (const I& info, const A& p) {
+		if (info.Length() <= index) return __isPointCompressed(p) ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED;
+		if (info[index]->IsUndefined()) return SECP256K1_EC_COMPRESSED;
+		return info[index]->BooleanValue() ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED;
+	}
+
 	template <size_t index, typename I>
-	unsigned int assumeCompression (const I& info, const secp256k1_pubkey& pubkey) {
-		if (info.Length() <= index) return __isPointCompressed(pubkey) ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED;
+	unsigned int assumeCompression (const I& info) {
+		if (info.Length() <= index) return SECP256K1_EC_COMPRESSED;
 		if (info[index]->IsUndefined()) return SECP256K1_EC_COMPRESSED;
 		return info[index]->BooleanValue() ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED;
 	}
@@ -100,7 +108,7 @@ NAN_METHOD(eccIsPointCompressed) {
 	secp256k1_pubkey public_key;
 	if (!isPoint(p, public_key)) return THROW_BAD_POINT;
 
-	return RETURNV(__isPointCompressed(public_key));
+	return RETURNV(__isPointCompressed(p));
 }
 
 // returns Bool
@@ -128,7 +136,7 @@ NAN_METHOD(eccPointAdd) {
 	secp256k1_pubkey p;
 	if (secp256k1_ec_pubkey_combine(secp256k1ctx, &p, points, 2) == 0) return RETURNV(Nan::Null());
 
-	const auto flags = assumeCompression<2>(info, a);
+	const auto flags = assumeCompression<2>(info, pA);
 	return RETURNV(pointAsBuffer(p, flags));
 }
 
@@ -146,7 +154,7 @@ NAN_METHOD(eccPointAddScalar) {
 
 	if (secp256k1_ec_pubkey_tweak_add(secp256k1ctx, &public_key, asDataPointer(tweak)) == 0) return RETURNV(Nan::Null());
 
-	const auto flags = assumeCompression<2>(info, public_key);
+	const auto flags = assumeCompression<2>(info, p);
 	return RETURNV(pointAsBuffer(public_key, flags));
 }
 
@@ -160,7 +168,7 @@ NAN_METHOD(eccPointCompress) {
 	secp256k1_pubkey public_key;
 	if (!isPoint(p, public_key)) return THROW_BAD_POINT;
 
-	const auto flags = assumeCompression<1>(info, public_key);
+	const auto flags = assumeCompression<1>(info, p);
 	return RETURNV(pointAsBuffer(public_key, flags));
 }
 
@@ -175,7 +183,7 @@ NAN_METHOD(eccPointFromScalar) {
 	secp256k1_pubkey public_key;
 	if (secp256k1_ec_pubkey_create(secp256k1ctx, &public_key, asDataPointer(d)) == 0) return RETURNV(Nan::Null());
 
-	const auto flags = assumeCompression<1>(info, public_key);
+	const auto flags = assumeCompression<1>(info);
 	return RETURNV(pointAsBuffer(public_key, flags));
 }
 
