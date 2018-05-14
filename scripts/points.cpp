@@ -72,7 +72,7 @@ auto generate () {
 		{ G_ONE, true },
 		{ G_TWO, true },
 		{ G_THREE, true },
-		{ _pointFromX(P_LESS_1), true, "X == P - 1" }
+		{ _pointFromX(P_LESS_1, 0x02), true, "X == P - 1" }
 	};
 	const auto _ip = ip; // prevent trashing ip while adding
 	for (auto& x : _ip) ip.push_back({ _pointFlip(x.a), x.e, x.desc });
@@ -167,7 +167,8 @@ auto generate () {
 
 		uint8_t_32 iix;
 		std::copy(ii.begin() + 1, ii.begin() + 33, iix.begin());
-		const auto iic = _pointFromX(iix);
+		const auto even = ii.at(64) % 2 == 0;
+		const auto iic = _pointFromX(iix, even ? 0x02 : 0x03);
 
 		pc.push_back({ iic, true, iic });
 		pc.push_back({ iic, false, ii });

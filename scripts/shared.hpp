@@ -191,7 +191,7 @@ auto _pointFromUInt32 (const uint32_t i, bool& ok) {
 	return _pointFromScalar<A>(scalarFromUInt32(i), ok);
 }
 
-auto _pointFromX (const uint8_t_32 x, uint8_t prefix = 0x02) {
+auto _pointFromX (const uint8_t_32 x, uint8_t prefix) {
 	uint8_t_vec p = { prefix };
 	p.reserve(33);
 	for (auto i : x) p.emplace_back(i);
@@ -306,9 +306,9 @@ std::vector<B<uint8_t_vec>> generateBadPoints () {
 		{ _pointFromX(ONE, 0x01), "Bad sequence prefix" },
 		{ _pointFromX(ONE, 0x04), "Bad sequence prefix" },
 		{ _pointFromX(ONE, 0x05), "Bad sequence prefix" },
-		{ _pointFromX(ZERO), "Bad X coordinate (== 0)" },
+		{ _pointFromX(ZERO, 0x02), "Bad X coordinate (== 0)" },
 		{ _pointFromX(ZERO, 0x03), "Bad X coordinate (== 0)" },
-		{ _pointFromX(P), "Bad X coordinate (== P)" },
+		{ _pointFromX(P, 0x02), "Bad X coordinate (== P)" },
 		{ _pointFromX(P, 0x03), "Bad X coordinate (== P)" },
 		{ _pointFromX(P_OVER_1, 0x03), "Bad X coordinate (> P)" },
 	};
