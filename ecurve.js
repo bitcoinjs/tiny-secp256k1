@@ -213,20 +213,23 @@ function sign (hash, x) {
     s = n.subtract(s)
   }
 
-  return { r, s }
+  let buffer = Buffer.allocUnsafe(64)
+  r.toBuffer(32).copy(buffer, 0)
+  s.toBuffer(32).copy(buffer, 32)
+  return buffer
 }
 
-function verify (hash, p, signature) {
+function verify (hash, q, signature) {
   if (!isScalar(hash)) throw new TypeError(THROW_BAD_HASH)
-  if (!isPoint(p)) throw new TypeError(THROW_BAD_PRIVATE)
+  if (!isPoint(q)) throw new TypeError(THROW_BAD_POINT)
   if (!isSignature(signature)) throw new TypeError(THROW_BAD_SIGNATURE)
 
-  let Q = ecurve.Point.decodeFrom(secp256k1, p)
+  let Q = ecurve.Point.decodeFrom(secp256k1, q)
   let n = secp256k1.n
   let G = secp256k1.G
 
-  let r = signature.r
-  let s = signature.s
+  let r = bigi.fromBuffer(signature.slice(0, 32))
+  let s = bigi.fromBuffer(signature.slice(32, 64))
 
   // 1.4.1 Enforce r and s are both integers in the interval [1, n − 1]
   if (r.signum() <= 0 || r.compareTo(n) >= 0) return false
