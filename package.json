@@ -8,7 +8,8 @@
     "node": ">=4.0.0"
   },
   "scripts": {
-    "build": "node-gyp rebuild"
+    "build": "node-gyp rebuild",
+    "test": "tape tests/*.js"
   },
   "repository": {
     "type": "git",

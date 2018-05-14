@@ -83,15 +83,16 @@ function pointAdd (pA, pB, __compressed) {
 function pointAddScalar (p, tweak, __compressed) {
   if (!isPoint(p)) throw new TypeError(THROW_BAD_POINT)
   if (!isOrderScalar(tweak)) throw new TypeError(THROW_BAD_TWEAK)
-  if (tweak.compare(ZERO32) === 0) return p
 
+  let compressed = assumeCompression(__compressed, p)
   let pp = ecurve.Point.decodeFrom(secp256k1, p)
+  if (tweak.compare(ZERO32) === 0) return pp.getEncoded(compressed)
+
   let tt = bigi.fromBuffer(tweak)
   let qq = secp256k1.G.multiply(tt)
   let uu = pp.add(qq)
   if (secp256k1.isInfinity(uu)) return null
 
-  let compressed = assumeCompression(__compressed, p)
   return uu.getEncoded(compressed)
 }
 
