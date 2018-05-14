@@ -73,23 +73,25 @@ function pointAdd (pA, pB, __compressed) {
 
   let a = ecurve.Point.decodeFrom(secp256k1, pA)
   let b = ecurve.Point.decodeFrom(secp256k1, pB)
-  let p = a.add(b)
-  if (secp256k1.isInfinity(p)) return null
+  let pp = a.add(b)
+  if (secp256k1.isInfinity(pp)) return null
 
   let compressed = assumeCompression(__compressed, pA)
-  return p.getEncoded(compressed)
+  return pp.getEncoded(compressed)
 }
 
 function pointAddScalar (p, tweak, __compressed) {
   if (!isPoint(p)) throw new TypeError(THROW_BAD_POINT)
   if (!isOrderScalar(tweak)) throw new TypeError(THROW_BAD_TWEAK)
+  if (tweak.compare(ZERO32) === 0) return p
 
   let pp = ecurve.Point.decodeFrom(secp256k1, p)
-  let q = pp.multiply(tweak)
-  if (secp256k1.isInfinity(q)) return null
+  let tt = bigi.fromBuffer(tweak)
+  let qq = pp.multiply(tt)
+  if (secp256k1.isInfinity(qq)) return null
 
-  let compressed = assumeCompression(__compressed, pp)
-  return p.getEncoded(compressed)
+  let compressed = assumeCompression(__compressed, p)
+  return qq.getEncoded(compressed)
 }
 
 function pointCompress (p, compressed) {
@@ -105,11 +107,11 @@ function pointFromScalar (d, __compressed) {
   if (!isPrivate(d)) throw new TypeError(THROW_BAD_PRIVATE)
 
   let dd = bigi.fromBuffer(d)
-  let p = secp256k1.G.multiply(dd)
-  if (secp256k1.isInfinity(p)) return null
+  let pp = secp256k1.G.multiply(dd)
+  if (secp256k1.isInfinity(pp)) return null
 
   let compressed = assumeCompression(__compressed)
-  return p.getEncoded(compressed)
+  return pp.getEncoded(compressed)
 }
 
 function privateAdd (d, tweak) {
