@@ -291,10 +291,13 @@ const std::vector<B<uint8_t_32>> BAD_TWEAKS = {
 	{ UINT256_MAX, "Tweak >= G" }
 };
 
-const std::vector<B<uint8_t_64>> BAD_SIGNATURES = {
+const std::vector<B<uint8_t_64>> BAD_SIGNATURES_VERIFY = {
 	{ _signatureFromRS(ZERO, ZERO), "Invalid r, s values (== 0)" },
 	{ _signatureFromRS(ZERO, ONE), "Invalid r value (== 0)" },
 	{ _signatureFromRS(ONE, ZERO), "Invalid s value (== 0)" },
+};
+
+const std::vector<B<uint8_t_64>> BAD_SIGNATURES = {
 	{ _signatureFromRS(GROUP_ORDER, ONE), "Invalid r value (>= n)" },
 	{ _signatureFromRS(ONE, GROUP_ORDER), "Invalid s value (>= n)" }
 };

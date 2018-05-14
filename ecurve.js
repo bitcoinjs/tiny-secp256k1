@@ -58,7 +58,11 @@ function isPrivate (x) {
 }
 
 function isSignature (value) {
-  return Buffer.isBuffer(value) && value.length === 64
+  let r = value.slice(0, 32)
+  let s = value.slice(32, 64)
+  return Buffer.isBuffer(value) && value.length === 64 &&
+    r.compare(EC_GROUP_ORDER) < 0 &&
+    s.compare(EC_GROUP_ORDER) < 0
 }
 
 function assumeCompression (value, pubkey) {
@@ -222,18 +226,19 @@ function sign (hash, x) {
 function verify (hash, q, signature) {
   if (!isScalar(hash)) throw new TypeError(THROW_BAD_HASH)
   if (!isPoint(q)) throw new TypeError(THROW_BAD_POINT)
+
+  // 1.4.1 Enforce r and s are both integers in the interval [1, n − 1] (1, isSignature enforces '< n - 1')
   if (!isSignature(signature)) throw new TypeError(THROW_BAD_SIGNATURE)
 
   let Q = ecurve.Point.decodeFrom(secp256k1, q)
   let n = secp256k1.n
   let G = secp256k1.G
-
   let r = bigi.fromBuffer(signature.slice(0, 32))
   let s = bigi.fromBuffer(signature.slice(32, 64))
 
-  // 1.4.1 Enforce r and s are both integers in the interval [1, n − 1]
-  if (r.signum() <= 0 || r.compareTo(n) >= 0) return false
-  if (s.signum() <= 0 || s.compareTo(n) >= 0) return false
+  // 1.4.1 Enforce r and s are both integers in the interval [1, n − 1] (2, enforces '> 0')
+  if (r.signum() <= 0 /* || r.compareTo(n) >= 0 */) return false
+  if (s.signum() <= 0 /* || s.compareTo(n) >= 0 */) return false
 
   // 1.4.2 H = Hash(M), already done by the user
   // 1.4.3 e = H

@@ -10290,12 +10290,14 @@
       },
       {
         "description": "Invalid r value (>= n)",
+        "exception": "Expected Signature",
         "Q": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         "m": "0000000000000000000000000000000000000000000000000000000000000003",
         "signature": "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd03641410000000000000000000000000000000000000000000000000000000000000001"
       },
       {
         "description": "Invalid s value (>= n)",
+        "exception": "Expected Signature",
         "Q": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         "m": "0000000000000000000000000000000000000000000000000000000000000003",
         "signature": "0000000000000000000000000000000000000000000000000000000000000001fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141"

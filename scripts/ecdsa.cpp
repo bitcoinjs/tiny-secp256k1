@@ -83,7 +83,9 @@ auto generateBadVerify () {
 	std::vector<BV> bv;
 	for (auto x : BAD_POINTS) bv.push_back({ x.a, THREE, _signatureFromRS(ONE, ONE), THROW_BAD_POINT, x.desc });
 	for (auto x : BAD_POINTS_C) bv.push_back({ x.a, THREE, _signatureFromRS(ONE, ONE), THROW_BAD_POINT, x.desc });
-	for (auto x : BAD_SIGNATURES) bv.push_back({ G_ONE, THREE, x.a, "", x.desc });
+
+	for (auto x : BAD_SIGNATURES_VERIFY) bv.push_back({ G_ONE, THREE, x.a, "", x.desc }); // never verify, but dont throw
+	for (auto x : BAD_SIGNATURES) bv.push_back({ G_ONE, THREE, x.a, THROW_BAD_SIGNATURE, x.desc });
 	return bv;
 }
 
