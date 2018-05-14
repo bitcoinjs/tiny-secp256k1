@@ -3,7 +3,7 @@ let createHmac = require('create-hmac')
 let ecurve = require('ecurve')
 let secp256k1 = ecurve.getCurveByName('secp256k1')
 
-let EC_ZERO = Buffer.from('0000000000000000000000000000000000000000000000000000000000000000', 'hex')
+let ZERO32 = Buffer.alloc(32, 0)
 let EC_GROUP_ORDER = Buffer.from('fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141', 'hex')
 let EC_P = Buffer.from('fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f', 'hex')
 
@@ -31,10 +31,12 @@ function isPoint (p) {
 
   let t = p[0]
   let x = p.slice(1, 33)
+  if (x.compare(ZERO32) === 0) return false
   if (x.compare(EC_P) >= 0) return false
   if ((t === 0x02 || t === 0x03) && p.length === 33) return true
 
   let y = p.slice(33)
+  if (y.compare(ZERO32) === 0) return false
   if (y.compare(EC_P) >= 0) return false
   if (t === 0x04 && p.length === 65) return true
   return false
@@ -51,7 +53,7 @@ function isPointCompressed (p) {
 
 function isPrivate (x) {
   if (!isScalar(x)) return false
-  return x.compare(EC_ZERO) > 0 && // > 0
+  return x.compare(ZERO32) > 0 && // > 0
     x.compare(EC_GROUP_ORDER) < 0 // < G
 }
 
