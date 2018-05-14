@@ -64,6 +64,7 @@ auto generate () {
 	const auto NULLQ = vectorify(Null<A>());
 	const auto BAD_POINTS_C = generateBadPoints<uint8_t_33>();
 	const auto BAD_POINTS = generateBadPoints<uint8_t_65>();
+	assert(jsonify(G_ONE) == jsonify(G)); // G == G*1 (duh)
 
 	///////////////////////////////// isPoint
 	std::vector<IP> ip = {
@@ -97,11 +98,10 @@ auto generate () {
 		{ G_LESS_1, G_LESS_2, G_LESS_3 },
 
 		// https://github.com/bitcoin-core/secp256k1/blob/452d8e4d2a2f9f1b5be6b02e18f1ba102e5ca0b4/src/tests.c#L3857
-		{ G_ONE, G_LESS_1, NULLQ }, // == 0/infinity
+		{ G_ONE, G_LESS_1, NULLQ, "", "1 + -1 == 0/Infinity" },
 		{ G_ONE, G_LESS_2, G_LESS_1 }, // == -1
 		{ G_TWO, G_LESS_1, G_ONE }, // == 1
-		{ G_ONE, G, NULLQ },
-		{ G_ONE, G_ONE, G_TWO },
+		{ G_ONE, G_ONE, G_TWO, "", "1 + 1 == 2"  },
 		{ G_ONE, G_TWO, G_THREE }
 	};
 
@@ -144,10 +144,10 @@ auto generate () {
 	///////////////////////////////// pointCompress
 
 	std::vector<PC> pc = {
-		{ G, false, G },
-		{ G, true, GC },
-		{ GC, false, G },
-		{ GC, true, GC }
+		{ G, true, G },
+		{ G, false, GU },
+		{ GU, true, G },
+		{ GU, false, GU },
 	};
 
 	for (auto i = 1; i < 10; ++i) {
