@@ -87,11 +87,12 @@ function pointAddScalar (p, tweak, __compressed) {
 
   let pp = ecurve.Point.decodeFrom(secp256k1, p)
   let tt = bigi.fromBuffer(tweak)
-  let qq = pp.multiply(tt)
-  if (secp256k1.isInfinity(qq)) return null
+  let qq = secp256k1.G.multiply(tt)
+  let uu = pp.add(qq)
+  if (secp256k1.isInfinity(uu)) return null
 
   let compressed = assumeCompression(__compressed, p)
-  return qq.getEncoded(compressed)
+  return uu.getEncoded(compressed)
 }
 
 function pointCompress (p, compressed) {
