@@ -1,6 +1,6 @@
 # tiny-secp256k1
 
-## isPoint (A) -> Bool
+## isPoint (A)
 ``` haskell
 isPoint :: Buffer -> Bool
 ```
@@ -9,13 +9,15 @@ Returns `false` if
 * `A.x` is not in `[1...p - 1]`
 * `A.y` is not in `[1...p - 1]`
 
-## isPointCompressed (A) -> Bool
+
+## isPointCompressed (A)
 ``` haskell
 isPointCompressed :: Buffer -> Bool
 ```
 Returns `false` if the signature is **not** compressed.
 
-## isPrivate (d) -> Bool
+
+## isPrivate (d)
 ``` haskell
 isPrivate :: Buffer -> Bool
 ```
@@ -23,7 +25,8 @@ Returns `false` if
 * `d` is not 256-bit, or
 * `d` is not in `[1..order - 1]`
 
-## pointAdd (A, B[, compressed]) -> ?Buffer
+
+## pointAdd (A, B[, compressed])
 ``` haskell
 pointAdd :: Buffer -> Buffer [-> Bool] -> Maybe Buffer
 ```
@@ -33,7 +36,8 @@ Returns `null` if result is at infinity.
 * `Expected Point` if `!isPoint(A)`
 * `Expected Point` if `!isPoint(B)`
 
-## pointAddScalar (A, tweak[, compressed]) -> ?Buffer
+
+## pointAddScalar (A, tweak[, compressed])
 ``` haskell
 pointAddScalar :: Buffer -> Buffer [-> Bool] -> Maybe Buffer
 ```
@@ -43,7 +47,8 @@ Returns `null` if result is at infinity.
 * `Expected Point` if `!isPoint(A)`
 * `Expected Tweak` if `tweak` is not in `[0...order - 1]`
 
-## pointCompress (A, compressed) -> Buffer
+
+## pointCompress (A, compressed)
 ``` haskell
 pointCompress :: Buffer -> Bool -> Buffer
 ```
@@ -51,7 +56,8 @@ pointCompress :: Buffer -> Bool -> Buffer
 ##### Throws:
 * `Expected Point` if `!isPoint(A)`
 
-## pointFromScalar (d[, compressed]) -> ?Buffer
+
+## pointFromScalar (d[, compressed])
 ``` haskell
 pointFromScalar :: Buffer [-> Bool] -> Maybe Buffer
 ```
@@ -60,7 +66,8 @@ Returns `null` if result is at infinity.
 ##### Throws:
 * `Expected Private` if `!isPrivate(d)`
 
-## privateAdd (d, tweak) -> ?Buffer
+
+## privateAdd (d, tweak)
 ``` haskell
 privateAdd :: Buffer -> Buffer -> Maybe Buffer
 ```
@@ -81,6 +88,7 @@ Uses RFC6979.
 ##### Throws:
 * `Expected Private` if `!isPrivate(d)`
 * `Expected Scalar` if `h` is not 256-bit
+
 
 ## verify (h, Q, signature[, strict = false]) -> Bool
 ``` haskell
