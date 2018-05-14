@@ -1,23 +1,23 @@
 # tiny-secp256k1
 
-## isPoint (A) -> bool
+## isPoint (A) -> Bool
 ``` haskell
-isPoint :: Buffer -> bool
+isPoint :: Buffer -> Bool
 ```
 Returns `false` if
 * `A` is not encoded with a sequence tag of `0x02`, `0x03` or `0x04`
 * `A.x` is not in `[1...p - 1]`
 * `A.y` is not in `[1...p - 1]`
 
-## isPointCompressed (A) -> bool
+## isPointCompressed (A) -> Bool
 ``` haskell
-isPointCompressed :: Buffer -> bool
+isPointCompressed :: Buffer -> Bool
 ```
 Returns `false` if the signature is **not** compressed.
 
-## isPrivate (d) -> bool
+## isPrivate (d) -> Bool
 ``` haskell
-isPrivate :: Buffer -> bool
+isPrivate :: Buffer -> Bool
 ```
 Returns `false` if
 * `d` is not 256-bit, or
@@ -25,7 +25,7 @@ Returns `false` if
 
 ## pointAdd (A, B[, compressed]) -> ?Buffer
 ``` haskell
-pointAdd :: Buffer -> Buffer [-> bool] -> Maybe Buffer
+pointAdd :: Buffer -> Buffer [-> Bool] -> Maybe Buffer
 ```
 Returns `null` if result is at infinity.
 
@@ -35,7 +35,7 @@ Returns `null` if result is at infinity.
 
 ## pointAddScalar (A, tweak[, compressed]) -> ?Buffer
 ``` haskell
-pointAddScalar :: Buffer -> Buffer [-> bool] -> Maybe Buffer
+pointAddScalar :: Buffer -> Buffer [-> Bool] -> Maybe Buffer
 ```
 Returns `null` if result is at infinity.
 
@@ -45,7 +45,7 @@ Returns `null` if result is at infinity.
 
 ## pointCompress (A, compressed) -> Buffer
 ``` haskell
-pointCompress :: Buffer -> bool -> Buffer
+pointCompress :: Buffer -> Bool -> Buffer
 ```
 
 ##### Throws:
@@ -53,7 +53,7 @@ pointCompress :: Buffer -> bool -> Buffer
 
 ## pointFromScalar (d[, compressed]) -> ?Buffer
 ``` haskell
-pointFromScalar :: Buffer [-> bool] -> Maybe Buffer
+pointFromScalar :: Buffer [-> Bool] -> Maybe Buffer
 ```
 Returns `null` if result is at infinity.
 
@@ -75,18 +75,20 @@ Returns `null` if result is equal to `0`.
 ``` haskell
 sign :: Buffer -> Buffer -> Buffer
 ```
+Returns normalized signatures, each of (r, s) values are guaranteed to less than `order / 2`.
+Uses RFC6979.
 
 ##### Throws:
 * `Expected Private` if `!isPrivate(d)`
 * `Expected Scalar` if `h` is not 256-bit
 
-## verify (h, Q, signature[, strict = false]) -> bool
+## verify (h, Q, signature[, strict = false]) -> Bool
 ``` haskell
-verify :: Buffer -> Buffer -> Buffer -> bool
+verify :: Buffer -> Buffer -> Buffer -> Bool
 ```
 Returns `false` if any of (r, s) values are equal to `0`,  or if the signature is rejected.
 
-If `strict` is `true`, valid signatures with any of (r, s) values greater than `n / 2` are rejected.
+If `strict` is `true`, valid signatures with any of (r, s) values greater than `order / 2` are rejected.
 
 ##### Throws:
 * `Expected Point` if `!isPoint(Q)`
