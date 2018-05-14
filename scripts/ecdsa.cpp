@@ -24,7 +24,7 @@ const auto BJS_MESSAGES = std::vector<std::string>({
 	"The question of whether computers can think is like the question of whether submarines can swim.",
 });
 
-struct S { uint8_t_32 d; uint8_t_32 m; uint8_t_64 e; std::string desc; bool v = true; };
+struct S { uint8_t_32 d; uint8_t_32 m; uint8_t_64 e; std::string desc; };
 auto generateSigns () {
 	bool ok = true;
 	std::vector<S> s;
@@ -59,15 +59,7 @@ auto generateSigns () {
 		auto verified = ok;
 		assert(_eccVerify(Q, hash, sig) == verified);
 
-		// flip a bit (invalidate the signature)
-		if (randomUInt8() > 0x7f) {
-			const auto mask = 1 << (1 + (randomUInt8() % 6));
-			sig.at(randomUInt8() % 32) ^= mask;
-			assert(_eccVerify(Q, hash, sig) == false);
-			verified = false;
-		}
-
-		s.push_back({ rkey, hash, sig, "", verified });
+		s.push_back({ rkey, hash, sig, "" });
 	}
 
 	return s;
@@ -91,7 +83,7 @@ auto generateBadVerify () {
 	std::vector<BV> bv;
 	for (auto x : BAD_POINTS) bv.push_back({ x.a, THREE, _signatureFromRS(ONE, ONE), THROW_BAD_POINT, x.desc });
 	for (auto x : BAD_POINTS_C) bv.push_back({ x.a, THREE, _signatureFromRS(ONE, ONE), THROW_BAD_POINT, x.desc });
-	for (auto x : BAD_SIGNATURES) bv.push_back({ G_ONE, THREE, x.a, THROW_BAD_SIGNATURE, x.desc });
+	for (auto x : BAD_SIGNATURES) bv.push_back({ G_ONE, THREE, x.a, "", x.desc });
 	return bv;
 }
 
@@ -103,8 +95,7 @@ void dumpJSON (std::ostream& o, const T& t) {
 				x.desc.empty() ? "" : jsonp("description", jsonify(x.desc)),
 				jsonp("d", jsonify(x.d)),
 				jsonp("m", jsonify(x.m)),
-				jsonp("signature", jsonify(x.e)),
-				jsonp("verifies", jsonify(x.v))
+				jsonp("signature", jsonify(x.e))
 			});
 		})),
 		jsonp("invalid", jsonifyO({
@@ -119,7 +110,7 @@ void dumpJSON (std::ostream& o, const T& t) {
 			jsonp("verify", jsonifyA(std::get<2>(t), [&](auto x) {
 				return jsonifyO({
 					x.desc.empty() ? "" : jsonp("description", jsonify(x.desc)),
-					jsonp("exception", jsonify(x.except)),
+					x.except.empty() ? "" : jsonp("exception", jsonify(x.except)),
 					jsonp("Q", jsonify(x.Q)),
 					jsonp("m", jsonify(x.m)),
 					jsonp("signature", jsonify(x.s))
