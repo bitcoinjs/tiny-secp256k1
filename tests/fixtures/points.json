@@ -8735,12 +8735,13 @@
     ],
     "pointAddScalar": [
       {
+        "description": "-1 + 0 == -1",
         "P": "0379be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         "d": "0000000000000000000000000000000000000000000000000000000000000000",
         "expected": "0379be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
       },
       {
-        "description": "Adds to infinity",
+        "description": "-1 + 1 == 0",
         "P": "0379be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         "d": "0000000000000000000000000000000000000000000000000000000000000001",
         "expected": null
@@ -8776,7 +8777,7 @@
         "expected": "0379be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
       },
       {
-        "description": "Adds to infinity",
+        "description": "-2 + 2 == 0",
         "P": "03c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5",
         "d": "0000000000000000000000000000000000000000000000000000000000000002",
         "expected": null
@@ -8787,19 +8788,19 @@
         "expected": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
       },
       {
-        "description": "Adds to infinity",
+        "description": "1 + -1 == 0",
         "P": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         "d": "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140",
         "expected": null
       },
       {
-        "description": "== G - 1",
+        "description": "1 + -2 == -1",
         "P": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         "d": "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd036413f",
         "expected": "0379be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
       },
       {
-        "description": "== 1",
+        "description": "2 + -1 == 1",
         "P": "02c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5",
         "d": "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140",
         "expected": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
@@ -8877,11 +8878,13 @@
     ],
     "pointCompress": [
       {
+        "description": "Generator",
         "P": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         "compress": true,
         "expected": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
       },
       {
+        "description": "Generator (Uncompressed)",
         "P": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         "compress": false,
         "expected": "0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
@@ -10079,26 +10082,32 @@
     ],
     "pointFromScalar": [
       {
+        "description": "== 1",
         "d": "0000000000000000000000000000000000000000000000000000000000000001",
         "expected": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
       },
       {
+        "description": "== 2",
         "d": "0000000000000000000000000000000000000000000000000000000000000002",
         "expected": "02c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5"
       },
       {
+        "description": "== 3",
         "d": "0000000000000000000000000000000000000000000000000000000000000003",
         "expected": "02f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9"
       },
       {
+        "description": "== -1",
         "d": "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140",
         "expected": "0379be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
       },
       {
+        "description": "== -2",
         "d": "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd036413f",
         "expected": "03c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5"
       },
       {
+        "description": "== -3",
         "d": "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd036413e",
         "expected": "03f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9"
       },

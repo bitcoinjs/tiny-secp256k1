@@ -118,19 +118,19 @@ auto generate () {
 	// XXX: only compressed point fixtures, flip for each combination when testing
 
 	std::vector<PAS> pas = {
-		{ G_LESS_1, ZERO, G_LESS_1 }, // #L3719, -1 + 0 == -1
-		{ G_LESS_1, ONE, NULLQ, "", "Adds to infinity" },
+		{ G_LESS_1, ZERO, G_LESS_1, "", "-1 + 0 == -1" }, // #L3719
+		{ G_LESS_1, ONE, NULLQ, "", "-1 + 1 == 0" },
 		{ G_LESS_1, TWO, G_ONE },
 		{ G_LESS_1, THREE, G_TWO },
 		{ G_LESS_1, GROUP_ORDER_LESS_1, G_LESS_2 },
 		{ G_LESS_1, GROUP_ORDER_LESS_2, G_LESS_3 },
 		{ G_LESS_1, GROUP_ORDER_LESS_2, G_LESS_3 },
 		{ G_LESS_2, ONE, G_LESS_1 },
-		{ G_LESS_2, TWO, NULLQ, "", "Adds to infinity" },
+		{ G_LESS_2, TWO, NULLQ, "", "-2 + 2 == 0" },
 		{ G_LESS_2, THREE, G_ONE },
-		{ G_ONE, GROUP_ORDER_LESS_1, NULLQ, "", "Adds to infinity" },
-		{ G_ONE, GROUP_ORDER_LESS_2, G_LESS_1, "", "== G - 1" }, // == -1
-		{ G_TWO, GROUP_ORDER_LESS_1, G_ONE, "", "== 1" } // == 1
+		{ G_ONE, GROUP_ORDER_LESS_1, NULLQ, "", "1 + -1 == 0" },
+		{ G_ONE, GROUP_ORDER_LESS_2, G_LESS_1, "", "1 + -2 == -1" },
+		{ G_TWO, GROUP_ORDER_LESS_1, G_ONE, "", "2 + -1 == 1" }
 	};
 
 	for (uint32_t i = 1; i < 5; ++i) {
@@ -144,8 +144,8 @@ auto generate () {
 	///////////////////////////////// pointCompress
 
 	std::vector<PC> pc = {
-		{ G, true, G },
-		{ G, false, GU },
+		{ G, true, G, "", "Generator" },
+		{ G, false, GU, "", "Generator (Uncompressed)" },
 		{ GU, true, G },
 		{ GU, false, GU },
 	};
@@ -180,12 +180,12 @@ auto generate () {
 	// XXX: only compressed point fixtures, flip for each combination when testing
 
 	std::vector<PFS> pfs = {
-		{ ONE, G_ONE }, // #L3153, #L3692, OK, > 0
-		{ TWO, G_TWO },
-		{ THREE, G_THREE },
-		{ GROUP_ORDER_LESS_1, G_LESS_1 }, // #L3171, #L3710, OK == G - 1
-		{ GROUP_ORDER_LESS_2, G_LESS_2 },
-		{ GROUP_ORDER_LESS_3, G_LESS_3 }
+		{ ONE, G_ONE, "", "== 1"  }, // #L3153, #L3692
+		{ TWO, G_TWO, "", "== 2"  },
+		{ THREE, G_THREE, "", "== 3" },
+		{ GROUP_ORDER_LESS_1, G_LESS_1, "", "== -1" }, // #L3171, #L3710
+		{ GROUP_ORDER_LESS_2, G_LESS_2, "", "== -2" },
+		{ GROUP_ORDER_LESS_3, G_LESS_3, "", "== -3" }
 	};
 
 	// ref https://github.com/bitcoin-core/secp256k1/blob/6ad5cdb42a1a8257289a0423d644dcbdeab0f83c/src/tests.c#L2160

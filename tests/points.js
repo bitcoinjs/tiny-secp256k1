@@ -56,6 +56,34 @@ function test (binding) {
     t.end()
   })
 
+  tape('pointAddScalar', (t) => {
+    fpoints.valid.pointAddScalar.forEach((f) => {
+      let p = Buffer.from(f.P, 'hex')
+      let d = Buffer.from(f.d, 'hex')
+
+      let expected = f.expected ? Buffer.from(f.expected, 'hex') : null
+      let description = `${f.P} + ${f.d} = ${f.expected ? f.expected : null}`
+      if (f.description) description += ` (${f.description})`
+
+      t.same(binding.pointAddScalar(p, d), expected, description)
+      if (expected === null) return
+
+      t.same(binding.pointAddScalar(p, d, true), binding.pointCompress(expected, true), description)
+      t.same(binding.pointAddScalar(p, d, false), binding.pointCompress(expected, false), description)
+    })
+
+    fpoints.invalid.pointAddScalar.forEach((f) => {
+      let p = Buffer.from(f.P, 'hex')
+      let d = Buffer.from(f.d, 'hex')
+
+      t.throws(() => {
+        binding.pointAddScalar(p, d)
+      }, new RegExp(f.exception), `${f.description} throws ${f.exception}`)
+    })
+
+    t.end()
+  })
+
   tape('pointCompress', (t) => {
     fpoints.valid.pointCompress.forEach((f) => {
       let p = Buffer.from(f.P, 'hex')
