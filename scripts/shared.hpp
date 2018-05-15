@@ -162,6 +162,22 @@ auto _pointAdd (const V p, const V q, bool& ok) {
 	return _ec_pubkey_to_vec<A>(public_key, ok);
 }
 
+template <typename A, typename V>
+auto _pointMul (const V p, const uint8_t_32 d, bool& ok) {
+	secp256k1_pubkey public_key;
+	ok &= secp256k1_ec_pubkey_parse(ctx, &public_key, p.data(), p.size());
+	ok &= secp256k1_ec_pubkey_tweak_mul(ctx, &public_key, d.data());
+	return _ec_pubkey_to_vec<A>(public_key, ok);
+}
+
+template <typename A, typename V>
+auto _pointAddScalar (const V p, const uint8_t_32 d, bool& ok) {
+	secp256k1_pubkey public_key;
+	ok &= secp256k1_ec_pubkey_parse(ctx, &public_key, p.data(), p.size());
+	ok &= secp256k1_ec_pubkey_tweak_add(ctx, &public_key, d.data());
+	return _ec_pubkey_to_vec<A>(public_key, ok);
+}
+
 uint8_t_vec _pointFlip (const uint8_t_vec& p) {
 	assert(!p.empty());
 
@@ -175,14 +191,6 @@ uint8_t_vec _pointFlip (const uint8_t_vec& p) {
 	assert(ok);
 
 	return std::move(r);
-}
-
-template <typename A, typename V>
-auto _pointAddScalar (const V p, const uint8_t_32 d, bool& ok) {
-	secp256k1_pubkey public_key;
-	ok &= secp256k1_ec_pubkey_parse(ctx, &public_key, p.data(), p.size());
-	ok &= secp256k1_ec_pubkey_tweak_add(ctx, &public_key, d.data());
-	return _ec_pubkey_to_vec<A>(public_key, ok);
 }
 
 template <typename A>
@@ -269,6 +277,7 @@ const auto ZERO = scalarFromHex("00000000000000000000000000000000000000000000000
 const auto ONE = scalarFromHex("0000000000000000000000000000000000000000000000000000000000000001");
 const auto TWO = scalarFromHex("0000000000000000000000000000000000000000000000000000000000000002");
 const auto THREE = scalarFromHex("0000000000000000000000000000000000000000000000000000000000000003");
+const auto FOUR = scalarFromHex("0000000000000000000000000000000000000000000000000000000000000004");
 const auto GROUP_ORDER = scalarFromHex("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
 const auto GROUP_ORDER_LESS_3 = scalarFromHex("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd036413e");
 const auto GROUP_ORDER_LESS_2 = scalarFromHex("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd036413f");

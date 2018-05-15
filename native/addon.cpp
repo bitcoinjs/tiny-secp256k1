@@ -188,6 +188,24 @@ NAN_METHOD(eccPointFromScalar) {
 	return RETURNV(pointAsBuffer(public_key, flags));
 }
 
+// returns ?Point
+NAN_METHOD(eccPointMultiply) {
+	Nan::HandleScope scope;
+	EXPECT_ARGS(2);
+
+	const auto p = info[0].As<v8::Object>();
+	const auto tweak = info[1].As<v8::Object>();
+
+	secp256k1_pubkey public_key;
+	if (!isPoint(p, public_key)) return THROW_BAD_POINT;
+	if (!isOrderScalar(tweak)) return THROW_BAD_TWEAK;
+
+	if (secp256k1_ec_pubkey_tweak_mul(context, &public_key, asDataPointer(tweak)) == 0) return RETURNV(Nan::Null());
+
+	const auto flags = assumeCompression<2>(info, p);
+	return RETURNV(pointAsBuffer(public_key, flags));
+}
+
 // returns ?Secret
 NAN_METHOD(eccPrivateAdd) {
 	Nan::HandleScope scope;
@@ -291,6 +309,7 @@ NAN_MODULE_INIT(Init) {
   Nan::Export(target, "pointAddScalar", eccPointAddScalar);
   Nan::Export(target, "pointCompress", eccPointCompress);
   Nan::Export(target, "pointFromScalar", eccPointFromScalar);
+  Nan::Export(target, "pointMultiply", eccPointMultiply);
   Nan::Export(target, "privateAdd", eccPrivateAdd);
   Nan::Export(target, "privateSub", eccPrivateSub);
 

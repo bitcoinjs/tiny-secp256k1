@@ -128,6 +128,34 @@ function test (binding) {
 
     t.end()
   })
+
+  tape('pointMultiply', (t) => {
+    fpoints.valid.pointMultiply.forEach((f) => {
+      let p = Buffer.from(f.P, 'hex')
+      let d = Buffer.from(f.d, 'hex')
+
+      let expected = f.expected ? Buffer.from(f.expected, 'hex') : null
+      let description = `${f.P} * ${f.d} = ${f.expected ? f.expected : null}`
+      if (f.description) description += ` (${f.description})`
+
+      t.same(binding.pointMultiply(p, d), expected, description)
+      if (expected === null) return
+
+      t.same(binding.pointMultiply(p, d, true), binding.pointCompress(expected, true), description)
+      t.same(binding.pointMultiply(p, d, false), binding.pointCompress(expected, false), description)
+    })
+
+    fpoints.invalid.pointMultiply.forEach((f) => {
+      let p = Buffer.from(f.P, 'hex')
+      let d = Buffer.from(f.d, 'hex')
+
+      t.throws(() => {
+        binding.pointMultiply(p, d)
+      }, new RegExp(f.exception), `${f.description} throws ${f.exception}`)
+    })
+
+    t.end()
+  })
 }
 
 test(ecurve)

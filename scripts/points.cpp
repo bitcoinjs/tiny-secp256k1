@@ -60,6 +60,7 @@ auto generate () {
 	const auto G_ONE = _pointFromUInt32<A>(1, ok);
 	const auto G_TWO = _pointFromUInt32<A>(2, ok);
 	const auto G_THREE = _pointFromUInt32<A>(3, ok);
+	const auto G_FOUR = _pointFromUInt32<A>(4, ok);
 	assert(ok);
 	const auto NULLQ = vectorify(Null<A>());
 	const auto BAD_POINTS_C = generateBadPoints<uint8_t_33>();
@@ -188,10 +189,23 @@ auto generate () {
 		{ GROUP_ORDER_LESS_3, G_LESS_3, "", "== -3" }
 	};
 
+	///////////////////////////////// pointMultiply
+	// XXX: only compressed point fixtures, flip for each combination when testing
+
+	std::vector<PAS> pm = {
+		{ G_ONE, ZERO, NULLQ, "", "1 * 0 == 0" },
+		{ G_ONE, ONE, G_ONE, "", "1 * 1 == 1" },
+		{ G_ONE, TWO, G_TWO, "", "1 * 2 == 2" },
+		{ G_ONE, FOUR, G_FOUR, "", "1 * 4 == 4" },
+		{ G_TWO, ONE, G_TWO, "", "2 * 1 == 2" },
+		{ G_TWO, TWO, G_FOUR, "", "2 * 2 == 4" },
+		{ G_FOUR, ONE, G_FOUR, "", "1 * 4 == 4" }
+	};
+
 	// ref https://github.com/bitcoin-core/secp256k1/blob/6ad5cdb42a1a8257289a0423d644dcbdeab0f83c/src/tests.c#L2160
 	test_ec_combine<A>(pa, pas, pfs);
 
-	return std::make_tuple(ip, pa, pas, pc, pfs);
+	return std::make_tuple(ip, pa, pas, pc, pfs, pm);
 }
 
 auto generateBad () {
@@ -226,7 +240,12 @@ auto generateBad () {
 	std::vector<PFS> pfs;
 	for (const auto x : BAD_PRIVATES) pfs.push_back({ x.a, {}, THROW_BAD_PRIVATE, x.desc });
 
-	return std::make_tuple(pa, pas, pc, pfs);
+	std::vector<PAS> pm;
+	for (const auto x : BAD_POINTS) pm.push_back({ x.a, ONE, {}, THROW_BAD_POINT, x.desc });
+	for (const auto x : BAD_POINTS_C) pm.push_back({ x.a, ONE, {}, THROW_BAD_POINT, x.desc });
+	for (const auto x : BAD_TWEAKS) pm.push_back({ G_ONE, x.a, {}, THROW_BAD_TWEAK, x.desc });
+
+	return std::make_tuple(pa, pas, pc, pfs, pm);
 }
 
 template <typename A, typename B>
@@ -285,12 +304,14 @@ void dumpJSON (
 			jsonp("pointAddScalar", jsonifyA(std::get<2>(good), jPAS)),
 			jsonp("pointCompress", jsonifyA(std::get<3>(good), jPC)),
 			jsonp("pointFromScalar", jsonifyA(std::get<4>(good), jPFS)),
+			jsonp("pointMultiply", jsonifyA(std::get<5>(good), jPAS))
 		})),
 		jsonp("invalid", jsonifyO({
 			jsonp("pointAdd", jsonifyA(std::get<0>(bad), jPA)),
 			jsonp("pointAddScalar", jsonifyA(std::get<1>(bad), jPAS)),
 			jsonp("pointCompress", jsonifyA(std::get<2>(bad), jPC)),
 			jsonp("pointFromScalar", jsonifyA(std::get<3>(bad), jPFS)),
+			jsonp("pointMultiply", jsonifyA(std::get<4>(bad), jPAS))
 		}))
 	});
 }

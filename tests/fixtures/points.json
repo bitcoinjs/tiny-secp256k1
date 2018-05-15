@@ -10151,6 +10151,50 @@
         "d": "c20f4427017ea5f9f7fedcf5a9d9f9f7e37933769efcba600e3494f010e00048",
         "expected": "03e75cf8ee20205fb24805bf8c01fb4f38361c754774f4d5579ea8e6da35757491"
       }
+    ],
+    "pointMultiply": [
+      {
+        "description": "1 * 0 == 0",
+        "P": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+        "d": "0000000000000000000000000000000000000000000000000000000000000000",
+        "expected": null
+      },
+      {
+        "description": "1 * 1 == 1",
+        "P": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+        "d": "0000000000000000000000000000000000000000000000000000000000000001",
+        "expected": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
+      },
+      {
+        "description": "1 * 2 == 2",
+        "P": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+        "d": "0000000000000000000000000000000000000000000000000000000000000002",
+        "expected": "02c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5"
+      },
+      {
+        "description": "1 * 4 == 4",
+        "P": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+        "d": "0000000000000000000000000000000000000000000000000000000000000004",
+        "expected": "02e493dbf1c10d80f3581e4904930b1404cc6c13900ee0758474fa94abe8c4cd13"
+      },
+      {
+        "description": "2 * 1 == 2",
+        "P": "02c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5",
+        "d": "0000000000000000000000000000000000000000000000000000000000000001",
+        "expected": "02c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5"
+      },
+      {
+        "description": "2 * 2 == 4",
+        "P": "02c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5",
+        "d": "0000000000000000000000000000000000000000000000000000000000000002",
+        "expected": "02e493dbf1c10d80f3581e4904930b1404cc6c13900ee0758474fa94abe8c4cd13"
+      },
+      {
+        "description": "1 * 4 == 4",
+        "P": "02e493dbf1c10d80f3581e4904930b1404cc6c13900ee0758474fa94abe8c4cd13",
+        "d": "0000000000000000000000000000000000000000000000000000000000000001",
+        "expected": "02e493dbf1c10d80f3581e4904930b1404cc6c13900ee0758474fa94abe8c4cd13"
+      }
     ]
   },
   "invalid": {
@@ -10654,6 +10698,140 @@
         "description": "Private key >= G",
         "d": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
         "exception": "Expected Private"
+      }
+    ],
+    "pointMultiply": [
+      {
+        "description": "Bad sequence prefix",
+        "P": "0100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001",
+        "d": "0000000000000000000000000000000000000000000000000000000000000001",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad sequence prefix",
+        "P": "0200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001",
+        "d": "0000000000000000000000000000000000000000000000000000000000000001",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad sequence prefix",
+        "P": "0300000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001",
+        "d": "0000000000000000000000000000000000000000000000000000000000000001",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad sequence prefix",
+        "P": "0500000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001",
+        "d": "0000000000000000000000000000000000000000000000000000000000000001",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad X coordinate (== 0)",
+        "P": "0400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001",
+        "d": "0000000000000000000000000000000000000000000000000000000000000001",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad Y coordinate (== 0)",
+        "P": "0400000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000",
+        "d": "0000000000000000000000000000000000000000000000000000000000000001",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad X/Y coordinate (== 0)",
+        "P": "0400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "d": "0000000000000000000000000000000000000000000000000000000000000001",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad X coordinate (== P)",
+        "P": "04fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f0000000000000000000000000000000000000000000000000000000000000001",
+        "d": "0000000000000000000000000000000000000000000000000000000000000001",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad Y coordinate (== P)",
+        "P": "040000000000000000000000000000000000000000000000000000000000000001fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f",
+        "d": "0000000000000000000000000000000000000000000000000000000000000001",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad X coordinate (> P)",
+        "P": "04fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc300000000000000000000000000000000000000000000000000000000000000001",
+        "d": "0000000000000000000000000000000000000000000000000000000000000001",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad Y coordinate (> P)",
+        "P": "040000000000000000000000000000000000000000000000000000000000000001fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc30",
+        "d": "0000000000000000000000000000000000000000000000000000000000000001",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad sequence prefix",
+        "P": "010000000000000000000000000000000000000000000000000000000000000001",
+        "d": "0000000000000000000000000000000000000000000000000000000000000001",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad sequence prefix",
+        "P": "040000000000000000000000000000000000000000000000000000000000000001",
+        "d": "0000000000000000000000000000000000000000000000000000000000000001",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad sequence prefix",
+        "P": "050000000000000000000000000000000000000000000000000000000000000001",
+        "d": "0000000000000000000000000000000000000000000000000000000000000001",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad X coordinate (== 0)",
+        "P": "020000000000000000000000000000000000000000000000000000000000000000",
+        "d": "0000000000000000000000000000000000000000000000000000000000000001",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad X coordinate (== 0)",
+        "P": "030000000000000000000000000000000000000000000000000000000000000000",
+        "d": "0000000000000000000000000000000000000000000000000000000000000001",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad X coordinate (== P)",
+        "P": "02fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f",
+        "d": "0000000000000000000000000000000000000000000000000000000000000001",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad X coordinate (== P)",
+        "P": "03fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f",
+        "d": "0000000000000000000000000000000000000000000000000000000000000001",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Bad X coordinate (> P)",
+        "P": "03fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc30",
+        "d": "0000000000000000000000000000000000000000000000000000000000000001",
+        "exception": "Expected Point"
+      },
+      {
+        "description": "Tweak >= G",
+        "P": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+        "d": "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141",
+        "exception": "Expected Tweak"
+      },
+      {
+        "description": "Tweak >= G",
+        "P": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+        "d": "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364142",
+        "exception": "Expected Tweak"
+      },
+      {
+        "description": "Tweak >= G",
+        "P": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+        "d": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "exception": "Expected Tweak"
       }
     ]
   }

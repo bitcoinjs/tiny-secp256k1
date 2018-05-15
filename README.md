@@ -67,6 +67,17 @@ Returns `null` if result is at infinity.
 * `Expected Private` if `!isPrivate(d)`
 
 
+## pointMultiply (A, tweak[, compressed])
+``` haskell
+pointMultiply :: Buffer -> Buffer [-> Bool] -> Maybe Buffer
+```
+Returns `null` if result is at infinity.
+
+##### Throws:
+* `Expected Point` if `!isPoint(A)`
+* `Expected Tweak` if `tweak` is not in `[0...order - 1]`
+
+
 ## privateAdd (d, tweak)
 ``` haskell
 privateAdd :: Buffer -> Buffer -> Maybe Buffer
@@ -78,7 +89,18 @@ Returns `null` if result is equal to `0`.
 * `Expected Tweak` if `tweak` is not in `[0...order - 1]`
 
 
-## sign (h, d) -> Buffer
+## privateSub (d, tweak)
+``` haskell
+privateSub :: Buffer -> Buffer -> Maybe Buffer
+```
+Returns `null` if result is equal to `0`.
+
+##### Throws:
+* `Expected Private` if `!isPrivate(d)`
+* `Expected Tweak` if `tweak` is not in `[0...order - 1]`
+
+
+## sign (h, d)
 ``` haskell
 sign :: Buffer -> Buffer -> Buffer
 ```
@@ -90,7 +112,7 @@ Uses RFC6979.
 * `Expected Scalar` if `h` is not 256-bit
 
 
-## verify (h, Q, signature[, strict = false]) -> Bool
+## verify (h, Q, signature[, strict = false])
 ``` haskell
 verify :: Buffer -> Buffer -> Buffer -> Bool
 ```

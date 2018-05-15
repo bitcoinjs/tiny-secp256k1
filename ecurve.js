@@ -120,6 +120,19 @@ function pointFromScalar (d, __compressed) {
   return pp.getEncoded(compressed)
 }
 
+function pointMultiply (p, tweak, __compressed) {
+  if (!isPoint(p)) throw new TypeError(THROW_BAD_POINT)
+  if (!isOrderScalar(tweak)) throw new TypeError(THROW_BAD_TWEAK)
+
+  let compressed = assumeCompression(__compressed, p)
+  let pp = ecurve.Point.decodeFrom(secp256k1, p)
+  let tt = bigi.fromBuffer(tweak)
+  let qq = pp.multiply(tt)
+  if (secp256k1.isInfinity(qq)) return null
+
+  return qq.getEncoded(compressed)
+}
+
 function privateAdd (d, tweak) {
   if (!isPrivate(d)) throw new TypeError(THROW_BAD_PRIVATE)
   if (!isOrderScalar(tweak)) throw new TypeError(THROW_BAD_TWEAK)
@@ -289,6 +302,7 @@ module.exports = {
   pointAddScalar,
   pointCompress,
   pointFromScalar,
+  pointMultiply,
   privateAdd,
   privateSub,
   sign,
