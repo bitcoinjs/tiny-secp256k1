@@ -132,6 +132,18 @@ function privateAdd (d, tweak) {
   return dt
 }
 
+function privateSub (d, tweak) {
+  if (!isPrivate(d)) throw new TypeError(THROW_BAD_PRIVATE)
+  if (!isOrderScalar(tweak)) throw new TypeError(THROW_BAD_TWEAK)
+
+  let dd = bigi.fromBuffer(d)
+  let tt = bigi.fromBuffer(tweak)
+  let dt = dd.subtract(tt).mod(secp256k1.n).toBuffer(32)
+  if (!isPrivate(dt)) return null
+
+  return dt
+}
+
 // https://tools.ietf.org/html/rfc6979#section-3.2
 function deterministicGenerateK (hash, x, checkSig) {
   // Step A, ignored as hash already provided
@@ -278,6 +290,7 @@ module.exports = {
   pointCompress,
   pointFromScalar,
   privateAdd,
+  privateSub,
   sign,
   verify
 }

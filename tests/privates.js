@@ -37,6 +37,29 @@ function test (binding) {
 
     t.end()
   })
+
+  tape('privateSub', (t) => {
+    fprivates.valid.privateSub.forEach((f) => {
+      let d = Buffer.from(f.d, 'hex')
+      let tweak = Buffer.from(f.tweak, 'hex')
+      let expected = f.expected ? Buffer.from(f.expected, 'hex') : null
+      let description = `${f.d} - ${f.tweak} = ${f.expected ? f.expected : null}`
+      if (f.description) description += ` (${f.description})`
+
+      t.same(binding.privateSub(d, tweak), expected, description)
+    })
+
+    fprivates.invalid.privateSub.forEach((f) => {
+      let d = Buffer.from(f.d, 'hex')
+      let tweak = Buffer.from(f.tweak, 'hex')
+
+      t.throws(() => {
+        binding.privateSub(d, tweak)
+      }, new RegExp(f.exception), `${f.description} throws ${f.exception}`)
+    })
+
+    t.end()
+  })
 }
 
 test(ecurve)

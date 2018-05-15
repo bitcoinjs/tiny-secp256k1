@@ -205,6 +205,27 @@ NAN_METHOD(eccPrivateAdd) {
 	return RETURNV(asBuffer(output, 32));
 }
 
+// returns ?Secret
+NAN_METHOD(eccPrivateSub) {
+	Nan::HandleScope scope;
+	EXPECT_ARGS(2);
+
+	const auto d = info[0].As<v8::Object>();
+	const auto tweak = info[1].As<v8::Object>();
+	if (!isPrivate(d)) return THROW_BAD_PRIVATE;
+	if (!isOrderScalar(tweak)) return THROW_BAD_TWEAK;
+
+	unsigned char tweak_negated[32];
+	memcpy(tweak_negated, asDataPointer(tweak), 32);
+	secp256k1_ec_privkey_negate(context, tweak_negated); // returns 1 always
+
+	unsigned char output[32];
+	memcpy(output, asDataPointer(d), 32);
+	if (secp256k1_ec_privkey_tweak_add(context, output, tweak_negated) == 0) return RETURNV(Nan::Null());
+
+	return RETURNV(asBuffer(output, 32));
+}
+
 // returns Signature
 NAN_METHOD(ecdsaSign) {
 	Nan::HandleScope scope;
@@ -271,6 +292,7 @@ NAN_MODULE_INIT(Init) {
   Nan::Export(target, "pointCompress", eccPointCompress);
   Nan::Export(target, "pointFromScalar", eccPointFromScalar);
   Nan::Export(target, "privateAdd", eccPrivateAdd);
+  Nan::Export(target, "privateSub", eccPrivateSub);
 
   // ecdsa
   Nan::Export(target, "sign", ecdsaSign);

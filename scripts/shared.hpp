@@ -132,6 +132,12 @@ auto _privAdd (uint8_t_32 key, const uint8_t_32 tweak, bool& ok) {
 	return key;
 }
 
+auto _privSub (uint8_t_32 key, uint8_t_32 tweak, bool& ok) {
+	ok &= secp256k1_ec_privkey_negate(ctx, tweak.data());
+	ok &= secp256k1_ec_privkey_tweak_add(ctx, key.data(), tweak.data());
+	return key;
+}
+
 template <typename A>
 uint8_t_vec _ec_pubkey_to_vec (const secp256k1_pubkey& public_key, bool& ok) {
 	static_assert(sizeof(A) == 33 || sizeof(A) == 65);

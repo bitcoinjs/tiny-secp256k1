@@ -66,6 +66,40 @@ void generate (std::ostream& o) {
 	for (const auto x : BAD_PRIVATES) paf.push_back({ x.a, ONE, {}, THROW_BAD_PRIVATE, x.desc });
 	for (const auto x : BAD_TWEAKS) paf.push_back({ ONE, x.a, {}, THROW_BAD_TWEAK, x.desc });
 
+	///////////////////////////////// privateSub
+	std::vector<PA> ps;
+
+	// visually inspected
+	//   covers https://github.com/bitcoin-core/secp256k1/blob/6ad5cdb42a1a8257289a0423d644dcbdeab0f83c/src/tests.c
+	ps.push_back({ ONE, ZERO, ONE, "", "1 - 0 == 1" });
+	for (size_t i = 2; i < 7; ++i) ps.push_back({ scalarFromUInt32(i), ONE, scalarFromUInt32(i - 1) });
+	for (size_t i = 1; i < 10; ++i) ps.push_back({ scalarFromUInt32(10), scalarFromUInt32(i), scalarFromUInt32(10 - i) });
+
+	ps.push_back({ ONE, ONE, Null<uint8_t_32>(), "", "1 - 1 == 0" });
+	ps.push_back({ THREE, THREE, Null<uint8_t_32>(), "", "3 - 3 == 0" });
+	ps.push_back({ GROUP_ORDER_LESS_1, ONE, GROUP_ORDER_LESS_2 });
+	ps.push_back({ GROUP_ORDER_LESS_2, ONE, GROUP_ORDER_LESS_3 });
+	ps.push_back({ GROUP_ORDER_LESS_1, GROUP_ORDER_LESS_2, ONE });
+	ps.push_back({ GROUP_ORDER_LESS_2, GROUP_ORDER_LESS_3, ONE });
+
+	// fuzz
+	for (size_t i = 0; i < 1000; ++i) {
+		const auto psPush = [&](const auto k, const auto t) {
+			bool ok = true;
+			const auto expected = _privSub(k, t, ok);
+			if (ok) ps.push_back({ k, t, expected });
+			else ps.push_back({ k, t, Null<uint8_t_32>() });
+		};
+
+		psPush(randomPrivate(), randomPrivate());
+		psPush(randomPrivateHigh(), randomPrivateLow());
+		psPush(randomPrivateLow(), randomPrivateHigh());
+	}
+
+	std::vector<PA> psf;
+	for (const auto x : BAD_PRIVATES) psf.push_back({ x.a, ONE, {}, THROW_BAD_PRIVATE, x.desc });
+	for (const auto x : BAD_TWEAKS) psf.push_back({ ONE, x.a, {}, THROW_BAD_TWEAK, x.desc });
+
 	// dump JSON
 	const auto jPA = [](auto x) {
 		return jsonifyO({
@@ -85,10 +119,12 @@ void generate (std::ostream& o) {
 					jsonp("expected", jsonify(x.e))
 				});
 			})),
-			jsonp("privateAdd", jsonifyA(pa, jPA))
+			jsonp("privateAdd", jsonifyA(pa, jPA)),
+			jsonp("privateSub", jsonifyA(ps, jPA))
 		})),
 		jsonp("invalid", jsonifyO({
-			jsonp("privateAdd", jsonifyA(paf, jPA))
+			jsonp("privateAdd", jsonifyA(paf, jPA)),
+			jsonp("privateSub", jsonifyA(psf, jPA))
 		}))
 	});
 }
