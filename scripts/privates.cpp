@@ -2,7 +2,7 @@
 #include <vector>
 #include "shared.hpp"
 
-struct IP { uint8_t_32 a = {}; bool e = false; };
+struct IP { uint8_t_32 a = {}; bool e = false; std::string desc = ""; };
 struct PA { uint8_t_32 a; uint8_t_32 b; uint8_t_32 e = Null<uint8_t_32>(); std::string except = ""; std::string desc = ""; };
 
 void generate (std::ostream& o) {
@@ -11,12 +11,12 @@ void generate (std::ostream& o) {
 	// edge cases (verify)
 	//   from https://github.com/bitcoin-core/secp256k1/blob/6ad5cdb42a1a8257289a0423d644dcbdeab0f83c/src/tests.c
 	std::vector<IP> ip = {
-		{ ZERO, false }, // #L3145, fail, == 0
-		{ ONE, true }, // #L3153, OK, > 0
-		{ GROUP_ORDER_LESS_1, true }, // #L3171, OK == G - 1
-		{ GROUP_ORDER, false }, // #L3115, fail, == G
-		{ GROUP_ORDER_OVER_1, false }, // #L3162, fail, >= G
-		{ UINT256_MAX, false }, // #L3131, fail, > G
+		{ ZERO, false, "== 0" }, // #L3145
+		{ ONE, true, "== 1" }, // #L3153
+		{ GROUP_ORDER_LESS_1, true, "== G - 1" }, // #L3171
+		{ GROUP_ORDER, false, "== G" }, // #L3115
+		{ GROUP_ORDER_OVER_1, false, "> G" }, // #L3162
+		{ UINT256_MAX, false, "2^256 - 1" }, // #L3131
 	};
 
 	// fuzz
@@ -40,12 +40,12 @@ void generate (std::ostream& o) {
 	for (size_t i = 1; i < 5; ++i) pa.push_back({ scalarFromUInt32(i), TWO, scalarFromUInt32(i + 2) });
 
 	pa.push_back({ ONE, GROUP_ORDER_LESS_1, Null<uint8_t_32>(), "", "1 + -1 == 0" });
-	pa.push_back({ ONE, GROUP_ORDER_LESS_2, GROUP_ORDER_LESS_1 });
-	pa.push_back({ ONE, GROUP_ORDER_LESS_3, GROUP_ORDER_LESS_2 });
+	pa.push_back({ ONE, GROUP_ORDER_LESS_2, GROUP_ORDER_LESS_1, "", "1 + -2 == -1" });
+	pa.push_back({ ONE, GROUP_ORDER_LESS_3, GROUP_ORDER_LESS_2, "", "1 + -3 == -2" });
 	pa.push_back({ GROUP_ORDER_LESS_1, GROUP_ORDER_LESS_1, GROUP_ORDER_LESS_2 });
 	pa.push_back({ GROUP_ORDER_LESS_2, GROUP_ORDER_LESS_1, GROUP_ORDER_LESS_3 });
 	pa.push_back({ GROUP_ORDER_LESS_3, ONE, GROUP_ORDER_LESS_2 });
-	pa.push_back({ GROUP_ORDER_LESS_3, TWO, GROUP_ORDER_LESS_1 });
+	pa.push_back({ GROUP_ORDER_LESS_3, TWO, GROUP_ORDER_LESS_1, "", "-3 + 2 == -1" });
 	pa.push_back({ GROUP_ORDER_LESS_3, THREE, Null<uint8_t_32>(), "", "-3 + 3 == 0" });
 
 	// fuzz
@@ -115,6 +115,7 @@ void generate (std::ostream& o) {
 		jsonp("valid", jsonifyO({
 			jsonp("isPrivate", jsonifyA(ip, [](auto x) {
 				return jsonifyO({
+					x.desc.empty() ? "" : jsonp("description", jsonify(x.desc)),
 					jsonp("d", jsonify(x.a)),
 					jsonp("expected", jsonify(x.e))
 				});
