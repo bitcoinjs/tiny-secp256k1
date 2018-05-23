@@ -1,3 +1,4 @@
+#include <array>
 #include <cstdlib>
 
 #include <nan.h>
