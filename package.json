@@ -5,11 +5,12 @@
   "main": "index.js",
   "gypfile": true,
   "engines": {
-    "node": ">=4.0.0"
+    "node": ">=6.0.0"
   },
   "scripts": {
     "build": "node-gyp rebuild",
-    "test": "tape tests/*.js"
+    "unit": "tape tests/*.js",
+    "test": "npm run unit"
   },
   "repository": {
     "type": "git",
