@@ -1,4 +1,7 @@
 # tiny-secp256k1
+[![Build Status](https://travis-ci.org/bitcoinjs/tiny-secp256k1.png?branch=master)](https://travis-ci.org/bitcoinjs/tiny-secp256k1)
+[![NPM](https://img.shields.io/npm/v/tiny-secp256k1.svg)](https://www.npmjs.org/package/tiny-secp256k1)
+[![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)
 
 ## isPoint (A)
 ``` haskell
