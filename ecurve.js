@@ -191,10 +191,10 @@ function deterministicGenerateK (hash, x, checkSig) {
   // Step H2b
   v = createHmac('sha256', k).update(v).digest()
 
-  let T = bigi.fromBuffer(v)
+  let T = v
 
   // Step H3, repeat until T is within the interval [1, n - 1] and is suitable for ECDSA
-  while (T.signum() <= 0 || T.compareTo(secp256k1.n) >= 0 || !checkSig(T)) {
+  while (!isPrivate(T) || !checkSig(T)) {
     k = createHmac('sha256', k)
       .update(v)
       .update(ZERO1)
@@ -205,7 +205,7 @@ function deterministicGenerateK (hash, x, checkSig) {
     // Step H1/H2a, again, ignored as tlen === qlen (256 bit)
     // Step H2b again
     v = createHmac('sha256', k).update(v).digest()
-    T = bigi.fromBuffer(v)
+    T = v
   }
 
   return T
@@ -224,14 +224,15 @@ function sign (hash, x) {
 
   let r, s
   deterministicGenerateK(hash, x, function (k) {
-    let Q = G.multiply(k)
+    let kI = bigi.fromBuffer(k)
+    let Q = G.multiply(kI)
 
     if (secp256k1.isInfinity(Q)) return false
 
     r = Q.affineX.mod(n)
     if (r.signum() === 0) return false
 
-    s = k.modInverse(n).multiply(e.add(d.multiply(r))).mod(n)
+    s = kI.modInverse(n).multiply(e.add(d.multiply(r))).mod(n)
     if (s.signum() === 0) return false
 
     return true
