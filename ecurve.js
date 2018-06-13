@@ -3,12 +3,15 @@ let createHmac = require('create-hmac')
 let ecurve = require('ecurve')
 let secp256k1 = ecurve.getCurveByName('secp256k1')
 
-let ZERO32 = Buffer.alloc(32, 0)
-let EC_GROUP_ORDER = Buffer.from('fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141', 'hex')
-let EC_P = Buffer.from('fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f', 'hex')
+const ONE1 = Buffer.alloc(1, 1)
+const ZERO1 = Buffer.alloc(1, 0)
+const ZERO32 = Buffer.alloc(32, 0)
+const EC_GROUP_ORDER = Buffer.from('fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141', 'hex')
+const EC_P = Buffer.from('fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f', 'hex')
 
-let ONE1 = Buffer.alloc(1, 1)
-let ZERO1 = Buffer.alloc(1, 0)
+const n = secp256k1.n
+const n_div_2 = n.shiftRight(1)
+const G = secp256k1.G
 
 let THROW_BAD_PRIVATE = 'Expected Private'
 let THROW_BAD_POINT = 'Expected Point'
@@ -93,7 +96,7 @@ function pointAddScalar (p, tweak, __compressed) {
   if (tweak.compare(ZERO32) === 0) return pp.getEncoded(compressed)
 
   let tt = bigi.fromBuffer(tweak)
-  let qq = secp256k1.G.multiply(tt)
+  let qq = G.multiply(tt)
   let uu = pp.add(qq)
   if (secp256k1.isInfinity(uu)) return null
 
@@ -113,7 +116,7 @@ function pointFromScalar (d, __compressed) {
   if (!isPrivate(d)) throw new TypeError(THROW_BAD_PRIVATE)
 
   let dd = bigi.fromBuffer(d)
-  let pp = secp256k1.G.multiply(dd)
+  let pp = G.multiply(dd)
   if (secp256k1.isInfinity(pp)) return null
 
   let compressed = assumeCompression(__compressed)
@@ -139,7 +142,7 @@ function privateAdd (d, tweak) {
 
   let dd = bigi.fromBuffer(d)
   let tt = bigi.fromBuffer(tweak)
-  let dt = dd.add(tt).mod(secp256k1.n).toBuffer(32)
+  let dt = dd.add(tt).mod(n).toBuffer(32)
   if (!isPrivate(dt)) return null
 
   return dt
@@ -151,7 +154,7 @@ function privateSub (d, tweak) {
 
   let dd = bigi.fromBuffer(d)
   let tt = bigi.fromBuffer(tweak)
-  let dt = dd.subtract(tt).mod(secp256k1.n).toBuffer(32)
+  let dt = dd.subtract(tt).mod(n).toBuffer(32)
   if (!isPrivate(dt)) return null
 
   return dt
@@ -211,16 +214,12 @@ function deterministicGenerateK (hash, x, checkSig) {
   return T
 }
 
-let N_OVER_TWO = secp256k1.n.shiftRight(1)
-
 function sign (hash, x) {
   if (!isScalar(hash)) throw new TypeError(THROW_BAD_HASH)
   if (!isPrivate(x)) throw new TypeError(THROW_BAD_PRIVATE)
 
   let d = bigi.fromBuffer(x)
   let e = bigi.fromBuffer(hash)
-  let n = secp256k1.n
-  let G = secp256k1.G
 
   let r, s
   deterministicGenerateK(hash, x, function (k) {
@@ -232,14 +231,17 @@ function sign (hash, x) {
     r = Q.affineX.mod(n)
     if (r.signum() === 0) return false
 
-    s = kI.modInverse(n).multiply(e.add(d.multiply(r))).mod(n)
+    s = kI
+      .modInverse(n)
+      .multiply(e.add(d.multiply(r)))
+      .mod(n)
     if (s.signum() === 0) return false
 
     return true
   })
 
   // enforce low S values, see bip62: 'low s values in signatures'
-  if (s.compareTo(N_OVER_TWO) > 0) {
+  if (s.compareTo(n_div_2) > 0) {
     s = n.subtract(s)
   }
 
@@ -257,8 +259,6 @@ function verify (hash, q, signature) {
   if (!isSignature(signature)) throw new TypeError(THROW_BAD_SIGNATURE)
 
   let Q = ecurve.Point.decodeFrom(secp256k1, q)
-  let n = secp256k1.n
-  let G = secp256k1.G
   let r = bigi.fromBuffer(signature.slice(0, 32))
   let s = bigi.fromBuffer(signature.slice(32, 64))
 
