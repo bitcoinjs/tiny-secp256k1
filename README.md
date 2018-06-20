@@ -3,7 +3,12 @@
 [![NPM](https://img.shields.io/npm/v/tiny-secp256k1.svg)](https://www.npmjs.org/package/tiny-secp256k1)
 [![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)
 
-## isPoint (A)
+This library is under development,  and,  like the [secp256k1](https://github.com/bitcoin-core/secp256k1) C library it depends on,  this is a research effort to determine an optimal API for end-users of the bitcoinjs ecosystem.
+
+
+## Documentation
+
+### isPoint (A)
 ``` haskell
 isPoint :: Buffer -> Bool
 ```
@@ -13,14 +18,14 @@ Returns `false` if
 * `A.y` is not in `[1...p - 1]`
 
 
-## isPointCompressed (A)
+### isPointCompressed (A)
 ``` haskell
 isPointCompressed :: Buffer -> Bool
 ```
 Returns `false` if the signature is **not** compressed.
 
 
-## isPrivate (d)
+### isPrivate (d)
 ``` haskell
 isPrivate :: Buffer -> Bool
 ```
@@ -29,7 +34,7 @@ Returns `false` if
 * `d` is not in `[1..order - 1]`
 
 
-## pointAdd (A, B[, compressed])
+### pointAdd (A, B[, compressed])
 ``` haskell
 pointAdd :: Buffer -> Buffer [-> Bool] -> Maybe Buffer
 ```
@@ -40,7 +45,7 @@ Returns `null` if result is at infinity.
 * `Expected Point` if `!isPoint(B)`
 
 
-## pointAddScalar (A, tweak[, compressed])
+### pointAddScalar (A, tweak[, compressed])
 ``` haskell
 pointAddScalar :: Buffer -> Buffer [-> Bool] -> Maybe Buffer
 ```
@@ -51,7 +56,7 @@ Returns `null` if result is at infinity.
 * `Expected Tweak` if `tweak` is not in `[0...order - 1]`
 
 
-## pointCompress (A, compressed)
+### pointCompress (A, compressed)
 ``` haskell
 pointCompress :: Buffer -> Bool -> Buffer
 ```
@@ -60,7 +65,7 @@ pointCompress :: Buffer -> Bool -> Buffer
 * `Expected Point` if `!isPoint(A)`
 
 
-## pointFromScalar (d[, compressed])
+### pointFromScalar (d[, compressed])
 ``` haskell
 pointFromScalar :: Buffer [-> Bool] -> Maybe Buffer
 ```
@@ -70,7 +75,7 @@ Returns `null` if result is at infinity.
 * `Expected Private` if `!isPrivate(d)`
 
 
-## pointMultiply (A, tweak[, compressed])
+### pointMultiply (A, tweak[, compressed])
 ``` haskell
 pointMultiply :: Buffer -> Buffer [-> Bool] -> Maybe Buffer
 ```
@@ -81,7 +86,7 @@ Returns `null` if result is at infinity.
 * `Expected Tweak` if `tweak` is not in `[0...order - 1]`
 
 
-## privateAdd (d, tweak)
+### privateAdd (d, tweak)
 ``` haskell
 privateAdd :: Buffer -> Buffer -> Maybe Buffer
 ```
@@ -92,7 +97,7 @@ Returns `null` if result is equal to `0`.
 * `Expected Tweak` if `tweak` is not in `[0...order - 1]`
 
 
-## privateSub (d, tweak)
+### privateSub (d, tweak)
 ``` haskell
 privateSub :: Buffer -> Buffer -> Maybe Buffer
 ```
@@ -103,7 +108,7 @@ Returns `null` if result is equal to `0`.
 * `Expected Tweak` if `tweak` is not in `[0...order - 1]`
 
 
-## sign (h, d)
+### sign (h, d)
 ``` haskell
 sign :: Buffer -> Buffer -> Buffer
 ```
@@ -115,7 +120,7 @@ Uses RFC6979.
 * `Expected Scalar` if `h` is not 256-bit
 
 
-## verify (h, Q, signature[, strict = false])
+### verify (h, Q, signature[, strict = false])
 ``` haskell
 verify :: Buffer -> Buffer -> Buffer -> Bool
 ```
