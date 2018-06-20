@@ -128,5 +128,12 @@ If `strict` is `true`, valid signatures with any of (r, s) values greater than `
 * `Expected Signature` if `signature` has any (r, s) values not in range `[0...order - 1]`
 * `Expected Scalar` if `h` is not 256-bit
 
+---
+
+## Credit
+This is a partially derived work of https://github.com/cryptocoinjs/secp256k1-node, specifically [this commit]https://github.com/bitcoinjs/tiny-secp256k1/commit/03a1d0ab5d61dc05ab42a7e884cf37d628a10724).
+
+https://github.com/bitcoin-core/secp256k1 - for the secp256k1 library
+
 
 # LICENSE [MIT](LICENSE)
