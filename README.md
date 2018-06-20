@@ -127,3 +127,6 @@ If `strict` is `true`, valid signatures with any of (r, s) values greater than `
 * `Expected Point` if `!isPoint(Q)`
 * `Expected Signature` if `signature` has any (r, s) values not in range `[0...order - 1]`
 * `Expected Scalar` if `h` is not 256-bit
+
+
+# LICENSE [MIT](LICENSE)
