@@ -10,7 +10,7 @@ const EC_GROUP_ORDER = Buffer.from('fffffffffffffffffffffffffffffffebaaedce6af48
 const EC_P = Buffer.from('fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f', 'hex')
 
 const n = secp256k1.curve.n
-const n_div_2 = n.shrn(1)
+const nDiv2 = n.shrn(1)
 const G = secp256k1.curve.g
 
 let THROW_BAD_PRIVATE = 'Expected Private'
@@ -246,7 +246,7 @@ function sign (hash, x) {
   })
 
   // enforce low S values, see bip62: 'low s values in signatures'
-  if (s.cmp(n_div_2) > 0) {
+  if (s.cmp(nDiv2) > 0) {
     s = n.sub(s)
   }
 
