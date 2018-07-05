@@ -10,7 +10,7 @@ This library is under development,  and,  like the [secp256k1](https://github.co
 npm install secp256k1
 ```
 
-If you are having problems,  please read the guide at [secp256k1-node](https://github.com/cryptocoinjs/secp256k1-node#installation),  as the build instructions should be exactly the same (and are a direct derivation).
+If you are having problems,  please read the guide at [secp256k1-node](https://github.com/cryptocoinjs/secp256k1-node#installation),  as the build instructions should be exactly the same (and this module is a direct derivation).
 
 
 ## Documentation
