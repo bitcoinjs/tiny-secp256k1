@@ -31,5 +31,8 @@
   },
   "devDependencies": {
     "tape": "^4.9.0"
+  },
+  "browser": {
+    "./index.js": "./ecurve.js"
   }
 }
