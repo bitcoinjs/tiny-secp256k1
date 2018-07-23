@@ -1,8 +1,4 @@
-let ecurve = require('../ecurve')
-//  let elliptic = require('elliptic') // for reference
-let native = require('bindings')('secp256k1')
 let tape = require('tape')
-
 let fecdsa = require('./fixtures/ecdsa.json')
 
 function corrupt (x) {
@@ -71,5 +67,4 @@ function test (binding) {
   })
 }
 
-test(ecurve)
-test(native)
+module.exports = test

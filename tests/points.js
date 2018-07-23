@@ -1,8 +1,4 @@
-let ecurve = require('../ecurve')
-//  let elliptic = require('elliptic') // for reference
-let native = require('bindings')('secp256k1')
 let tape = require('tape')
-
 let fpoints = require('./fixtures/points.json')
 
 function test (binding) {
@@ -158,5 +154,4 @@ function test (binding) {
   })
 }
 
-test(ecurve)
-test(native)
+module.exports = test
