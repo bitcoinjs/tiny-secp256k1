@@ -12,7 +12,6 @@ try {
   }
 
   module.exports = binding
-
 } catch (err) {
   module.exports = require('./ecurve')
 }
