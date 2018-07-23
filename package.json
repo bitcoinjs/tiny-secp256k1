@@ -9,7 +9,8 @@
   },
   "scripts": {
     "build": "node-gyp rebuild",
-    "unit": "tape tests/*.js",
+    "unit": "tape tests/index.js",
+    "test-browser": "browserify tests/index.js > tests/bundle.js",
     "test": "npm run unit"
   },
   "repository": {
@@ -30,6 +31,7 @@
     "nan": "^2.10.0"
   },
   "devDependencies": {
+    "browserify": "^16.2.2",
     "tape": "^4.9.0"
   },
   "browser": {
