@@ -14,14 +14,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dcousens/secp256k1-tiny.git"
+    "url": "git+https://github.com/bitcoinjs/tiny-secp256k1.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/dcousens/secp256k1-tiny/issues"
+    "url": "https://github.com/bitcoinjs/tiny-secp256k1/issues"
   },
-  "homepage": "https://github.com/dcousens/secp256k1-tiny#readme",
+  "homepage": "https://github.com/bitcoinjs/tiny-secp256k1#readme",
   "dependencies": {
     "bindings": "^1.3.0",
     "bn.js": "^4.11.8",
