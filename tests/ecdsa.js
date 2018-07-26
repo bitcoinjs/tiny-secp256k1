@@ -1,5 +1,5 @@
-let tape = require('tape')
-let fecdsa = require('./fixtures/ecdsa.json')
+const tape = require('tape')
+const fecdsa = require('./fixtures/ecdsa.json')
 
 function corrupt (x) {
   function randomUInt8 () {
@@ -7,7 +7,7 @@ function corrupt (x) {
   }
 
   x = Buffer.from(x)
-  let mask = 1 << (randomUInt8() % 8)
+  const mask = 1 << (randomUInt8() % 8)
   x[randomUInt8() % 32] ^= mask
   return x
 }
@@ -15,16 +15,16 @@ function corrupt (x) {
 function test (binding) {
   tape('sign', (t) => {
     fecdsa.valid.forEach((f) => {
-      let d = Buffer.from(f.d, 'hex')
-      let m = Buffer.from(f.m, 'hex')
-      let expected = Buffer.from(f.signature, 'hex')
+      const d = Buffer.from(f.d, 'hex')
+      const m = Buffer.from(f.m, 'hex')
+      const expected = Buffer.from(f.signature, 'hex')
 
       t.same(binding.sign(m, d), expected, `sign(${f.m}, ...) == ${f.signature}`)
     })
 
     fecdsa.invalid.sign.forEach((f) => {
-      let d = Buffer.from(f.d, 'hex')
-      let m = Buffer.from(f.m, 'hex')
+      const d = Buffer.from(f.d, 'hex')
+      const m = Buffer.from(f.m, 'hex')
 
       t.throws(() => {
         binding.sign(m, d)
@@ -36,12 +36,12 @@ function test (binding) {
 
   tape('verify', (t) => {
     fecdsa.valid.forEach((f) => {
-      let d = Buffer.from(f.d, 'hex')
-      let Q = binding.pointFromScalar(d, true)
-      let Qu = binding.pointFromScalar(d, false)
-      let m = Buffer.from(f.m, 'hex')
-      let signature = Buffer.from(f.signature, 'hex')
-      let bad = corrupt(signature)
+      const d = Buffer.from(f.d, 'hex')
+      const Q = binding.pointFromScalar(d, true)
+      const Qu = binding.pointFromScalar(d, false)
+      const m = Buffer.from(f.m, 'hex')
+      const signature = Buffer.from(f.signature, 'hex')
+      const bad = corrupt(signature)
 
       t.equal(binding.verify(m, Q, signature), true, `verify(${f.signature}) is OK`)
       t.equal(binding.verify(m, Q, bad), false, `verify(${bad.toString('hex')}) is rejected`)
@@ -50,9 +50,9 @@ function test (binding) {
     })
 
     fecdsa.invalid.verify.forEach((f) => {
-      let Q = Buffer.from(f.Q, 'hex')
-      let m = Buffer.from(f.m, 'hex')
-      let signature = Buffer.from(f.signature, 'hex')
+      const Q = Buffer.from(f.Q, 'hex')
+      const m = Buffer.from(f.m, 'hex')
+      const signature = Buffer.from(f.signature, 'hex')
 
       if (f.exception) {
         t.throws(() => {
