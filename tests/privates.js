@@ -1,10 +1,10 @@
-let tape = require('tape')
-let fprivates = require('./fixtures/privates.json')
+const tape = require('tape')
+const fprivates = require('./fixtures/privates.json')
 
 function test (binding) {
   tape('isPrivate', (t) => {
     fprivates.valid.isPrivate.forEach((f) => {
-      let d = Buffer.from(f.d, 'hex')
+      const d = Buffer.from(f.d, 'hex')
 
       t.equal(binding.isPrivate(d), f.expected, `${f.d} is ${f.expected ? 'OK' : 'rejected'}`)
     })
@@ -14,9 +14,9 @@ function test (binding) {
 
   tape('privateAdd', (t) => {
     fprivates.valid.privateAdd.forEach((f) => {
-      let d = Buffer.from(f.d, 'hex')
-      let tweak = Buffer.from(f.tweak, 'hex')
-      let expected = f.expected ? Buffer.from(f.expected, 'hex') : null
+      const d = Buffer.from(f.d, 'hex')
+      const tweak = Buffer.from(f.tweak, 'hex')
+      const expected = f.expected ? Buffer.from(f.expected, 'hex') : null
       let description = `${f.d} + ${f.tweak} = ${f.expected ? f.expected : null}`
       if (f.description) description += ` (${f.description})`
 
@@ -24,8 +24,8 @@ function test (binding) {
     })
 
     fprivates.invalid.privateAdd.forEach((f) => {
-      let d = Buffer.from(f.d, 'hex')
-      let tweak = Buffer.from(f.tweak, 'hex')
+      const d = Buffer.from(f.d, 'hex')
+      const tweak = Buffer.from(f.tweak, 'hex')
 
       t.throws(() => {
         binding.privateAdd(d, tweak)
@@ -37,9 +37,9 @@ function test (binding) {
 
   tape('privateSub', (t) => {
     fprivates.valid.privateSub.forEach((f) => {
-      let d = Buffer.from(f.d, 'hex')
-      let tweak = Buffer.from(f.tweak, 'hex')
-      let expected = f.expected ? Buffer.from(f.expected, 'hex') : null
+      const d = Buffer.from(f.d, 'hex')
+      const tweak = Buffer.from(f.tweak, 'hex')
+      const expected = f.expected ? Buffer.from(f.expected, 'hex') : null
       let description = `${f.d} - ${f.tweak} = ${f.expected ? f.expected : null}`
       if (f.description) description += ` (${f.description})`
 
@@ -47,8 +47,8 @@ function test (binding) {
     })
 
     fprivates.invalid.privateSub.forEach((f) => {
-      let d = Buffer.from(f.d, 'hex')
-      let tweak = Buffer.from(f.tweak, 'hex')
+      const d = Buffer.from(f.d, 'hex')
+      const tweak = Buffer.from(f.tweak, 'hex')
 
       t.throws(() => {
         binding.privateSub(d, tweak)
