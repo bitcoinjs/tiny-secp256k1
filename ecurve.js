@@ -1,10 +1,8 @@
 const BN = require('bn.js')
 const EC = require('elliptic').ec
 const secp256k1 = new EC('secp256k1')
-const createHmac = require('create-hmac')
+const deterministicGenerateK = require('./rfc6979')
 
-const ONE1 = Buffer.alloc(1, 1)
-const ZERO1 = Buffer.alloc(1, 0)
 const ZERO32 = Buffer.alloc(32, 0)
 const EC_GROUP_ORDER = Buffer.from('fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141', 'hex')
 const EC_P = Buffer.from('fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f', 'hex')
@@ -165,60 +163,6 @@ function privateSub (d, tweak) {
   return dt
 }
 
-// https://tools.ietf.org/html/rfc6979#section-3.2
-function deterministicGenerateK (hash, x, checkSig) {
-  // Step A, ignored as hash already provided
-  // Step B
-  // Step C
-  let k = Buffer.alloc(32, 0)
-  let v = Buffer.alloc(32, 1)
-
-  // Step D
-  k = createHmac('sha256', k)
-    .update(v)
-    .update(ZERO1)
-    .update(x)
-    .update(hash)
-    .digest()
-
-  // Step E
-  v = createHmac('sha256', k).update(v).digest()
-
-  // Step F
-  k = createHmac('sha256', k)
-    .update(v)
-    .update(ONE1)
-    .update(x)
-    .update(hash)
-    .digest()
-
-  // Step G
-  v = createHmac('sha256', k).update(v).digest()
-
-  // Step H1/H2a, ignored as tlen === qlen (256 bit)
-  // Step H2b
-  v = createHmac('sha256', k).update(v).digest()
-
-  let T = v
-
-  // Step H3, repeat until T is within the interval [1, n - 1] and is suitable for ECDSA
-  while (!isPrivate(T) || !checkSig(T)) {
-    k = createHmac('sha256', k)
-      .update(v)
-      .update(ZERO1)
-      .digest()
-
-    v = createHmac('sha256', k).update(v).digest()
-
-    // Step H1/H2a, again, ignored as tlen === qlen (256 bit)
-    // Step H2b again
-    v = createHmac('sha256', k).update(v).digest()
-    T = v
-  }
-
-  return T
-}
-
 function sign (hash, x) {
   if (!isScalar(hash)) throw new TypeError(THROW_BAD_HASH)
   if (!isPrivate(x)) throw new TypeError(THROW_BAD_PRIVATE)
@@ -243,7 +187,7 @@ function sign (hash, x) {
     if (s.isZero() === 0) return false
 
     return true
-  })
+  }, isPrivate)
 
   // enforce low S values, see bip62: 'low s values in signatures'
   if (s.cmp(nDiv2) > 0) {
