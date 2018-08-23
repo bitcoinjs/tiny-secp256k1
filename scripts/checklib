@@ -1,6 +1,8 @@
-#!/usr/bin/env bash
-function check () {
-  local regex="lib$1.+(so|dylib)"
+#!/usr/bin/env sh
+# from https://github.com/cryptocoinjs/secp256k1-node/blob/25a4b6cb567b49a40f47f50c5ca9a756f5343e4d/utils/has_lib.sh
+
+check () {
+  regex="lib$1.+(so|dylib)"
 
   # Add /sbin to path as ldconfig is located there on some systems - e.g. Debian
   # (and it still can be used by unprivileged users):
