@@ -83,7 +83,7 @@ function test (binding) {
   tape('pointCompress', (t) => {
     fpoints.valid.pointCompress.forEach((f) => {
       const p = Buffer.from(f.P, 'hex')
-      const expected = f.expected ? Buffer.from(f.expected, 'hex') : null
+      const expected = Buffer.from(f.expected, 'hex')
 
       t.same(binding.pointCompress(p, f.compress), expected)
     })
@@ -103,8 +103,8 @@ function test (binding) {
     fpoints.valid.pointFromScalar.forEach((f) => {
       const d = Buffer.from(f.d, 'hex')
 
-      const expected = f.expected ? Buffer.from(f.expected, 'hex') : null
-      let description = `${f.d} * G = ${f.expected ? f.expected : null}`
+      const expected = Buffer.from(f.expected, 'hex')
+      let description = `${f.d} * G = ${f.expected}`
       if (f.description) description += ` (${f.description})`
 
       t.same(binding.pointFromScalar(d), expected, description)
