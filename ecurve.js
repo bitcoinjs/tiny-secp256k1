@@ -9,6 +9,7 @@ const EC_P = Buffer.from('ffffffffffffffffffffffffffffffffffffffffffffffffffffff
 
 const n = secp256k1.curve.n
 const nDiv2 = n.shrn(1)
+const maxDiv2 = new BN('7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 'hex')
 const G = secp256k1.curve.g
 
 const THROW_BAD_PRIVATE = 'Expected Private'
@@ -171,7 +172,7 @@ function sign (hash, x) {
   const e = fromBuffer(hash)
 
   let r, s
-  deterministicGenerateK(hash, x, function (k) {
+  const checkSig = function (k) {
     const kI = fromBuffer(k)
     const Q = G.mul(kI)
 
@@ -187,7 +188,19 @@ function sign (hash, x) {
     if (s.isZero() === 0) return false
 
     return true
-  }, isPrivate)
+  }
+
+  let extraEntropy
+  let counter = 0
+
+  do { // loop to find low-R: https://github.com/bitcoin/bitcoin/pull/13666
+    // First time through: counter === 0, extraEntropy === undefined
+    // Second time and above: extraEntropy is 32 byte Buffer and counter is written in LE
+    if (counter === 1) extraEntropy = Buffer.alloc(32, 0)
+    if (counter > 0) extraEntropy.writeUIntLE(counter, 0, 6)
+    deterministicGenerateK(hash, x, checkSig, isPrivate, extraEntropy)
+    counter++
+  } while (r.cmp(maxDiv2) > 0)
 
   // enforce low S values, see bip62: 'low s values in signatures'
   if (s.cmp(nDiv2) > 0) {

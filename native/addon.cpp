@@ -87,6 +87,13 @@ namespace {
 		if (info[index]->IsUndefined()) return SECP256K1_EC_COMPRESSED;
 		return info[index]->BooleanValue() ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED;
 	}
+
+	bool SigHasLowR(const secp256k1_ecdsa_signature* sig)
+	{
+		unsigned char compact_sig[64];
+		secp256k1_ecdsa_signature_serialize_compact(context, compact_sig, sig);
+		return compact_sig[0] < 0x80;
+	}
 }
 
 // returns Bool
@@ -256,14 +263,32 @@ NAN_METHOD(ecdsaSign) {
 	if (!isPrivate(d)) return THROW_BAD_PRIVATE;
 
 	secp256k1_ecdsa_signature signature;
-	if (secp256k1_ecdsa_sign(
+	int ret = secp256k1_ecdsa_sign(
 		context,
 		&signature,
 		asDataPointer(hash),
 		asDataPointer(d),
 		secp256k1_nonce_function_rfc6979,
 		nullptr
-	) == 0) return THROW_BAD_SIGNATURE;
+	);
+
+	unsigned char extra_entropy[32] = {0};
+	int counter = 0;
+
+	while (ret && !SigHasLowR(&signature)) {
+		// The chances of failing 255 times in a row is 1 in 2^255
+		// So just cast the counter int to a single char and LE place in front
+		extra_entropy[0] = static_cast<char>(++counter);
+		ret = secp256k1_ecdsa_sign(
+			context,
+			&signature,
+			asDataPointer(hash),
+			asDataPointer(d),
+			secp256k1_nonce_function_rfc6979,
+			extra_entropy
+		);
+	}
+	if (ret == 0) return THROW_BAD_SIGNATURE;
 
 	unsigned char output[64];
 	secp256k1_ecdsa_signature_serialize_compact(context, output, &signature);
