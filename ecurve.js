@@ -17,9 +17,14 @@ const THROW_BAD_POINT = 'Expected Point'
 const THROW_BAD_TWEAK = 'Expected Tweak'
 const THROW_BAD_HASH = 'Expected Hash'
 const THROW_BAD_SIGNATURE = 'Expected Signature'
+const THROW_BAD_BOOLEAN = 'Expected Boolean'
 
 function isScalar (x) {
   return Buffer.isBuffer(x) && x.length === 32
+}
+
+function isBoolean (x) {
+  return typeof x === 'boolean'
 }
 
 function isOrderScalar (x) {
@@ -164,9 +169,11 @@ function privateSub (d, tweak) {
   return dt
 }
 
-function sign (hash, x) {
+function sign (hash, x, lowR) {
   if (!isScalar(hash)) throw new TypeError(THROW_BAD_HASH)
   if (!isPrivate(x)) throw new TypeError(THROW_BAD_PRIVATE)
+  if (lowR === undefined) lowR = false
+  if (!isBoolean(lowR)) throw new TypeError(THROW_BAD_BOOLEAN)
 
   const d = fromBuffer(x)
   const e = fromBuffer(hash)
@@ -200,7 +207,7 @@ function sign (hash, x) {
     if (counter > 0) extraEntropy.writeUIntLE(counter, 0, 6)
     deterministicGenerateK(hash, x, checkSig, isPrivate, extraEntropy)
     counter++
-  } while (r.cmp(maxDiv2) > 0)
+  } while (lowR && r.cmp(maxDiv2) > 0)
 
   // enforce low S values, see bip62: 'low s values in signatures'
   if (s.cmp(nDiv2) > 0) {

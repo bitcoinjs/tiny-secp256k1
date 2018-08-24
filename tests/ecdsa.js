@@ -22,6 +22,23 @@ function test (binding) {
       t.same(binding.sign(m, d), expected, `sign(${f.m}, ...) == ${f.signature}`)
     })
 
+    fecdsa.lowR.forEach((f) => {
+      const d = Buffer.from(f.d, 'hex')
+      const m = Buffer.from(f.m, 'hex')
+      const expected = Buffer.from(f.signature, 'hex')
+      const expectedLowR = Buffer.from(f.lowRsignature, 'hex')
+
+      const hiSig1 = binding.sign(m, d)
+      const hiSig2 = binding.sign(m, d, undefined)
+      const hiSig3 = binding.sign(m, d, false)
+
+      const loSig = binding.sign(m, d, true)
+
+      t.same(hiSig1, expected, `sign(${f.m}, ...) == ${f.signature}`)
+      t.same(loSig, expectedLowR, `signLowR(${f.m}, ...) == ${f.signature}`)
+      t.same(hiSig1.equals(hiSig2) && hiSig1.equals(hiSig3), true, `sign(${f.m}, ...) == ${f.signature}`)
+    })
+
     fecdsa.invalid.sign.forEach((f) => {
       const d = Buffer.from(f.d, 'hex')
       const m = Buffer.from(f.m, 'hex')

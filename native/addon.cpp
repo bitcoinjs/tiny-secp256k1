@@ -10,6 +10,7 @@
 #define THROW_BAD_TWEAK Nan::ThrowTypeError("Expected Tweak")
 #define THROW_BAD_HASH Nan::ThrowTypeError("Expected Hash")
 #define THROW_BAD_SIGNATURE Nan::ThrowTypeError("Expected Signature")
+#define THROW_BAD_BOOLEAN Nan::ThrowTypeError("Expected Boolean")
 #define EXPECT_ARGS(N) if (info.Length() < N) return THROW_BAD_ARGUMENTS
 
 #define RETURNV(X) info.GetReturnValue().Set(X)
@@ -35,6 +36,11 @@ namespace {
 	template <typename T>
 	bool isScalar (const T& x) {
 		return node::Buffer::HasInstance(x) && node::Buffer::Length(x) == 32;
+	}
+
+	template <typename T>
+	bool isBooleanOrUndefined (const T& x) {
+		return x->IsBoolean() || x->IsUndefined();
 	}
 
 	template <typename T>
@@ -259,8 +265,12 @@ NAN_METHOD(ecdsaSign) {
 
 	const auto hash = info[0].As<v8::Object>();
 	const auto d = info[1].As<v8::Object>();
+	const auto lowRVal = info[2].As<v8::Object>();
 	if (!isScalar(hash)) return THROW_BAD_HASH;
 	if (!isPrivate(d)) return THROW_BAD_PRIVATE;
+	if (!isBooleanOrUndefined(lowRVal)) return THROW_BAD_BOOLEAN;
+
+	const bool lowR = lowRVal->BooleanValue();
 
 	secp256k1_ecdsa_signature signature;
 	int ret = secp256k1_ecdsa_sign(
@@ -275,7 +285,7 @@ NAN_METHOD(ecdsaSign) {
 	unsigned char extra_entropy[32] = {0};
 	int counter = 0;
 
-	while (ret && !SigHasLowR(&signature)) {
+	while (ret && lowR && !SigHasLowR(&signature)) {
 		// The chances of failing 255 times in a row is 1 in 2^255
 		// So just cast the counter int to a single char and LE place in front
 		extra_entropy[0] = static_cast<char>(++counter);
