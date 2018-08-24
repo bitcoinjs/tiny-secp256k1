@@ -10,6 +10,7 @@
 #define THROW_BAD_TWEAK Nan::ThrowTypeError("Expected Tweak")
 #define THROW_BAD_HASH Nan::ThrowTypeError("Expected Hash")
 #define THROW_BAD_SIGNATURE Nan::ThrowTypeError("Expected Signature")
+#define THROW_BAD_EXTRA_DATA Nan::ThrowTypeError("Expected Extra Data (32 bytes)")
 #define EXPECT_ARGS(N) if (info.Length() < N) return THROW_BAD_ARGUMENTS
 
 #define RETURNV(X) info.GetReturnValue().Set(X)
@@ -252,8 +253,17 @@ NAN_METHOD(ecdsaSign) {
 
 	const auto hash = info[0].As<v8::Object>();
 	const auto d = info[1].As<v8::Object>();
+	const auto addData = info[2].As<v8::Object>();
 	if (!isScalar(hash)) return THROW_BAD_HASH;
 	if (!isPrivate(d)) return THROW_BAD_PRIVATE;
+	if (!addData->IsUndefined() && !isScalar(addData)) return THROW_BAD_EXTRA_DATA;
+
+	const unsigned char* extraData;
+	if (addData->IsUndefined()) {
+		extraData = nullptr;
+	} else {
+		extraData = asDataPointer(addData);
+	}
 
 	secp256k1_ecdsa_signature signature;
 	if (secp256k1_ecdsa_sign(
@@ -262,7 +272,7 @@ NAN_METHOD(ecdsaSign) {
 		asDataPointer(hash),
 		asDataPointer(d),
 		secp256k1_nonce_function_rfc6979,
-		nullptr
+		extraData
 	) == 0) return THROW_BAD_SIGNATURE;
 
 	unsigned char output[64];
