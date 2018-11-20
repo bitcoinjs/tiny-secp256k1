@@ -287,6 +287,7 @@ const auto UINT256_MAX = scalarFromHex("ffffffffffffffffffffffffffffffffffffffff
 const auto G = pointFromHex("0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798");
 const auto GU = pointFromHex("0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8");
 const auto P_LESS_1 = scalarFromHex("fffffffffffffffffffffffffffffffffffffffffffffffffffffffeeffffc2e");
+const auto P_LESS_2 = scalarFromHex("fffffffffffffffffffffffffffffffffffffffffffffffffffffffeeffffc2d");
 const auto P = scalarFromHex("fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f");
 const auto P_OVER_1 = scalarFromHex("fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc30");
 
@@ -328,6 +329,8 @@ std::vector<B<uint8_t_vec>> generateBadPoints () {
 		{ _pointFromX(ZERO, 0x03), "Bad X coordinate (== 0)" },
 		{ _pointFromX(P, 0x02), "Bad X coordinate (== P)" },
 		{ _pointFromX(P, 0x03), "Bad X coordinate (== P)" },
+		{ _pointFromX(P_LESS_2, 0x02), "Bad X coordinate (P - 2)" },
+		{ _pointFromX(P_LESS_2, 0x03), "Bad X coordinate (P - 2)" },
 		{ _pointFromX(P_OVER_1, 0x03), "Bad X coordinate (> P)" },
 	};
 }
