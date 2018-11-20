@@ -154,7 +154,7 @@ If `strict` is `true`, valid signatures with any of (r, s) values greater than `
 ## Credit
 This is a partially derived work of https://github.com/cryptocoinjs/secp256k1-node, specifically [this commit](https://github.com/bitcoinjs/tiny-secp256k1/commit/03a1d0ab5d61dc05ab42a7e884cf37d628a10724).
 
-https://github.com/bitcoin-core/secp256k1 - for the secp256k1 library
+This library uses the native library [secp256k1](https://github.com/bitcoin-core/secp256k1) by the bitcoin-core developers,  including derivatives of its tests and test vectors.
 
 
 # LICENSE [MIT](LICENSE)
