@@ -167,7 +167,15 @@ function privateSub (d, tweak) {
   return dt
 }
 
-function sign (hash, x, addData) {
+function sign (hash, x) {
+  return __sign(hash, x)
+}
+
+function signWithEntropy (hash, x, addData) {
+  return __sign(hash, x, addData)
+}
+
+function __sign (hash, x, addData) {
   if (!isScalar(hash)) throw new TypeError(THROW_BAD_HASH)
   if (!isPrivate(x)) throw new TypeError(THROW_BAD_PRIVATE)
   if (addData !== undefined && !isScalar(addData)) throw new TypeError(THROW_BAD_EXTRA_DATA)
@@ -263,5 +271,6 @@ module.exports = {
   privateAdd,
   privateSub,
   sign,
+  signWithEntropy,
   verify
 }
