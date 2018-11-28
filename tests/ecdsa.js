@@ -40,12 +40,12 @@ function test (binding) {
 
       const sig = binding.sign(m, d)
 
-      const extraEntropyUndefined = binding.sign(m, d, undefined)
-      const extraEntropy0 = binding.sign(m, d, buf1)
-      const extraEntropy1 = binding.sign(m, d, buf2)
-      const extraEntropyRand = binding.sign(m, d, buf3)
-      const extraEntropyN = binding.sign(m, d, buf4)
-      const extraEntropyMax = binding.sign(m, d, buf5)
+      const extraEntropyUndefined = binding.signWithEntropy(m, d, undefined)
+      const extraEntropy0 = binding.signWithEntropy(m, d, buf1)
+      const extraEntropy1 = binding.signWithEntropy(m, d, buf2)
+      const extraEntropyRand = binding.signWithEntropy(m, d, buf3)
+      const extraEntropyN = binding.signWithEntropy(m, d, buf4)
+      const extraEntropyMax = binding.signWithEntropy(m, d, buf5)
 
       t.same(sig, expectedSig, `sign(${f.m}, ...) == ${f.signature}`)
       t.same(extraEntropyUndefined, expectedSig, `sign(${f.m}, ..., undefined) == ${f.signature}`)
