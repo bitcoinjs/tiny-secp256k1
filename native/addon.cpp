@@ -253,6 +253,32 @@ NAN_METHOD(ecdsaSign) {
 
 	const auto hash = info[0].As<v8::Object>();
 	const auto d = info[1].As<v8::Object>();
+	if (!isScalar(hash)) return THROW_BAD_HASH;
+	if (!isPrivate(d)) return THROW_BAD_PRIVATE;
+
+	secp256k1_ecdsa_signature signature;
+	if (secp256k1_ecdsa_sign(
+		context,
+		&signature,
+		asDataPointer(hash),
+		asDataPointer(d),
+		secp256k1_nonce_function_rfc6979,
+		nullptr
+	) == 0) return THROW_BAD_SIGNATURE;
+
+	unsigned char output[64];
+	secp256k1_ecdsa_signature_serialize_compact(context, output, &signature);
+
+	return RETURNV(asBuffer(output, 64));
+}
+
+// returns Signature
+NAN_METHOD(ecdsaSignWithEntropy) {
+	Nan::HandleScope scope;
+	EXPECT_ARGS(2);
+
+	const auto hash = info[0].As<v8::Object>();
+	const auto d = info[1].As<v8::Object>();
 	const auto addData = info[2].As<v8::Object>();
 	if (!isScalar(hash)) return THROW_BAD_HASH;
 	if (!isPrivate(d)) return THROW_BAD_PRIVATE;
@@ -326,6 +352,7 @@ NAN_MODULE_INIT(Init) {
 
   // ecdsa
   Nan::Export(target, "sign", ecdsaSign);
+  Nan::Export(target, "signWithEntropy", ecdsaSignWithEntropy);
   Nan::Export(target, "verify", ecdsaVerify);
 }
 
