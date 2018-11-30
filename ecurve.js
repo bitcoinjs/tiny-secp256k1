@@ -34,7 +34,10 @@ function isPoint (p) {
   const x = p.slice(1, 33)
   if (x.compare(ZERO32) === 0) return false
   if (x.compare(EC_P) >= 0) return false
-  if ((t === 0x02 || t === 0x03) && p.length === 33) return true
+  if ((t === 0x02 || t === 0x03) && p.length === 33) {
+    try { decodeFrom(p) } catch (e) { return false } // TODO: temporary
+    return true
+  }
 
   const y = p.slice(33)
   if (y.compare(ZERO32) === 0) return false
