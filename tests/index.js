@@ -1,11 +1,11 @@
-const ecurve = require('../ecurve')
+const js = require('../js')
 
-require('./ecdsa')(ecurve)
-require('./privates')(ecurve)
-require('./points')(ecurve)
+require('./ecdsa')(js)
+require('./privates')(js)
+require('./points')(js)
 
 try {
-  const native = require('bindings')('secp256k1')
+  const native = require('../native')
   require('./ecdsa')(native)
   require('./privates')(native)
   require('./points')(native)
