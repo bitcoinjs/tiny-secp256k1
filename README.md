@@ -136,6 +136,20 @@ Uses RFC6979.
 * `Expected Scalar` if `h` is not 256-bit
 
 
+### signWithEntropy (h, d, e)
+``` haskell
+sign :: Buffer -> Buffer -> Buffer -> Buffer
+```
+Returns normalized signatures, each of (r, s) values are guaranteed to less than `order / 2`.
+Uses RFC6979.
+Adds `e` as Added Entropy to the deterministic k generation.
+
+##### Throws:
+* `Expected Private` if `!isPrivate(d)`
+* `Expected Scalar` if `h` is not 256-bit
+* `Expected Extra Data (32 bytes)` if `e` is not 256-bit
+
+
 ### verify (h, Q, signature[, strict = false])
 ``` haskell
 verify :: Buffer -> Buffer -> Buffer -> Bool
