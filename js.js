@@ -16,6 +16,7 @@ const THROW_BAD_POINT = 'Expected Point'
 const THROW_BAD_TWEAK = 'Expected Tweak'
 const THROW_BAD_HASH = 'Expected Hash'
 const THROW_BAD_SIGNATURE = 'Expected Signature'
+const THROW_BAD_EXTRA_DATA = 'Expected Extra Data (32 bytes)'
 
 function isScalar (x) {
   return Buffer.isBuffer(x) && x.length === 32
@@ -167,14 +168,23 @@ function privateSub (d, tweak) {
 }
 
 function sign (hash, x) {
+  return __sign(hash, x)
+}
+
+function signWithEntropy (hash, x, addData) {
+  return __sign(hash, x, addData)
+}
+
+function __sign (hash, x, addData) {
   if (!isScalar(hash)) throw new TypeError(THROW_BAD_HASH)
   if (!isPrivate(x)) throw new TypeError(THROW_BAD_PRIVATE)
+  if (addData !== undefined && !isScalar(addData)) throw new TypeError(THROW_BAD_EXTRA_DATA)
 
   const d = fromBuffer(x)
   const e = fromBuffer(hash)
 
   let r, s
-  deterministicGenerateK(hash, x, function (k) {
+  const checkSig = function (k) {
     const kI = fromBuffer(k)
     const Q = G.mul(kI)
 
@@ -190,7 +200,9 @@ function sign (hash, x) {
     if (s.isZero() === 0) return false
 
     return true
-  }, isPrivate)
+  }
+
+  deterministicGenerateK(hash, x, checkSig, isPrivate, addData)
 
   // enforce low S values, see bip62: 'low s values in signatures'
   if (s.cmp(nDiv2) > 0) {
@@ -259,5 +271,6 @@ module.exports = {
   privateAdd,
   privateSub,
   sign,
+  signWithEntropy,
   verify
 }

@@ -4,7 +4,7 @@ const ONE1 = Buffer.alloc(1, 1)
 const ZERO1 = Buffer.alloc(1, 0)
 
 // https://tools.ietf.org/html/rfc6979#section-3.2
-function deterministicGenerateK (hash, x, checkSig, isPrivate) {
+function deterministicGenerateK (hash, x, checkSig, isPrivate, extraEntropy) {
   // Step A, ignored as hash already provided
   // Step B
   // Step C
@@ -17,6 +17,7 @@ function deterministicGenerateK (hash, x, checkSig, isPrivate) {
     .update(ZERO1)
     .update(x)
     .update(hash)
+    .update(extraEntropy || '')
     .digest()
 
   // Step E
@@ -28,6 +29,7 @@ function deterministicGenerateK (hash, x, checkSig, isPrivate) {
     .update(ONE1)
     .update(x)
     .update(hash)
+    .update(extraEntropy || '')
     .digest()
 
   // Step G
