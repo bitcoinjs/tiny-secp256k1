@@ -2,3 +2,4 @@ build/
 coverage/
 node_modules/
 tests/bundle.js
+package-lock.json
