@@ -5,7 +5,7 @@
   "main": "index.js",
   "gypfile": true,
   "engines": {
-    "node": ">=6.0.0"
+    "node": ">=8.0.0"
   },
   "scripts": {
     "build": "node-gyp rebuild",
@@ -37,5 +37,8 @@
   },
   "browser": {
     "./index.js": "./js.js"
+  },
+  "optionalDependencies": {
+    "tiny-secp256k1-native": "1.0.0"
   }
 }
