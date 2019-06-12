@@ -9,6 +9,7 @@
   },
   "scripts": {
     "build": "node-gyp rebuild",
+    "install": "npm run build || echo \"secp256k1 bindings compilation fail. Pure JS implementation will be used.\"",
     "unit": "tape tests/index.js | tap-difflet -p",
     "test-browser": "browserify tests/index.js > tests/bundle.js",
     "test": "npm run unit"
