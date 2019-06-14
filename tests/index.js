@@ -5,7 +5,7 @@ require('./privates')(js)
 require('./points')(js)
 
 try {
-  const native = require('tiny-secp256k1-native')
+  const native = require('../native')
   require('./ecdsa')(native)
   require('./privates')(native)
   require('./points')(native)
