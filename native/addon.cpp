@@ -79,14 +79,22 @@ namespace {
 	unsigned int assumeCompression (const I& info, const A& p) {
 		if (info.Length() <= index) return __isPointCompressed(p) ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED;
 		if (info[index]->IsUndefined()) return SECP256K1_EC_COMPRESSED;
+#if (NODE_MODULE_VERSION > NODE_11_0_MODULE_VERSION)
+		return info[index]->BooleanValue(v8::Isolate::GetCurrent()) ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED;
+#else
 		return info[index]->BooleanValue(Nan::GetCurrentContext()).FromJust() ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED;
+#endif
 	}
 
 	template <size_t index, typename I>
 	unsigned int assumeCompression (const I& info) {
 		if (info.Length() <= index) return SECP256K1_EC_COMPRESSED;
 		if (info[index]->IsUndefined()) return SECP256K1_EC_COMPRESSED;
+#if (NODE_MODULE_VERSION > NODE_11_0_MODULE_VERSION)
+		return info[index]->BooleanValue(v8::Isolate::GetCurrent()) ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED;
+#else
 		return info[index]->BooleanValue(Nan::GetCurrentContext()).FromJust() ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED;
+#endif
 	}
 }
 
@@ -317,7 +325,11 @@ NAN_METHOD(ecdsaVerify) {
 	const auto sig = info[2].As<v8::Object>();
 	auto strict = false;
 	if (info.Length() > 3 && !info[3]->IsUndefined()) {
+#if (NODE_MODULE_VERSION > NODE_11_0_MODULE_VERSION)
+		strict = info[3]->BooleanValue(v8::Isolate::GetCurrent());
+#else
 		strict = info[3]->BooleanValue(Nan::GetCurrentContext()).FromJust();
+#endif
 	}
 
 	secp256k1_pubkey public_key;
