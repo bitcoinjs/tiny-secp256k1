@@ -93,7 +93,10 @@ function test (binding) {
           binding.verify(m, Q, signature)
         }, new RegExp(f.exception), `${f.description} throws ${f.exception}`)
       } else {
-        t.equal(binding.verify(m, Q, signature), false, `verify(${f.signature}) is rejected`)
+        t.equal(binding.verify(m, Q, signature, f.strict), false, `verify(${f.signature}) is rejected`)
+        if (f.strict === true) {
+          t.equal(binding.verify(m, Q, signature, false), true, `verify(${f.signature}) is OK without strict`)
+        }
       }
     })
 
