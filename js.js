@@ -110,11 +110,13 @@ function pointAddScalar (p, tweak, __compressed) {
   return getEncoded(uu, compressed)
 }
 
-function pointCompress (p, compressed) {
+function pointCompress (p, __compressed) {
   if (!isPoint(p)) throw new TypeError(THROW_BAD_POINT)
 
   const pp = decodeFrom(p)
   if (pp.isInfinity()) throw new TypeError(THROW_BAD_POINT)
+
+  const compressed = assumeCompression(__compressed, p)
 
   return getEncoded(pp, compressed)
 }
