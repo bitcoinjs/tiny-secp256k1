@@ -10078,6 +10078,18 @@
         "P": "04d5747c593533e620dc7b576febd13fb758525670eeb42006166fcfbaf273bb416f32cb9ea9d5403e4bdb5ca38037e169e95004324c0786c5ab5ee32050cc0213",
         "compress": false,
         "expected": "04d5747c593533e620dc7b576febd13fb758525670eeb42006166fcfbaf273bb416f32cb9ea9d5403e4bdb5ca38037e169e95004324c0786c5ab5ee32050cc0213"
+      },
+      {
+        "P": "042f01e5e15cca351daff3843fb70f3c2f0a1bdd05e5af888a67784ef3e10a2a015c4da8a741539949293d082a132d13b4c2e213d6ba5b7617b5da2cb76cbde904",
+        "noarg": true,
+        "expected": "042f01e5e15cca351daff3843fb70f3c2f0a1bdd05e5af888a67784ef3e10a2a015c4da8a741539949293d082a132d13b4c2e213d6ba5b7617b5da2cb76cbde904",
+        "note": "Need to test if pointCompress keeps compressed status without any compressed arg"
+      },
+      {
+        "P": "042f01e5e15cca351daff3843fb70f3c2f0a1bdd05e5af888a67784ef3e10a2a015c4da8a741539949293d082a132d13b4c2e213d6ba5b7617b5da2cb76cbde904",
+        "noarg": false,
+        "expected": "042f01e5e15cca351daff3843fb70f3c2f0a1bdd05e5af888a67784ef3e10a2a015c4da8a741539949293d082a132d13b4c2e213d6ba5b7617b5da2cb76cbde904",
+        "note": "Need to test if pointCompress keeps compressed status when explicitly passing undefined. (This is why this fixture has no 'compressed')"
       }
     ],
     "pointFromScalar": [
