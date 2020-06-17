@@ -110,11 +110,13 @@ function pointAddScalar (p, tweak, __compressed) {
   return getEncoded(uu, compressed)
 }
 
-function pointCompress (p, compressed) {
+function pointCompress (p, __compressed) {
   if (!isPoint(p)) throw new TypeError(THROW_BAD_POINT)
 
   const pp = decodeFrom(p)
   if (pp.isInfinity()) throw new TypeError(THROW_BAD_POINT)
+
+  const compressed = assumeCompression(__compressed, p)
 
   return getEncoded(pp, compressed)
 }
@@ -215,7 +217,7 @@ function __sign (hash, x, addData) {
   return buffer
 }
 
-function verify (hash, q, signature) {
+function verify (hash, q, signature, strict) {
   if (!isScalar(hash)) throw new TypeError(THROW_BAD_HASH)
   if (!isPoint(q)) throw new TypeError(THROW_BAD_POINT)
 
@@ -225,6 +227,10 @@ function verify (hash, q, signature) {
   const Q = decodeFrom(q)
   const r = fromBuffer(signature.slice(0, 32))
   const s = fromBuffer(signature.slice(32, 64))
+
+  if (strict && s.cmp(nDiv2) > 0) {
+    return false
+  }
 
   // 1.4.1 Enforce r and s are both integers in the interval [1, n − 1] (2, enforces '> 0')
   if (r.gtn(0) <= 0 /* || r.compareTo(n) >= 0 */) return false

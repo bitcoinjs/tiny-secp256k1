@@ -85,7 +85,11 @@ function test (binding) {
       const p = Buffer.from(f.P, 'hex')
       const expected = Buffer.from(f.expected, 'hex')
 
-      t.same(binding.pointCompress(p, f.compress), expected)
+      if (f.noarg) {
+        t.same(binding.pointCompress(p), expected)
+      } else {
+        t.same(binding.pointCompress(p, f.compress), expected)
+      }
     })
 
     fpoints.invalid.pointCompress.forEach((f) => {

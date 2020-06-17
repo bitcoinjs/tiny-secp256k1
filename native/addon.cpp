@@ -77,8 +77,9 @@ namespace {
 
 	template <size_t index, typename I, typename A>
 	unsigned int assumeCompression (const I& info, const A& p) {
-		if (info.Length() <= index) return __isPointCompressed(p) ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED;
-		if (info[index]->IsUndefined()) return SECP256K1_EC_COMPRESSED;
+		if (info.Length() <= index || info[index]->IsUndefined()) {
+			return __isPointCompressed(p) ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED;
+		}
 #if (NODE_MODULE_VERSION > NODE_11_0_MODULE_VERSION)
 		return info[index]->BooleanValue(v8::Isolate::GetCurrent()) ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED;
 #else
