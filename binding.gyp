@@ -1,6 +1,15 @@
 {
   "targets": [{
     "target_name": "secp256k1",
+      "cflags!": [ "-fno-exceptions" ],
+      "cflags_cc!": [ "-fno-exceptions" ],
+      "xcode_settings": { "GCC_ENABLE_CPP_EXCEPTIONS": "YES",
+        "CLANG_CXX_LIBRARY": "libc++",
+        "MACOSX_DEPLOYMENT_TARGET": "10.7",
+      },
+      "msvs_settings": {
+        "VCCLCompilerTool": { "ExceptionHandling": 1 },
+      },
     "variables": {
       "conditions": [
         [
@@ -17,12 +26,12 @@
       "./native/secp256k1/src/secp256k1.c"
     ],
     "include_dirs": [
+      "<!@(node -p \"require('node-addon-api').include\")",
       "/usr/local/include",
       "./native/secp256k1",
       "./native/secp256k1/contrib",
       "./native/secp256k1/include",
       "./native/secp256k1/src",
-      "<!(node -e \"require('nan')\")"
     ],
     "defines": [
       "ECMULT_GEN_PREC_BITS=4",
