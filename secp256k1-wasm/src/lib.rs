@@ -19,7 +19,13 @@ extern "C" {
     fn throw_error(errcode: usize);
 }
 
+const PRIVATE_KEY_SIZE: usize = 32;
 const PUBLIC_KEY_COMPRESSED_SIZE: usize = 33;
+const PUBLIC_KEY_UNCOMPRESSED_SIZE: usize = 65;
+const TWEAK_SIZE: usize = 32;
+const HASH_SIZE: usize = 32;
+const EXTRA_DATA_SIZE: usize = 32;
+const SIGNATURE_SIZE: usize = 64;
 
 // const ERROR_BAD_PRIVATE: usize = 0;
 const ERROR_BAD_POINT: usize = 1;
@@ -32,19 +38,19 @@ static CONTEXT_BUFFER: [u8; 1114320] = [0; 1114320];
 static mut CONTEXT_SEED: [u8; 32] = [0; 32];
 
 #[no_mangle]
-pub static mut PRIVATE_INPUT: [u8; 32] = [0; 32];
+pub static mut PRIVATE_INPUT: [u8; PRIVATE_KEY_SIZE] = [0; PRIVATE_KEY_SIZE];
 #[no_mangle]
-pub static mut PUBLIC_KEY_INPUT: [u8; 65] = [0; 65];
+pub static mut PUBLIC_KEY_INPUT: [u8; PUBLIC_KEY_UNCOMPRESSED_SIZE] = [0; PUBLIC_KEY_UNCOMPRESSED_SIZE];
 #[no_mangle]
-pub static PUBLIC_KEY_INPUT2: [u8; 65] = [0; 65];
+pub static PUBLIC_KEY_INPUT2: [u8; PUBLIC_KEY_UNCOMPRESSED_SIZE] = [0; PUBLIC_KEY_UNCOMPRESSED_SIZE];
 #[no_mangle]
-pub static mut TWEAK_INPUT: [u8; 32] = [0; 32];
+pub static mut TWEAK_INPUT: [u8; TWEAK_SIZE] = [0; TWEAK_SIZE];
 #[no_mangle]
-pub static HASH_INPUT: [u8; 32] = [0; 32];
+pub static HASH_INPUT: [u8; HASH_SIZE] = [0; HASH_SIZE];
 #[no_mangle]
-pub static EXTRA_DATA_INPUT: [u8; 32] = [0; 32];
+pub static EXTRA_DATA_INPUT: [u8;EXTRA_DATA_SIZE] = [0;EXTRA_DATA_SIZE];
 #[no_mangle]
-pub static mut SIGNATURE_INPUT: [u8; 64] = [0; 64];
+pub static mut SIGNATURE_INPUT: [u8; SIGNATURE_SIZE] = [0; SIGNATURE_SIZE];
 
 type InvalidInputResult<T> = Result<T, usize>;
 
