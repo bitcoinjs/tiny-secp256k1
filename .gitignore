@@ -1,5 +1,7 @@
-build/
-coverage/
-node_modules/
-tests/bundle.js
+/coverage
+/node_modules
+/target
+
+lib/secp256k1.wasm
 package-lock.json
+tests/bundle.js
