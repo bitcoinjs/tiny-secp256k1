@@ -1,25 +1,21 @@
 const tape = require("tape");
+const { fromHex, toHex } = require("./util");
 const fecdsa = require("./fixtures/ecdsa.json");
 
-const buf1 = Buffer.from(
-  "0000000000000000000000000000000000000000000000000000000000000000",
-  "hex"
+const buf1 = fromHex(
+  "0000000000000000000000000000000000000000000000000000000000000000"
 );
-const buf2 = Buffer.from(
-  "0000000000000000000000000000000000000000000000000000000000000001",
-  "hex"
+const buf2 = fromHex(
+  "0000000000000000000000000000000000000000000000000000000000000001"
 );
-const buf3 = Buffer.from(
-  "6e723d3fd94ed5d2b6bdd4f123364b0f3ca52af829988a63f8afe91d29db1c33",
-  "hex"
+const buf3 = fromHex(
+  "6e723d3fd94ed5d2b6bdd4f123364b0f3ca52af829988a63f8afe91d29db1c33"
 );
-const buf4 = Buffer.from(
-  "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141",
-  "hex"
+const buf4 = fromHex(
+  "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141"
 );
-const buf5 = Buffer.from(
-  "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-  "hex"
+const buf5 = fromHex(
+  "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 );
 
 function corrupt(x) {
@@ -27,7 +23,7 @@ function corrupt(x) {
     return Math.floor(Math.random() * 0xff);
   }
 
-  x = Buffer.from(x);
+  x = Uint8Array.from(x);
   const mask = 1 << randomUInt8() % 8;
   x[randomUInt8() % 32] ^= mask;
   return x;
@@ -35,27 +31,27 @@ function corrupt(x) {
 
 function test(binding) {
   tape("sign", (t) => {
-    fecdsa.valid.forEach((f) => {
-      const d = Buffer.from(f.d, "hex");
-      const m = Buffer.from(f.m, "hex");
-      const expected = new Uint8Array(Buffer.from(f.signature, "hex"));
+    for (const f of fecdsa.valid) {
+      const d = fromHex(f.d);
+      const m = fromHex(f.m);
+      const expected = fromHex(f.signature);
 
       t.same(
         binding.sign(m, d),
         expected,
         `sign(${f.m}, ...) == ${f.signature}`
       );
-    });
+    }
 
-    fecdsa.extraEntropy.forEach((f) => {
-      const d = Buffer.from(f.d, "hex");
-      const m = Buffer.from(f.m, "hex");
-      const expectedSig = new Uint8Array(Buffer.from(f.signature, "hex"));
-      const expectedExtraEntropy0 = new Uint8Array(Buffer.from(f.extraEntropy0, "hex"));
-      const expectedExtraEntropy1 = new Uint8Array(Buffer.from(f.extraEntropy1, "hex"));
-      const expectedExtraEntropyRand = new Uint8Array(Buffer.from(f.extraEntropyRand, "hex"));
-      const expectedExtraEntropyN = new Uint8Array(Buffer.from(f.extraEntropyN, "hex"));
-      const expectedExtraEntropyMax = new Uint8Array(Buffer.from(f.extraEntropyMax, "hex"));
+    for (const f of fecdsa.extraEntropy) {
+      const d = fromHex(f.d);
+      const m = fromHex(f.m);
+      const expectedSig = fromHex(f.signature);
+      const expectedExtraEntropy0 = fromHex(f.extraEntropy0);
+      const expectedExtraEntropy1 = fromHex(f.extraEntropy1);
+      const expectedExtraEntropyRand = fromHex(f.extraEntropyRand);
+      const expectedExtraEntropyN = fromHex(f.extraEntropyN);
+      const expectedExtraEntropyMax = fromHex(f.extraEntropyMax);
 
       const sig = binding.sign(m, d);
 
@@ -97,11 +93,11 @@ function test(binding) {
         expectedExtraEntropyMax,
         `sign(${f.m}, ..., max256) == ${f.signature}`
       );
-    });
+    }
 
-    fecdsa.invalid.sign.forEach((f) => {
-      const d = Buffer.from(f.d, "hex");
-      const m = Buffer.from(f.m, "hex");
+    for (const f of fecdsa.invalid.sign) {
+      const d = fromHex(f.d);
+      const m = fromHex(f.m);
 
       t.throws(
         () => {
@@ -110,18 +106,18 @@ function test(binding) {
         new RegExp(f.exception),
         `${f.description} throws ${f.exception}`
       );
-    });
+    }
 
     t.end();
   });
 
   tape("verify", (t) => {
-    fecdsa.valid.forEach((f) => {
-      const d = Buffer.from(f.d, "hex");
+    for (const f of fecdsa.valid) {
+      const d = fromHex(f.d);
       const Q = binding.pointFromScalar(d, true);
       const Qu = binding.pointFromScalar(d, false);
-      const m = Buffer.from(f.m, "hex");
-      const signature = Buffer.from(f.signature, "hex");
+      const m = fromHex(f.m);
+      const signature = fromHex(f.signature);
       const bad = corrupt(signature);
 
       t.equal(
@@ -132,7 +128,7 @@ function test(binding) {
       t.equal(
         binding.verify(m, Q, bad),
         false,
-        `verify(${bad.toString("hex")}) is rejected`
+        `verify(${toHex(bad)}) is rejected`
       );
       t.equal(
         binding.verify(m, Qu, signature),
@@ -142,14 +138,14 @@ function test(binding) {
       t.equal(
         binding.verify(m, Qu, bad),
         false,
-        `verify(${bad.toString("hex")}) is rejected`
+        `verify(${toHex(bad)}) is rejected`
       );
-    });
+    }
 
-    fecdsa.invalid.verify.forEach((f) => {
-      const Q = Buffer.from(f.Q, "hex");
-      const m = Buffer.from(f.m, "hex");
-      const signature = Buffer.from(f.signature, "hex");
+    for (const f of fecdsa.invalid.verify) {
+      const Q = fromHex(f.Q);
+      const m = fromHex(f.m);
+      const signature = fromHex(f.signature);
 
       if (f.exception) {
         t.throws(
@@ -173,7 +169,7 @@ function test(binding) {
           );
         }
       }
-    });
+    }
 
     t.end();
   });

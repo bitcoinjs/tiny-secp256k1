@@ -1,37 +1,38 @@
 const tape = require("tape");
+const { fromHex } = require("./util");
 const fprivates = require("./fixtures/privates.json");
 
 function test(binding) {
   tape("isPrivate", (t) => {
-    fprivates.valid.isPrivate.forEach((f) => {
-      const d = Buffer.from(f.d, "hex");
+    for (const f of fprivates.valid.isPrivate) {
+      const d = fromHex(f.d);
 
       t.equal(
         binding.isPrivate(d),
         f.expected,
         `${f.d} is ${f.expected ? "OK" : "rejected"}`
       );
-    });
+    }
 
     t.end();
   });
 
   tape("privateAdd", (t) => {
-    fprivates.valid.privateAdd.forEach((f) => {
-      const d = Buffer.from(f.d, "hex");
-      const tweak = Buffer.from(f.tweak, "hex");
-      const expected = f.expected ? new Uint8Array(Buffer.from(f.expected, "hex")) : null;
+    for (const f of fprivates.valid.privateAdd) {
+      const d = fromHex(f.d);
+      const tweak = fromHex(f.tweak);
+      const expected = f.expected ? fromHex(f.expected) : null;
       let description = `${f.d} + ${f.tweak} = ${
         f.expected ? f.expected : null
       }`;
       if (f.description) description += ` (${f.description})`;
 
       t.same(binding.privateAdd(d, tweak), expected, description);
-    });
+    }
 
-    fprivates.invalid.privateAdd.forEach((f) => {
-      const d = Buffer.from(f.d, "hex");
-      const tweak = Buffer.from(f.tweak, "hex");
+    for (const f of fprivates.invalid.privateAdd) {
+      const d = fromHex(f.d);
+      const tweak = fromHex(f.tweak);
 
       t.throws(
         () => {
@@ -40,27 +41,27 @@ function test(binding) {
         new RegExp(f.exception),
         `${f.description} throws ${f.exception}`
       );
-    });
+    }
 
     t.end();
   });
 
   tape("privateSub", (t) => {
-    fprivates.valid.privateSub.forEach((f) => {
-      const d = Buffer.from(f.d, "hex");
-      const tweak = Buffer.from(f.tweak, "hex");
-      const expected = f.expected ? new Uint8Array(Buffer.from(f.expected, "hex")) : null;
+    for (const f of fprivates.valid.privateSub) {
+      const d = fromHex(f.d);
+      const tweak = fromHex(f.tweak);
+      const expected = f.expected ? fromHex(f.expected) : null;
       let description = `${f.d} - ${f.tweak} = ${
         f.expected ? f.expected : null
       }`;
       if (f.description) description += ` (${f.description})`;
 
       t.same(binding.privateSub(d, tweak), expected, description);
-    });
+    }
 
-    fprivates.invalid.privateSub.forEach((f) => {
-      const d = Buffer.from(f.d, "hex");
-      const tweak = Buffer.from(f.tweak, "hex");
+    for (const f of fprivates.invalid.privateSub) {
+      const d = fromHex(f.d);
+      const tweak = fromHex(f.tweak);
 
       t.throws(
         () => {
@@ -69,7 +70,7 @@ function test(binding) {
         new RegExp(f.exception),
         `${f.description} throws ${f.exception}`
       );
-    });
+    }
 
     t.end();
   });
