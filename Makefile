@@ -3,6 +3,8 @@ build-wasm-cp = cp -f target/wasm32-unknown-unknown/$(1)/tiny_secp256k1_wasm.was
 build-wasm:
 	cargo build --target wasm32-unknown-unknown --release
 	$(call build-wasm-cp,release)
+	wasm-opt --strip-debug --strip-producers --output lib/secp256k1.wasm lib/secp256k1.wasm
+	node ./util/wasm-strip.js lib/secp256k1.wasm
 	wasm-opt -O4 --output lib/secp256k1.wasm lib/secp256k1.wasm
 
 build-wasm-debug:
@@ -15,7 +17,7 @@ format:
 
 lint:
 	cargo fmt -- --check
-	cargo clippy
+	cargo clippy --target wasm32-unknown-unknown
 	npx prettier -c .
 
 test:

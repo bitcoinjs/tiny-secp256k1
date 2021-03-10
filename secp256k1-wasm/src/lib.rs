@@ -1,3 +1,14 @@
+#![no_std]
+#![feature(core_intrinsics)]
+
+#[panic_handler]
+fn panic(_info: &core::panic::PanicInfo) -> ! {
+    core::intrinsics::abort()
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+compile_error!("Only `wasm32` target_arch is supported.");
+
 use secp256k1_sys::{
     secp256k1_context_no_precomp, secp256k1_context_preallocated_create,
     secp256k1_context_preallocated_size, secp256k1_context_randomize, secp256k1_ec_pubkey_combine,
@@ -75,30 +86,32 @@ fn initialize_context_seed() {
     unsafe {
         for offset in (0..8).map(|v| v * 4) {
             let value = generate_int32();
-            let bytes: [u8; 4] = std::mem::transmute(value);
+            let bytes: [u8; 4] = core::mem::transmute(value);
             CONTEXT_SEED[offset..offset + 4].copy_from_slice(&bytes);
         }
     }
 }
 
 fn get_context() -> *const Context {
-    static mut CONTEXT: *const Context = std::ptr::null();
-    static ONCE: std::sync::Once = std::sync::Once::new();
-    ONCE.call_once(|| unsafe {
-        let size =
-            secp256k1_context_preallocated_size(SECP256K1_START_SIGN | SECP256K1_START_VERIFY);
-        assert_eq!(size, CONTEXT_BUFFER.len());
-        let ctx = secp256k1_context_preallocated_create(
-            CONTEXT_BUFFER.as_ptr() as *mut c_void,
-            SECP256K1_START_SIGN | SECP256K1_START_VERIFY,
-        );
-        initialize_context_seed();
-        let retcode = secp256k1_context_randomize(ctx, CONTEXT_SEED.as_ptr());
-        CONTEXT_SEED.fill(0);
-        assert_eq!(retcode, 1);
-        CONTEXT = ctx
-    });
-    unsafe { CONTEXT }
+    static mut CONTEXT: *const Context = core::ptr::null();
+    unsafe {
+        if CONTEXT_SEED[0] == 0 {
+            let size =
+                secp256k1_context_preallocated_size(SECP256K1_START_SIGN | SECP256K1_START_VERIFY);
+            assert_eq!(size, CONTEXT_BUFFER.len());
+            let ctx = secp256k1_context_preallocated_create(
+                CONTEXT_BUFFER.as_ptr() as *mut c_void,
+                SECP256K1_START_SIGN | SECP256K1_START_VERIFY,
+            );
+            initialize_context_seed();
+            let retcode = secp256k1_context_randomize(ctx, CONTEXT_SEED.as_ptr());
+            CONTEXT_SEED[0] = 1;
+            CONTEXT_SEED[1..].fill(0);
+            assert_eq!(retcode, 1);
+            CONTEXT = ctx
+        }
+        CONTEXT
+    }
 }
 
 unsafe fn pubkey_parse(input: *const u8, inputlen: usize) -> InvalidInputResult<PublicKey> {
@@ -262,7 +275,7 @@ pub extern "C" fn sign(extra_data: i32) {
     unsafe {
         let mut sig = Signature::new();
         let noncedata = if extra_data == 0 {
-            std::ptr::null()
+            core::ptr::null()
         } else {
             EXTRA_DATA_INPUT.as_ptr()
         } as *const c_void;

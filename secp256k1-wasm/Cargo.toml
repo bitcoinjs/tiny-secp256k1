@@ -11,4 +11,5 @@ publish = false
 crate-type = ["cdylib"]
 
 [dependencies]
-secp256k1-sys = "0.4.0"
+# `[patch.crates-io]` is not working :(
+secp256k1-sys = { version = "0.4.0", default-features = false, git = "https://github.com/fanatid/rust-secp256k1", branch = "more-features" }
