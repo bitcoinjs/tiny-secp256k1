@@ -1,6 +1,6 @@
-const tape = require("tape");
-const { fromHex, toHex } = require("./util");
-const fecdsa = require("./fixtures/ecdsa.json");
+import { test } from "tape";
+import { fromHex, toHex } from "./util.js";
+import fecdsa from "./fixtures/ecdsa.json";
 
 const buf1 = fromHex(
   "0000000000000000000000000000000000000000000000000000000000000000"
@@ -29,8 +29,8 @@ function corrupt(x) {
   return x;
 }
 
-function test(binding) {
-  tape("sign", (t) => {
+export default function (binding) {
+  test("sign", (t) => {
     for (const f of fecdsa.valid) {
       const d = fromHex(f.d);
       const m = fromHex(f.m);
@@ -111,7 +111,7 @@ function test(binding) {
     t.end();
   });
 
-  tape("verify", (t) => {
+  test("verify", (t) => {
     for (const f of fecdsa.valid) {
       const d = fromHex(f.d);
       const Q = binding.pointFromScalar(d, true);
@@ -174,5 +174,3 @@ function test(binding) {
     t.end();
   });
 }
-
-module.exports = test;

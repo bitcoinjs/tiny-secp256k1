@@ -1,7 +1,6 @@
-/coverage
 /node_modules
 /target
+/tests/browser
 
-lib/secp256k1.wasm
-package-lock.json
-tests/bundle.js
+/lib/secp256k1.wasm
+/package-lock.json

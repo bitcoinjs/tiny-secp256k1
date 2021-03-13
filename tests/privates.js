@@ -1,9 +1,9 @@
-const tape = require("tape");
-const { fromHex } = require("./util");
-const fprivates = require("./fixtures/privates.json");
+import { test } from "tape";
+import { fromHex } from "./util.js";
+import fprivates from "./fixtures/privates.json";
 
-function test(binding) {
-  tape("isPrivate", (t) => {
+export default function (binding) {
+  test("isPrivate", (t) => {
     for (const f of fprivates.valid.isPrivate) {
       const d = fromHex(f.d);
 
@@ -17,7 +17,7 @@ function test(binding) {
     t.end();
   });
 
-  tape("privateAdd", (t) => {
+  test("privateAdd", (t) => {
     for (const f of fprivates.valid.privateAdd) {
       const d = fromHex(f.d);
       const tweak = fromHex(f.tweak);
@@ -46,7 +46,7 @@ function test(binding) {
     t.end();
   });
 
-  tape("privateSub", (t) => {
+  test("privateSub", (t) => {
     for (const f of fprivates.valid.privateSub) {
       const d = fromHex(f.d);
       const tweak = fromHex(f.tweak);
@@ -75,5 +75,3 @@ function test(binding) {
     t.end();
   });
 }
-
-module.exports = test;

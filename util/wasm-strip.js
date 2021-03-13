@@ -1,5 +1,5 @@
-const fs = require("fs");
-const binaryen = require("binaryen");
+import * as fs from "fs";
+import binaryen from "binaryen";
 
 const NOT_USED_FUNCTIONS = [
   "rustsecp256k1_v0_4_0_default_error_callback_fn",

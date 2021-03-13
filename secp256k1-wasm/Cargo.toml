@@ -1,9 +1,9 @@
 [package]
-name = "tiny-secp256k1-wasm"
+name = "secp256k1-wasm"
 version = "0.0.0"
 authors = ["Kirill Fomichev <fanatid@ya.ru>"]
 edition = "2018"
-description = "A Rust library for building tiny-secp256k1 WASM"
+description = "A Rust library for building tiny-secp256k1 WASM."
 license = "MIT"
 publish = false
 

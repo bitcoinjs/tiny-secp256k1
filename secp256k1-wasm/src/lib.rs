@@ -21,13 +21,16 @@ use secp256k1_sys::{
     SECP256K1_START_VERIFY,
 };
 
-#[link(wasm_import_module = "./validate_wasm.js")]
+#[link(wasm_import_module = "./wasm_error.js")]
+extern "C" {
+    #[link_name = "throwError"]
+    fn throw_error(errcode: usize);
+}
+
+#[link(wasm_import_module = "./wasm_rand.js")]
 extern "C" {
     #[link_name = "generateInt32"]
     fn generate_int32() -> i32;
-
-    #[link_name = "throwError"]
-    fn throw_error(errcode: usize);
 }
 
 const PRIVATE_KEY_SIZE: usize = 32;

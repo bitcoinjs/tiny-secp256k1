@@ -1,12 +1,9 @@
-function fromHex(data) {
+import { Buffer } from "buffer";
+
+export function fromHex(data) {
   return new Uint8Array(Buffer.from(data, "hex"));
 }
 
-function toHex(data) {
+export function toHex(data) {
   return Buffer.from(data).toString("hex");
 }
-
-module.exports = {
-  fromHex,
-  toHex,
-};
