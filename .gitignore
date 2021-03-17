@@ -2,5 +2,5 @@
 /target
 /tests/browser
 
-/lib/secp256k1.wasm
+/lib/secp256k1*
 /package-lock.json

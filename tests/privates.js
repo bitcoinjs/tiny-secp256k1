@@ -2,13 +2,13 @@ import { test } from "tape";
 import { fromHex } from "./util.js";
 import fprivates from "./fixtures/privates.json";
 
-export default function (binding) {
+export default function (secp256k1) {
   test("isPrivate", (t) => {
     for (const f of fprivates.valid.isPrivate) {
       const d = fromHex(f.d);
 
       t.equal(
-        binding.isPrivate(d),
+        secp256k1.isPrivate(d),
         f.expected,
         `${f.d} is ${f.expected ? "OK" : "rejected"}`
       );
@@ -27,7 +27,7 @@ export default function (binding) {
       }`;
       if (f.description) description += ` (${f.description})`;
 
-      t.same(binding.privateAdd(d, tweak), expected, description);
+      t.same(secp256k1.privateAdd(d, tweak), expected, description);
     }
 
     for (const f of fprivates.invalid.privateAdd) {
@@ -36,7 +36,7 @@ export default function (binding) {
 
       t.throws(
         () => {
-          binding.privateAdd(d, tweak);
+          secp256k1.privateAdd(d, tweak);
         },
         new RegExp(f.exception),
         `${f.description} throws ${f.exception}`
@@ -56,7 +56,7 @@ export default function (binding) {
       }`;
       if (f.description) description += ` (${f.description})`;
 
-      t.same(binding.privateSub(d, tweak), expected, description);
+      t.same(secp256k1.privateSub(d, tweak), expected, description);
     }
 
     for (const f of fprivates.invalid.privateSub) {
@@ -65,7 +65,7 @@ export default function (binding) {
 
       t.throws(
         () => {
-          binding.privateSub(d, tweak);
+          secp256k1.privateSub(d, tweak);
         },
         new RegExp(f.exception),
         `${f.description} throws ${f.exception}`

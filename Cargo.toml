@@ -1,5 +1,7 @@
 [workspace]
 members = [
+    "secp256k1",
+    "secp256k1-node",
     "secp256k1-wasm",
 ]
 

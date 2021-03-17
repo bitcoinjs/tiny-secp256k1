@@ -14,8 +14,9 @@
   "type": "module",
   "main": "./lib/index.js",
   "browser": {
-    "./lib/secp256k1.js": "./lib/secp256k1.browser.js",
-    "./lib/wasm_rand.js": "./lib/wasm_rand.browser.js"
+    "./lib/index.js": "./lib/index.browser.js",
+    "./lib/rand.js": "./lib/rand.browser.js",
+    "./lib/wasm_loader.js": "./lib/wasm_loader.browser.js"
   },
   "devDependencies": {
     "binaryen": "^100.0.0",

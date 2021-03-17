@@ -29,7 +29,7 @@ function corrupt(x) {
   return x;
 }
 
-export default function (binding) {
+export default function (secp256k1) {
   test("sign", (t) => {
     for (const f of fecdsa.valid) {
       const d = fromHex(f.d);
@@ -37,7 +37,7 @@ export default function (binding) {
       const expected = fromHex(f.signature);
 
       t.same(
-        binding.sign(m, d),
+        secp256k1.sign(m, d),
         expected,
         `sign(${f.m}, ...) == ${f.signature}`
       );
@@ -53,14 +53,14 @@ export default function (binding) {
       const expectedExtraEntropyN = fromHex(f.extraEntropyN);
       const expectedExtraEntropyMax = fromHex(f.extraEntropyMax);
 
-      const sig = binding.sign(m, d);
+      const sig = secp256k1.sign(m, d);
 
-      const extraEntropyUndefined = binding.signWithEntropy(m, d, undefined);
-      const extraEntropy0 = binding.signWithEntropy(m, d, buf1);
-      const extraEntropy1 = binding.signWithEntropy(m, d, buf2);
-      const extraEntropyRand = binding.signWithEntropy(m, d, buf3);
-      const extraEntropyN = binding.signWithEntropy(m, d, buf4);
-      const extraEntropyMax = binding.signWithEntropy(m, d, buf5);
+      const extraEntropyUndefined = secp256k1.signWithEntropy(m, d, undefined);
+      const extraEntropy0 = secp256k1.signWithEntropy(m, d, buf1);
+      const extraEntropy1 = secp256k1.signWithEntropy(m, d, buf2);
+      const extraEntropyRand = secp256k1.signWithEntropy(m, d, buf3);
+      const extraEntropyN = secp256k1.signWithEntropy(m, d, buf4);
+      const extraEntropyMax = secp256k1.signWithEntropy(m, d, buf5);
 
       t.same(sig, expectedSig, `sign(${f.m}, ...) == ${f.signature}`);
       t.same(
@@ -101,7 +101,7 @@ export default function (binding) {
 
       t.throws(
         () => {
-          binding.sign(m, d);
+          secp256k1.sign(m, d);
         },
         new RegExp(f.exception),
         `${f.description} throws ${f.exception}`
@@ -114,29 +114,29 @@ export default function (binding) {
   test("verify", (t) => {
     for (const f of fecdsa.valid) {
       const d = fromHex(f.d);
-      const Q = binding.pointFromScalar(d, true);
-      const Qu = binding.pointFromScalar(d, false);
+      const Q = secp256k1.pointFromScalar(d, true);
+      const Qu = secp256k1.pointFromScalar(d, false);
       const m = fromHex(f.m);
       const signature = fromHex(f.signature);
       const bad = corrupt(signature);
 
       t.equal(
-        binding.verify(m, Q, signature),
+        secp256k1.verify(m, Q, signature),
         true,
         `verify(${f.signature}) is OK`
       );
       t.equal(
-        binding.verify(m, Q, bad),
+        secp256k1.verify(m, Q, bad),
         false,
         `verify(${toHex(bad)}) is rejected`
       );
       t.equal(
-        binding.verify(m, Qu, signature),
+        secp256k1.verify(m, Qu, signature),
         true,
         `verify(${f.signature}) is OK`
       );
       t.equal(
-        binding.verify(m, Qu, bad),
+        secp256k1.verify(m, Qu, bad),
         false,
         `verify(${toHex(bad)}) is rejected`
       );
@@ -150,20 +150,20 @@ export default function (binding) {
       if (f.exception) {
         t.throws(
           () => {
-            binding.verify(m, Q, signature);
+            secp256k1.verify(m, Q, signature);
           },
           new RegExp(f.exception),
           `${f.description} throws ${f.exception}`
         );
       } else {
         t.equal(
-          binding.verify(m, Q, signature, f.strict),
+          secp256k1.verify(m, Q, signature, f.strict),
           false,
           `verify(${f.signature}) is rejected`
         );
         if (f.strict === true) {
           t.equal(
-            binding.verify(m, Q, signature, false),
+            secp256k1.verify(m, Q, signature, false),
             true,
             `verify(${f.signature}) is OK without strict`
           );
