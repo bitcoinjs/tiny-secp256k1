@@ -2,15 +2,26 @@ import tiny_secp256k1_prev_js from "tiny-secp256k1/js.js";
 import tiny_secp256k1_prev_native from "tiny-secp256k1/native.js";
 import * as tiny_secp256k1 from "../lib/index.js";
 import * as cryptocoinjs_secp256k1 from "./cryptocoinjs_secp256k1.js";
+import noble_secp256k1 from "./noble_secp256k1.js";
 import { fecdsa, fpoints, fprivates } from "./fixtures.js";
 
+// import { loadAddon as _loadAddon } from "../lib/addon.js";
+// function loadAddon(location) {
+//   const path = new URL(location, import.meta.url).pathname;
+//   return _loadAddon(path);
+// }
+
 const modules = [
+  // {
+  //   name: "tiny-secp256k1 (Rust addon, N-API, opt-level-3)",
+  //   secp256k1: loadAddon("./opt-level-3.so"),
+  // },
   {
-    name: "tiny-secp256k1 (rust addon)",
+    name: "tiny-secp256k1 (Rust addon, N-API)",
     secp256k1: tiny_secp256k1.__addon,
   },
   {
-    name: "tiny-secp256k1 (wasm)",
+    name: "tiny-secp256k1 (WASM)",
     secp256k1: tiny_secp256k1.__wasm,
   },
   {
@@ -28,6 +39,10 @@ const modules = [
   {
     name: "secp256k1@4.0.2 (elliptic)",
     secp256k1: cryptocoinjs_secp256k1.js,
+  },
+  {
+    name: "noble-secp256k1@1.1.2 (BigInt)",
+    secp256k1: noble_secp256k1,
   },
 ];
 
@@ -104,10 +119,10 @@ const benchmarks = [
 const millis2nanos = (ms) => BigInt(ms) * 10n ** 6n;
 
 // Warmup bench function during
-function warmingUp(bench, minIter, maxTime) {
+async function warmingUp(bench, minIter, maxTime) {
   const start = process.hrtime.bigint();
   for (let i = 0; ; ) {
-    bench();
+    await bench();
     if (process.hrtime.bigint() - start > maxTime && ++i >= minIter) {
       break;
     }
@@ -116,9 +131,10 @@ function warmingUp(bench, minIter, maxTime) {
 
 // Create benchmark function from fixtures
 function createBenchmarkFn(fixtures, fn) {
-  return function (secp256k1) {
+  return async function (secp256k1) {
     for (const f of fixtures) {
-      fn(secp256k1, f);
+      let result = await fn(secp256k1, f);
+      if (result.then) await result;
     }
     return fixtures.length;
   };
@@ -156,7 +172,7 @@ for (const benchmark of benchmarks) {
       continue;
     }
 
-    warmingUp(
+    await warmingUp(
       () => bench(module.secp256k1),
       warmingUpMinIter,
       warmingUpMaxTime
@@ -166,7 +182,7 @@ for (const benchmark of benchmarks) {
     const start = process.hrtime.bigint();
     let start_fn = start;
     for (let i = 0; ; ) {
-      const ops = bench(module.secp256k1);
+      const ops = await bench(module.secp256k1);
       const current = process.hrtime.bigint();
       results_ns.push(Number(current - start_fn) / ops);
       if (current - start > benchmarkMaxTime && ++i >= benchmarkMinIter) {
