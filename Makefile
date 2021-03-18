@@ -34,7 +34,8 @@ clean:
 .PHONY: format
 format:
 	cargo-fmt
-	npx prettier -w . 
+	npx prettier -w .
+	npx sort-package-json package.json benches/package.json
 
 .PHONY: lint
 lint:
