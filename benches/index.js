@@ -133,7 +133,7 @@ async function warmingUp(bench, minIter, maxTime) {
 function createBenchmarkFn(fixtures, fn) {
   return async function (secp256k1) {
     for (const f of fixtures) {
-      let result = await fn(secp256k1, f);
+      let result = fn(secp256k1, f);
       if (result.then) await result;
     }
     return fixtures.length;
