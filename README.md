@@ -188,6 +188,23 @@ If `strict` is `true`, valid signatures with any of (r, s) values greater than `
 
 ---
 
+## Docker Build / Development Environment
+
+#### Build Docker image
+
+```
+docker build -t tiny-secp256k1 .
+```
+
+#### Run Docker container
+
+```
+docker run -it --rm -v `pwd`:/tiny-secp256k1 -w /tiny-secp256k1 tiny-secp256k1
+# npm install --unsafe-perm
+# make test
+# make clean
+```
+
 ## Credit
 
 This library uses the native library [secp256k1](https://github.com/bitcoin-core/secp256k1) by the bitcoin-core developers through Rust crate [secp256k1-sys](https://crates.io/crates/secp256k1-sys), including derivatives of its tests and test vectors.

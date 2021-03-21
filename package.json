@@ -19,10 +19,14 @@
     "./lib/rand.js": "./lib/rand.browser.js",
     "./lib/wasm_loader.js": "./lib/wasm_loader.browser.js"
   },
+  "scripts": {
+    "postinstall": "patch-package --patch-dir ./util/patches"
+  },
   "devDependencies": {
     "binaryen": "^100.0.0",
     "browser-run": "^8.0.0",
     "buffer": "^6.0.3",
+    "patch-package": "^6.4.7",
     "path-browserify": "^1.0.1",
     "prettier": "^2.2.1",
     "process": "^0.11.10",
