@@ -1,3 +1,4 @@
+#![allow(clippy::missing_safety_doc)]
 #![cfg_attr(not(any(test, feature = "std")), no_std)]
 #![feature(core_intrinsics)]
 

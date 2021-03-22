@@ -49,6 +49,9 @@ pub static EXTRA_DATA_INPUT: [u8; EXTRA_DATA_SIZE] = [0; EXTRA_DATA_SIZE];
 pub static mut SIGNATURE_INPUT: [u8; SIGNATURE_SIZE] = [0; SIGNATURE_SIZE];
 
 macro_rules! jstry {
+    ($value:expr) => {
+        jstry!($value, ())
+    };
     ($value:expr, $ret:expr) => {
         match $value {
             Ok(value) => value,
@@ -150,7 +153,7 @@ pub extern "C" fn point_add_scalar(inputlen: usize, outputlen: usize) -> i32 {
 #[export_name = "pointCompress"]
 pub extern "C" fn point_compress(inputlen: usize, outputlen: usize) {
     unsafe {
-        let pk = jstry!(pubkey_parse(PUBLIC_KEY_INPUT.as_ptr(), inputlen), ());
+        let pk = jstry!(pubkey_parse(PUBLIC_KEY_INPUT.as_ptr(), inputlen));
         pubkey_serialize(&pk, PUBLIC_KEY_INPUT.as_mut_ptr(), outputlen);
     }
 }

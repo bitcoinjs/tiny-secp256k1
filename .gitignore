@@ -1,7 +1,8 @@
 /benches/node_modules
+/lib
 /node_modules
 /target
 /tests/browser
+/types
 
-/lib/secp256k1*
 /package-lock.json

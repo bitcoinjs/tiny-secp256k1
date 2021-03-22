@@ -41,6 +41,10 @@ const SIGNATURE_INPUT = WASM_BUFFER.subarray(
 );
 
 export default createApi({
+  initializeContext() {
+    wasm.initializeContext();
+  },
+
   isPoint(p) {
     try {
       PUBLIC_KEY_INPUT.set(p);

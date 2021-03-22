@@ -1,7 +1,0 @@
-/target
-/tests/browser
-/tests/fixtures
-/util/gen-fixtures/secp256k1
-
-benches/package-lock.json
-package-lock.json

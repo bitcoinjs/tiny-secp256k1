@@ -44,7 +44,7 @@ test("functions exported properly", (t) => {
       ? secp256k1.__wasm
       : secp256k1.__addon;
   for (const fnName of fnList) {
-    t.equal(secp256k1[fnName], source[fnName]);
+    t.same(secp256k1[fnName], source[fnName]);
   }
 
   t.end();
