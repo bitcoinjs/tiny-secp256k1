@@ -1,13 +1,24 @@
 .PHONY: build-js
-build-js:
-	npx tsc
+build-js: build-js-browser build-js-node
+
+.PHONY: build-js-browser
+build-js-browser:
+	npx tsc --project tsconfig.browser.json && \
+		rm lib.browser/addon.js && \
+		rm lib.browser/index.js && mv lib.browser/index.browser.js lib.browser/index.js && \
+		rm lib.browser/rand.js && mv lib.browser/rand.browser.js lib.browser/rand.js && \
+		rm lib.browser/wasm_loader.js && mv lib.browser/wasm_loader.browser.js lib.browser/wasm_loader.js
+
+.PHONY: build-js-node
+build-js-node:
+	npx tsc --project tsconfig.node.json && rm lib.node/*.browser.js
 
 .PHONY: build-node-%
 build-node-%: export PAIR = $(subst +, ,$(subst build-node-,,$@))
 build-node-%:
 	cargo build --package secp256k1-node --target $(firstword $(PAIR)) -Z build-std=panic_abort,std --release
-	mkdir -p lib && cp -f target/$(firstword $(PAIR))/release/libsecp256k1_node.so lib/secp256k1-$(lastword $(PAIR)).so
-	strip lib/secp256k1-$(lastword $(PAIR)).so
+	mkdir -p lib.node && cp -f target/$(firstword $(PAIR))/release/libsecp256k1_node.so lib.node/secp256k1-$(lastword $(PAIR)).so
+	strip lib.node/secp256k1-$(lastword $(PAIR)).so
 
 .PHONY: build-node-debug
 build-node-debug:
@@ -17,29 +28,33 @@ build-node-debug:
 build-node-debug-%: export PAIR = $(subst +, ,$(subst build-node-debug-,,$@))
 build-node-debug-%:
 	cargo build --package secp256k1-node --target $(firstword $(PAIR))
-	mkdir -p lib && cp -f target/$(firstword $(PAIR))/debug/libsecp256k1_node.so lib/secp256k1-$(lastword $(PAIR)).so
+	mkdir -p lib.node && cp -f target/$(firstword $(PAIR))/debug/libsecp256k1_node.so lib.node/secp256k1-$(lastword $(PAIR)).so
 
 .PHONY: build-wasm
 build-wasm:
 	RUSTFLAGS="-C link-args=-zstack-size=655360" cargo build --package secp256k1-wasm --target wasm32-unknown-unknown --release
-	mkdir -p lib && cp -f target/wasm32-unknown-unknown/release/secp256k1_wasm.wasm lib/secp256k1.wasm
-	wasm-opt --strip-debug --strip-producers --output lib/secp256k1.wasm lib/secp256k1.wasm
-	node util/wasm-strip.js lib/secp256k1.wasm
-	wasm-opt -O4 --output lib/secp256k1.wasm lib/secp256k1.wasm
+	mkdir -p lib.browser && cp -f target/wasm32-unknown-unknown/release/secp256k1_wasm.wasm lib.browser/secp256k1.wasm
+	wasm-opt --strip-debug --strip-producers --output lib.browser/secp256k1.wasm lib.browser/secp256k1.wasm
+	node util/wasm-strip.js lib.browser/secp256k1.wasm
+	wasm-opt -O4 --output lib.browser/secp256k1.wasm lib.browser/secp256k1.wasm
+	mkdir -p lib.node && cp -f lib.browser/secp256k1.wasm lib.node/secp256k1.wasm
 
 .PHONY: build-wasm-debug
 build-wasm-debug:
 	RUSTFLAGS="-C link-args=-zstack-size=655360" cargo build --package secp256k1-wasm --target wasm32-unknown-unknown
-	mkdir -p lib && cp -f target/wasm32-unknown-unknown/debug/secp256k1_wasm.wasm lib/secp256k1.wasm
+	mkdir -p lib.browser && cp -f target/wasm32-unknown-unknown/debug/secp256k1_wasm.wasm lib.browser/secp256k1.wasm
+	mkdir -p lib.node && cp -f target/wasm32-unknown-unknown/debug/secp256k1_wasm.wasm lib.node/secp256k1.wasm
 
 .PHONY: clean
 clean:
 	rm -rf \
 		benches/node_modules \
+		examples/random-in-node/node_modules \
 		examples/react-app/dist/*.js \
 		examples/react-app/dist/*.wasm \
 		examples/react-app/node_modules \
-		lib \
+		lib.browser \
+		lib.node \
 		node_modules \
 		target \
 		tests/browser \
@@ -71,4 +86,4 @@ test-browser: test-browser-build
 
 .PHONY: test-node
 test-node: build-js build-node-debug build-wasm-debug
-	node --experimental-json-modules tests/index.js | npx tap-difflet -p
+	npx babel-node -b @babel/preset-env tests/index.js | npx tap-difflet -p

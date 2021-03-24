@@ -12,18 +12,15 @@
     "url": "https://github.com/bitcoinjs/tiny-secp256k1.git"
   },
   "license": "MIT",
-  "type": "module",
-  "main": "./lib/index.js",
-  "browser": {
-    "./lib/index.js": "./lib/index.browser.js",
-    "./lib/rand.js": "./lib/rand.browser.js",
-    "./lib/wasm_loader.js": "./lib/wasm_loader.browser.js"
-  },
+  "main": "./lib.node/index.js",
+  "browser": "./lib.browser/index.js",
   "types": "./types/index.d.ts",
   "scripts": {
     "postinstall": "patch-package --patch-dir ./util/patches"
   },
   "devDependencies": {
+    "@babel/node": "^7.13.12",
+    "@babel/preset-env": "^7.13.12",
     "@types/node": "^14.14.35",
     "@typescript-eslint/eslint-plugin": "^4.18.0",
     "@typescript-eslint/parser": "^4.18.0",
@@ -45,6 +42,6 @@
     "webpack-cli": "^4.5.0"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=12.0.0"
   }
 }

@@ -4,7 +4,10 @@
   "private": true,
   "main": "./index.js",
   "scripts": {
-    "start": "node bin.js"
+    "start": "npx babel-node -b @babel/preset-env bin.js"
   },
-  "type": "module"
+  "dependencies": {
+    "@babel/node": "^7.13.12",
+    "@babel/preset-env": "^7.13.12"
+  }
 }

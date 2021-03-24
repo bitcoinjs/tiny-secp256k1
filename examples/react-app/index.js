@@ -14,7 +14,6 @@ import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
 
 import * as _secp256k1 from "../../";
-import * as _validate from "../../lib/validate.js";
 import { generate } from "../random-in-node";
 
 const EMPTY_BUFFER = Buffer.allocUnsafe(0);
@@ -25,18 +24,27 @@ function toUint8Array(value) {
 }
 
 const validate = {
-  _throw2bool(method, v) {
-    try {
-      _validate[method](toUint8Array(v));
-      return true;
-    } catch (_err) {
-      return false;
-    }
+  isTweak: (value) => _secp256k1.isPrivate(toUint8Array(value)),
+  isHash(value) {
+    const hash = toUint8Array(value);
+    return hash instanceof Uint8Array && hash.length === 32;
   },
-  isTweak: (v) => validate._throw2bool("validateTweak", v),
-  isHash: (v) => validate._throw2bool("validateHash", v),
-  isExtraData: (v) => validate._throw2bool("validateExtraData", v),
-  isSignature: (v) => validate._throw2bool("validateSignature", v),
+  isExtraData(value) {
+    const entropy = toUint8Array(value);
+    return (
+      entropy === undefined ||
+      (entropy instanceof Uint8Array && entropy.length === 32)
+    );
+  },
+  isSignature(value) {
+    const signature = toUint8Array(value);
+    return (
+      signature instanceof Uint8Array &&
+      signature.length === 64 &&
+      _secp256k1.isPrivate(signature.slice(0, 32)) &&
+      _secp256k1.isPrivate(signature.slice(32, 64))
+    );
+  },
 };
 const secp256k1 = {
   _throw2null(method, args) {

@@ -1,7 +1,9 @@
 /benches/node_modules
+/examples/random-in-node/node_modules
 /examples/react-app/dist
 /examples/react-app/node_modules
-/lib
+/lib.browser
+/lib.node
 /node_modules
 /target
 /tests/browser

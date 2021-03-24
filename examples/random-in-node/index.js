@@ -1,5 +1,5 @@
 import { randomBytes } from "crypto";
-import * as secp256k1 from "../../lib/index.js";
+import * as secp256k1 from "../../";
 
 const eq = (v1, v2) =>
   v1.length === v2.length && v1.every((v, i) => v === v2[i]);

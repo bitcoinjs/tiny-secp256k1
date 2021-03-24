@@ -1,9 +1,12 @@
 import { readFileSync } from "fs";
-import { URL } from "url";
+// import { URL } from "url";
 import * as rand from "./rand.js";
 import * as validate_error from "./validate_error.js";
 
-const binary = readFileSync(new URL("secp256k1.wasm", import.meta.url));
+const pathname = require.resolve("./secp256k1.wasm");
+// const { pathname } = new URL("secp256k1.wasm", import.meta.url);
+
+const binary = readFileSync(pathname);
 const imports = {
   "./rand.js": rand,
   "./validate_error.js": validate_error,

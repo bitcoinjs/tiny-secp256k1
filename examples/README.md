@@ -4,6 +4,7 @@
 Generate data and demonstrate arguments/result for different methods of `tiny-secp256k1`.
 
 ```
+npm install
 npm start
 ```
 
@@ -12,6 +13,7 @@ npm start
 [React](https://reactjs.org/) application with inputs for testing `tiny-secp256k1` methods.
 
 ```
+npm install
 npm start
 ```
 
