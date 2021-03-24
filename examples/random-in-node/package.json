@@ -1,0 +1,10 @@
+{
+  "name": "random-in-node",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./index.js",
+  "scripts": {
+    "start": "node bin.js"
+  },
+  "type": "module"
+}
