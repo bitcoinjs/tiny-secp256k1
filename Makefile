@@ -77,7 +77,7 @@ lint:
 test: test-browser test-node
 
 .PHONY: test-browser-build
-test-browser-build: build-js build-wasm-debug
+test-browser-build: build-js-browser build-wasm-debug
 	npx webpack build -c tests/browser.webpack.js
 
 .PHONY: test-browser
@@ -85,5 +85,10 @@ test-browser: test-browser-build
 	cat tests/browser/index.js | npx browser-run --static tests/browser | npx tap-difflet -p
 
 .PHONY: test-node
-test-node: build-js build-node-debug build-wasm-debug
+test-node: build-js-node build-node-debug build-wasm-debug
 	npx babel-node -b @babel/preset-env tests/index.js | npx tap-difflet -p
+
+.PHONY: test-node-coverage
+test-node-coverage: build-js-node build-node-debug build-wasm-debug
+	npx nyc npx babel-node -b @babel/preset-env tests/index.js >/dev/null
+	npx nyc report --reporter=html --reporter=text

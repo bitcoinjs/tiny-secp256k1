@@ -1,4 +1,6 @@
+/.nyc_output
 /benches/node_modules
+/coverage
 /examples/random-in-node/node_modules
 /examples/react-app/dist
 /examples/react-app/node_modules
