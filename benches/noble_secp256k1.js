@@ -1,4 +1,4 @@
-import secp256k1 from "noble-secp256k1";
+import * as secp256k1 from "noble-secp256k1";
 
 export default {
   // isPoint

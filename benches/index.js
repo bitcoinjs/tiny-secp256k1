@@ -1,6 +1,6 @@
 import tiny_secp256k1_prev_js from "tiny-secp256k1/js.js";
 import tiny_secp256k1_prev_native from "tiny-secp256k1/native.js";
-import * as tiny_secp256k1 from "../lib/index.js";
+import * as tiny_secp256k1 from "../";
 import * as cryptocoinjs_secp256k1 from "./cryptocoinjs_secp256k1.js";
 import noble_secp256k1 from "./noble_secp256k1.js";
 import { fecdsa, fpoints, fprivates } from "./fixtures.js";
@@ -116,7 +116,7 @@ const benchmarks = [
 ];
 
 // Covert milliseconds as Number to nanoseconds as BigInt
-const millis2nanos = (ms) => BigInt(ms) * 10n ** 6n;
+const millis2nanos = (ms) => BigInt(ms) * BigInt(10 ** 6);
 
 // Warmup bench function during
 async function warmingUp(bench, minIter, maxTime) {
@@ -141,83 +141,90 @@ function createBenchmarkFn(fixtures, fn) {
 }
 
 // Run benchmarks
-const lineEqual = new Array(100).fill("=").join("");
-const lineDash = new Array(100).fill("-").join("");
-let isFirstResult = true;
-for (const benchmark of benchmarks) {
-  const {
-    name,
-    bench,
-    warmingUpMinIter,
-    warmingUpMaxTime,
-    benchmarkMinIter,
-    benchmarkMaxTime,
-  } = {
-    warmingUpMinIter: 1,
-    benchmarkMinIter: 2,
-    warmingUpMaxTime: millis2nanos(2000),
-    benchmarkMaxTime: millis2nanos(5000),
-    ...benchmark,
-  };
-
-  if (isFirstResult) {
-    console.log(lineEqual);
-    isFirstResult = false;
-  }
-  console.log(`Benchmarking function: ${name}`);
-  console.log(lineDash);
-  const results = [];
-  for (const module of modules) {
-    if (module.secp256k1[name] === undefined) {
-      continue;
-    }
-
-    await warmingUp(
-      () => bench(module.secp256k1),
+async function main() {
+  const lineEqual = new Array(100).fill("=").join("");
+  const lineDash = new Array(100).fill("-").join("");
+  let isFirstResult = true;
+  for (const benchmark of benchmarks) {
+    const {
+      name,
+      bench,
       warmingUpMinIter,
-      warmingUpMaxTime
-    );
+      warmingUpMaxTime,
+      benchmarkMinIter,
+      benchmarkMaxTime,
+    } = {
+      warmingUpMinIter: 1,
+      benchmarkMinIter: 2,
+      warmingUpMaxTime: millis2nanos(2000),
+      benchmarkMaxTime: millis2nanos(5000),
+      ...benchmark,
+    };
 
-    const results_ns = [];
-    const start = process.hrtime.bigint();
-    let start_fn = start;
-    for (let i = 0; ; ) {
-      const ops = await bench(module.secp256k1);
-      const current = process.hrtime.bigint();
-      results_ns.push(Number(current - start_fn) / ops);
-      if (current - start > benchmarkMaxTime && ++i >= benchmarkMinIter) {
-        break;
-      }
-      start_fn = current;
+    if (isFirstResult) {
+      console.log(lineEqual);
+      isFirstResult = false;
     }
-
-    const ops_avg_ns =
-      results_ns.reduce((total, time) => total + time, 0) / results_ns.length;
-    const ops_err_ns =
-      results_ns.length > 1
-        ? results_ns.reduce(
-            (total, time) => total + Math.abs(ops_avg_ns - time),
-            0
-          ) /
-          (results_ns.length - 1)
-        : 0;
-    const ops_err = (ops_err_ns / ops_avg_ns) * 100;
-
-    console.log(
-      `${module.name}: ${(ops_avg_ns / 1000).toFixed(2)} us/op (${(
-        10 ** 9 /
-        ops_avg_ns
-      ).toFixed(2)} op/s), ±${ops_err.toFixed(2)} %`
-    );
-
-    results.push({ name: module.name, ops_avg_ns });
-  }
-  if (results.length > 1) {
-    const fastest = results.reduce((a, b) =>
-      a.ops_avg_ns < b.ops_avg_ns ? a : b
-    );
+    console.log(`Benchmarking function: ${name}`);
     console.log(lineDash);
-    console.log(`Fastest: ${fastest.name}`);
+    const results = [];
+    for (const module of modules) {
+      if (module.secp256k1[name] === undefined) {
+        continue;
+      }
+
+      await warmingUp(
+        () => bench(module.secp256k1),
+        warmingUpMinIter,
+        warmingUpMaxTime
+      );
+
+      const results_ns = [];
+      const start = process.hrtime.bigint();
+      let start_fn = start;
+      for (let i = 0; ; ) {
+        const ops = await bench(module.secp256k1);
+        const current = process.hrtime.bigint();
+        results_ns.push(Number(current - start_fn) / ops);
+        if (current - start > benchmarkMaxTime && ++i >= benchmarkMinIter) {
+          break;
+        }
+        start_fn = current;
+      }
+
+      const ops_avg_ns =
+        results_ns.reduce((total, time) => total + time, 0) / results_ns.length;
+      const ops_err_ns =
+        results_ns.length > 1
+          ? results_ns.reduce(
+              (total, time) => total + Math.abs(ops_avg_ns - time),
+              0
+            ) /
+            (results_ns.length - 1)
+          : 0;
+      const ops_err = (ops_err_ns / ops_avg_ns) * 100;
+
+      console.log(
+        `${module.name}: ${(ops_avg_ns / 1000).toFixed(2)} us/op (${(
+          10 ** 9 /
+          ops_avg_ns
+        ).toFixed(2)} op/s), ±${ops_err.toFixed(2)} %`
+      );
+
+      results.push({ name: module.name, ops_avg_ns });
+    }
+    if (results.length > 1) {
+      const fastest = results.reduce((a, b) =>
+        a.ops_avg_ns < b.ops_avg_ns ? a : b
+      );
+      console.log(lineDash);
+      console.log(`Fastest: ${fastest.name}`);
+    }
+    console.log(lineEqual);
   }
-  console.log(lineEqual);
 }
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

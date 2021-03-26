@@ -21,13 +21,30 @@ function getLibExt(): string {
   }
 }
 
+function getLocalBuildLibName(): string {
+  switch (process.platform) {
+    case "darwin":
+      return "libsecp256k1_node.dylib";
+    case "win32":
+      return "secp256k1_node.dll";
+    case "linux":
+    case "freebsd":
+    case "openbsd":
+    case "android":
+    case "sunos":
+      return "libsecp256k1_node.so";
+    default:
+      return "¯\\_(ツ)_/¯";
+  }
+}
+
 function getPrebuildLibLocation(): string {
   const name = `secp256k1-${process.arch}-${process.platform}.${getLibExt()}`;
   return path.join(__dirname, name);
 }
 
 function getLocalBuildLibLocation(mode: string): string {
-  return path.join(__dirname, "..", "target", mode, "libsecp256k1_node.so");
+  return path.join(__dirname, "..", "target", mode, getLocalBuildLibName());
 }
 
 function dlopen(location: string): Secp256k1InternalApi {
