@@ -23,7 +23,7 @@ jobs:
           --component rustfmt
 
     - name: Install Node.js dependencies
-      run: npm install
+      run: npm ci
 
     - name: Run lint
       run: |
@@ -42,7 +42,7 @@ jobs:
       run: rustup target add wasm32-unknown-unknown
 
     - name: Install Node.js dependencies
-      run: npm install
+      run: npm ci
 
     - uses: actions/cache@v2
       id: binaryen-cache
@@ -98,7 +98,7 @@ jobs:
         node-version: 12.0.0
 
     - name: Install Node.js dependencies
-      run: npm install
+      run: npm ci
 
     - name: Add component rust-src
       run: rustup component add rust-src
@@ -167,7 +167,7 @@ jobs:
         fetch-depth: 1
 
     - name: Install Node.js dependencies
-      run: npm install
+      run: npm ci
 
     - name: Build JS
       run: make build-js
@@ -238,7 +238,7 @@ jobs:
         fetch-depth: 1
 
     - name: Install Node.js dependencies
-      run: npm install
+      run: npm ci
 
     - name: Build JS
       run: make build-js
@@ -256,7 +256,7 @@ jobs:
         path: lib.node
 
     - name: Install benchmark dependencies
-      run: cd benches && npm install
+      run: cd benches && npm ci
 
     - name: Run benchmark
       run: |
