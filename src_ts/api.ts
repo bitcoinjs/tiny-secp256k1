@@ -22,7 +22,7 @@ export interface Secp256k1InternalApi {
   ) => Uint8Array | null;
   privateAdd: (d: Uint8Array, tweak: Uint8Array) => Uint8Array | null;
   privateSub: (d: Uint8Array, tweak: Uint8Array) => Uint8Array | null;
-  signWithEntropy: (h: Uint8Array, d: Uint8Array, e?: Uint8Array) => Uint8Array;
+  sign: (h: Uint8Array, d: Uint8Array, e?: Uint8Array) => Uint8Array;
   verify: (
     h: Uint8Array,
     Q: Uint8Array,
@@ -55,8 +55,7 @@ export interface Secp256k1Api {
   ) => Uint8Array | null;
   privateAdd: (d: Uint8Array, tweak: Uint8Array) => Uint8Array | null;
   privateSub: (d: Uint8Array, tweak: Uint8Array) => Uint8Array | null;
-  sign: (h: Uint8Array, d: Uint8Array) => Uint8Array;
-  signWithEntropy: (h: Uint8Array, d: Uint8Array, e?: Uint8Array) => Uint8Array;
+  sign: (h: Uint8Array, d: Uint8Array, e?: Uint8Array) => Uint8Array;
   verify: (
     h: Uint8Array,
     Q: Uint8Array,
@@ -75,17 +74,6 @@ export default function createApi(
     return compressed
       ? validate.PUBLIC_KEY_COMPRESSED_SIZE
       : validate.PUBLIC_KEY_UNCOMPRESSED_SIZE;
-  }
-
-  function signWithEntropy(
-    h: Uint8Array,
-    d: Uint8Array,
-    e?: Uint8Array
-  ): Uint8Array {
-    validate.validateHash(h);
-    validate.validatePrivate(d);
-    validate.validateExtraData(e);
-    return secp256k1.signWithEntropy(h, d, e);
   }
 
   return {
@@ -169,11 +157,12 @@ export default function createApi(
       return secp256k1.privateSub(d, tweak);
     },
 
-    sign(h: Uint8Array, d: Uint8Array): Uint8Array {
-      return signWithEntropy(h, d);
+    sign(h: Uint8Array, d: Uint8Array, e?: Uint8Array): Uint8Array {
+      validate.validateHash(h);
+      validate.validatePrivate(d);
+      validate.validateExtraData(e);
+      return secp256k1.sign(h, d, e);
     },
-
-    signWithEntropy,
 
     verify(
       h: Uint8Array,

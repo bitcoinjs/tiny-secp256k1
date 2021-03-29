@@ -140,24 +140,10 @@ Returns `null` if result is equal to `0`.
 - `Expected Private` if `!isPrivate(d)`
 - `Expected Tweak` if `tweak` is not in `[0...order - 1]`
 
-### sign (h, d)
+### sign (h, d[, e])
 
 ```haskell
-sign :: Buffer -> Buffer -> Buffer
-```
-
-Returns normalized signatures, each of (r, s) values are guaranteed to less than `order / 2`.
-Uses RFC6979.
-
-##### Throws:
-
-- `Expected Private` if `!isPrivate(d)`
-- `Expected Scalar` if `h` is not 256-bit
-
-### signWithEntropy (h, d, e)
-
-```haskell
-sign :: Buffer -> Buffer -> Buffer -> Buffer
+sign :: Buffer -> Buffer [-> Buffer] -> Buffer
 ```
 
 Returns normalized signatures, each of (r, s) values are guaranteed to less than `order / 2`.

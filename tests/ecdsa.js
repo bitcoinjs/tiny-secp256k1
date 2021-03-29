@@ -53,16 +53,13 @@ export default function (secp256k1) {
       const expectedExtraEntropyN = fromHex(f.extraEntropyN);
       const expectedExtraEntropyMax = fromHex(f.extraEntropyMax);
 
-      const sig = secp256k1.sign(m, d);
+      const extraEntropyUndefined = secp256k1.sign(m, d);
+      const extraEntropy0 = secp256k1.sign(m, d, buf1);
+      const extraEntropy1 = secp256k1.sign(m, d, buf2);
+      const extraEntropyRand = secp256k1.sign(m, d, buf3);
+      const extraEntropyN = secp256k1.sign(m, d, buf4);
+      const extraEntropyMax = secp256k1.sign(m, d, buf5);
 
-      const extraEntropyUndefined = secp256k1.signWithEntropy(m, d, undefined);
-      const extraEntropy0 = secp256k1.signWithEntropy(m, d, buf1);
-      const extraEntropy1 = secp256k1.signWithEntropy(m, d, buf2);
-      const extraEntropyRand = secp256k1.signWithEntropy(m, d, buf3);
-      const extraEntropyN = secp256k1.signWithEntropy(m, d, buf4);
-      const extraEntropyMax = secp256k1.signWithEntropy(m, d, buf5);
-
-      t.same(sig, expectedSig, `sign(${f.m}, ...) == ${f.signature}`);
       t.same(
         extraEntropyUndefined,
         expectedSig,

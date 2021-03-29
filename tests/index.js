@@ -36,7 +36,6 @@ test("functions exported properly", (t) => {
     "privateAdd",
     "privateSub",
     "sign",
-    "signWithEntropy",
     "verify",
   ];
   const source =

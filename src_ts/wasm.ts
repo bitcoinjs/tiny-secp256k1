@@ -141,7 +141,7 @@ export default createApi({
     }
   },
 
-  signWithEntropy(h, d, e) {
+  sign(h, d, e) {
     try {
       HASH_INPUT.set(h);
       PRIVATE_KEY_INPUT.set(d);

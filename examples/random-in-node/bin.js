@@ -35,8 +35,7 @@ print([
   { name: "pointMultiply", args: [data.pubkey, data.tweak] },
   { name: "privateAdd", args: [data.seckey, data.tweak] },
   { name: "privateSub", args: [data.seckey, data.tweak] },
-  { name: "sign", args: [data.hash, data.seckey] },
-  { name: "signWithEntropy", args: [data.hash, data.seckey, data.entropy] },
+  { name: "sign", args: [data.hash, data.seckey, data.entropy] },
   {
     name: "verify",
     args: [data.hash, data.pubkey, secp256k1.sign(data.hash, data.seckey)],

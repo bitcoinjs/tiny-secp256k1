@@ -133,7 +133,7 @@ fn init(mut exports: JsObject, env: Env) -> NapiResult<()> {
     exports.create_named_method("pointMultiply", point_multiply)?;
     exports.create_named_method("privateAdd", private_add)?;
     exports.create_named_method("privateSub", private_sub)?;
-    exports.create_named_method("signWithEntropy", sign_with_entropy)?;
+    exports.create_named_method("sign", sign)?;
     exports.create_named_method("verify", verify)?;
 
     Ok(())
@@ -280,7 +280,7 @@ fn private_sub(ctx: CallContext) -> NapiResult<JsUnknown> {
 }
 
 #[js_function(3)]
-fn sign_with_entropy(ctx: CallContext) -> NapiResult<JsTypedArray> {
+fn sign(ctx: CallContext) -> NapiResult<JsTypedArray> {
     let h = get_typed_array(&ctx, 0)?;
     let d = get_typed_array(&ctx, 1)?;
     let e = ctx.get::<JsUnknown>(2)?;

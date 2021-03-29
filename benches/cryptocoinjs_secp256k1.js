@@ -18,7 +18,6 @@ function createApi(secp256k1) {
       secp256k1.privateKeyTweakAdd(new Uint8Array(d), tweak),
     // privateSub
     sign: (h, d) => secp256k1.ecdsaSign(h, d),
-    // signWithEntropy
     verify: (h, Q, signature) => secp256k1.ecdsaVerify(signature, h, Q),
   };
 }

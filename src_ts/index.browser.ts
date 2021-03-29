@@ -16,6 +16,5 @@ export const {
   privateAdd,
   privateSub,
   sign,
-  signWithEntropy,
   verify,
 } = wasm;

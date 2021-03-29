@@ -17,6 +17,5 @@ export const {
   privateAdd,
   privateSub,
   sign,
-  signWithEntropy,
   verify,
 } = addon || wasm;

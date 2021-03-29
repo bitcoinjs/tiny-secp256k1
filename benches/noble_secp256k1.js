@@ -12,6 +12,5 @@ export default {
   // privateAdd
   // privateSub
   sign: secp256k1.sign,
-  // signWithEntropy
   // verify: (h, Q, signature) => secp256k1.verify(signature, h, Q),
 };

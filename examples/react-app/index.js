@@ -244,13 +244,6 @@ const App = withStyles(useStyles)(
                   classes={this.props.classes}
                   hash={this.state.data?.hash}
                   seckey={this.state.data?.seckey}
-                />
-              </Box>
-              <Box className={this.props.classes.methodBox}>
-                <ApiSignWithEntropy
-                  classes={this.props.classes}
-                  hash={this.state.data?.hash}
-                  seckey={this.state.data?.seckey}
                   entropy={this.state.data?.entropy}
                 />
               </Box>
@@ -991,94 +984,6 @@ const ApiSign = withStyles(useStyles)(
         hash_valid: undefined,
         seckey: "",
         seckey_valid: undefined,
-        result: undefined,
-      };
-    }
-
-    componentDidUpdate(prevProps, prevState) {
-      if (
-        prevProps.hash !== this.props.hash ||
-        prevProps.seckey !== this.props.seckey
-      ) {
-        this.setState({
-          hash: this.props.hash,
-          seckey: this.props.seckey,
-        });
-      }
-
-      if (
-        prevState.hash !== this.state.hash ||
-        prevState.seckey !== this.state.seckey
-      ) {
-        const { hash, seckey } = this.state;
-        const hash_valid = hash === "" ? undefined : validate.isHash(hash);
-        const seckey_valid =
-          seckey === "" ? undefined : secp256k1.isPrivate(seckey);
-        const result =
-          hash === "" && seckey === ""
-            ? undefined
-            : secp256k1.sign(hash, seckey);
-        this.setState({ hash_valid, seckey_valid, result });
-      }
-    }
-
-    render() {
-      return (
-        <>
-          <Typography variant="h6">
-            sign(h: Uint8Array, d: Uint8Array) =&gt; Uint8Array
-          </Typography>
-          <TextField
-            label="Hash as HEX string"
-            onChange={createInputChange(this, "hash")}
-            value={this.state.hash}
-            fullWidth
-            margin="normal"
-            variant="outlined"
-            InputProps={getInputProps(
-              this.state.hash_valid,
-              this.props.classes
-            )}
-          />
-          <TextField
-            label="Private Key as HEX string"
-            onChange={createInputChange(this, "seckey")}
-            value={this.state.seckey}
-            fullWidth
-            margin="normal"
-            variant="outlined"
-            InputProps={getInputProps(
-              this.state.seckey_valid,
-              this.props.classes
-            )}
-          />
-          <TextField
-            label="Output, Signature as HEX string"
-            value={
-              this.state.result === undefined
-                ? ""
-                : this.state.result || "Invalid result"
-            }
-            fullWidth
-            margin="normal"
-            variant="outlined"
-            InputProps={getInputProps(this.state.result, this.props.classes)}
-          />
-        </>
-      );
-    }
-  }
-);
-
-const ApiSignWithEntropy = withStyles(useStyles)(
-  class extends Component {
-    constructor(props) {
-      super(props);
-      this.state = {
-        hash: "",
-        hash_valid: undefined,
-        seckey: "",
-        seckey_valid: undefined,
         entropy: "",
         entropy_valid: undefined,
         result: undefined,
@@ -1112,7 +1017,7 @@ const ApiSignWithEntropy = withStyles(useStyles)(
         const result =
           hash === "" && seckey === "" && entropy === ""
             ? undefined
-            : secp256k1.signWithEntropy(hash, seckey, entropy);
+            : secp256k1.sign(hash, seckey, entropy);
         this.setState({ hash_valid, seckey_valid, entropy_valid, result });
       }
     }
@@ -1121,8 +1026,7 @@ const ApiSignWithEntropy = withStyles(useStyles)(
       return (
         <>
           <Typography variant="h6">
-            signWithEntropy(h: Uint8Array, d: Uint8Array, e: Uint8Array) =&gt;
-            Uint8Array
+            sign(h: Uint8Array, d: Uint8Array, e: Uint8Array) =&gt; Uint8Array
           </Typography>
           <TextField
             label="Hash as HEX string"
