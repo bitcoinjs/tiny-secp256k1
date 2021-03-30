@@ -1,4 +1,4 @@
-import { test } from "tape";
+import test from "tape";
 import { fromHex } from "./util.js";
 import fpoints from "./fixtures/points.json";
 

@@ -2,12 +2,9 @@
   "name": "random-in-node",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "main": "./index.js",
   "scripts": {
-    "start": "npx babel-node -b @babel/preset-env bin.js"
-  },
-  "dependencies": {
-    "@babel/node": "^7.13.12",
-    "@babel/preset-env": "^7.13.12"
+    "start": "node bin.js"
   }
 }

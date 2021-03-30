@@ -1,20 +1,21 @@
 import { Buffer } from "buffer";
 import ReactDOM from "react-dom";
 import React, { Component } from "react";
-import Box from "@material-ui/core/Box";
-import Button from "@material-ui/core/Button";
-import CheckIcon from "@material-ui/icons/Check";
-import Checkbox from "@material-ui/core/Checkbox";
-import CloseIcon from "@material-ui/icons/Close";
-import CssBaseline from "@material-ui/core/CssBaseline";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import Paper from "@material-ui/core/Paper";
-import TextField from "@material-ui/core/TextField";
-import Typography from "@material-ui/core/Typography";
-import { withStyles } from "@material-ui/core/styles";
+import {
+  Box,
+  Button,
+  Checkbox,
+  CssBaseline,
+  FormControlLabel,
+  Paper,
+  TextField,
+  Typography,
+  withStyles,
+} from "@material-ui/core";
+import { Close as CloseIcon, Check as CheckIcon } from "@material-ui/icons";
 
-import * as _secp256k1 from "../../";
-import { generate } from "../random-in-node";
+import * as _secp256k1 from "../../lib/index.js";
+import { generate } from "../random-in-node/index.js";
 
 const EMPTY_BUFFER = Buffer.allocUnsafe(0);
 function toUint8Array(value) {

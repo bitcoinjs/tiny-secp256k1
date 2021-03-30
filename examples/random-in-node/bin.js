@@ -1,5 +1,5 @@
-import * as secp256k1 from "../../";
-import { generate } from "./";
+import * as secp256k1 from "../../lib/index.js";
+import { generate } from "./index.js";
 
 const toHex = (v) =>
   v instanceof Uint8Array ? Buffer.from(v).toString("hex") : v;

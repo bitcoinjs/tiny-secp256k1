@@ -1,5 +1,5 @@
-import { test } from "tape";
-import * as secp256k1 from "../";
+import test from "tape";
+import * as secp256k1 from "../lib/index.js";
 
 import test_ecdsa from "./ecdsa.js";
 import test_points from "./points.js";

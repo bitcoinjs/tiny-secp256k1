@@ -4,12 +4,11 @@
   "private": true,
   "description": "tiny-secp256k1 benchmarks",
   "license": "MIT",
+  "type": "module",
   "scripts": {
-    "start": "npx babel-node -b @babel/preset-env index.js"
+    "start": "node --experimental-json-modules index.js"
   },
   "dependencies": {
-    "@babel/node": "^7.13.12",
-    "@babel/preset-env": "^7.13.12",
     "noble-secp256k1": "=1.1.2",
     "secp256k1": "=4.0.2",
     "tiny-secp256k1": "=1.1.6"

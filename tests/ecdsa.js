@@ -1,4 +1,4 @@
-import { test } from "tape";
+import test from "tape";
 import { fromHex, toHex } from "./util.js";
 import fecdsa from "./fixtures/ecdsa.json";
 

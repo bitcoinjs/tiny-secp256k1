@@ -1,4 +1,4 @@
-import * as tiny_secp256k1 from "../";
+import * as tiny_secp256k1 from "../lib/index.js";
 import _fecdsa from "../tests/fixtures/ecdsa.json";
 import _fpoints from "../tests/fixtures/points.json";
 import _fprivates from "../tests/fixtures/privates.json";

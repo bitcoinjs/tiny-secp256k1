@@ -3,7 +3,7 @@ name: CI
 on: [push, pull_request]
 
 env:
-  CI: true
+  NODE_VERSION: 14.0.0
 
 jobs:
   lint:
@@ -22,6 +22,11 @@ jobs:
           --component clippy \
           --component rustfmt
 
+    - name: Install Node.js@${{ env.NODE_VERSION }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
     - name: Install Node.js dependencies
       run: npm ci
 
@@ -38,8 +43,13 @@ jobs:
       with:
         fetch-depth: 1
 
-    - name: Add target wasm32-unknown-unknown
-      run: rustup target add wasm32-unknown-unknown
+    - name: Install Rust nightly with wasm32-unknown-unknown
+      run: rustup toolchain install nightly --target wasm32-unknown-unknown
+
+    - name: Install Node.js@${{ env.NODE_VERSION }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ env.NODE_VERSION }}
 
     - name: Install Node.js dependencies
       run: npm ci
@@ -60,7 +70,7 @@ jobs:
       run: export PATH=$PATH:./binaryen-version_100/bin/ && make build-wasm
 
     - name: Build JS
-      run: make build-js-browser
+      run: make build-js
 
     - name: Run tests
       env:
@@ -74,7 +84,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: wasm
-        path: lib.node/secp256k1.wasm
+        path: lib/secp256k1.wasm
 
   test-node:
     name: Test in Node.js
@@ -92,30 +102,30 @@ jobs:
       with:
         fetch-depth: 1
 
-    - name: Install Node.js@12.0.0
+    - name: Install Rust nightly with rust-src
+      run: rustup toolchain install nightly --component rust-src
+
+    - name: Install Node.js@${{ env.NODE_VERSION }}
       uses: actions/setup-node@v2
       with:
-        node-version: 12.0.0
+        node-version: ${{ env.NODE_VERSION }}
 
     - name: Install Node.js dependencies
       run: npm ci
-
-    - name: Add component rust-src
-      run: rustup component add rust-src
 
     - name: Download compiled wasm
       uses: actions/download-artifact@v2
       with:
         name: wasm
-        path: lib.node
+        path: lib
 
     - name: Build JS
-      run: make build-js-node
+      run: make build-js
 
     - name: Add target x86_64-unknown-linux-musl and musl-tools
       if: runner.os == 'Linux'
       run: |
-        rustup target add x86_64-unknown-linux-musl
+        rustup toolchain install nightly --target x86_64-unknown-linux-musl
         sudo apt-get install musl-tools
 
     - name: Build addon (Linux)
@@ -140,21 +150,21 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: secp256k1-x64-linux.so
-        path: lib.node/secp256k1-x64-linux.so
+        path: lib/secp256k1-x64-linux.so
 
     - name: Upload addon (macOS)
       if: runner.os == 'macOS'
       uses: actions/upload-artifact@v2
       with:
         name: secp256k1-x64-darwin.dylib
-        path: lib.node/secp256k1-x64-darwin.dylib
+        path: lib/secp256k1-x64-darwin.dylib
 
     - name: Upload addon (Windows)
       if: runner.os == 'Windows'
       uses: actions/upload-artifact@v2
       with:
         name: secp256k1-x64-win32.dll
-        path: lib.node/secp256k1-x64-win32.dll
+        path: lib/secp256k1-x64-win32.dll
 
   package:
     name: Create package
@@ -166,6 +176,11 @@ jobs:
       with:
         fetch-depth: 1
 
+    - name: Install Node.js@${{ env.NODE_VERSION }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
     - name: Install Node.js dependencies
       run: npm ci
 
@@ -176,36 +191,34 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         name: secp256k1-x64-linux.so
-        path: lib.node
+        path: lib
 
     - name: Download compiled macOS addon
       uses: actions/download-artifact@v2
       with:
         name: secp256k1-x64-darwin.dylib
-        path: lib.node
+        path: lib
 
     - name: Download compiled Windows addon
       uses: actions/download-artifact@v2
       with:
         name: secp256k1-x64-win32.dll
-        path: lib.node
+        path: lib
 
     - name: Download compiled wasm
       uses: actions/download-artifact@v2
       with:
         name: wasm
-        path: lib.node
+        path: lib
 
     - name: Create package
       run: |
-        cp lib.node/secp256k1.wasm lib.browser/secp256k1.wasm
         mkdir package
         # Copy LICENSE, README.md
         cp LICENSE package/LICENSE
         cp README.md package/README.md
         # Copy js, addon, wasm
-        cp -r lib.browser package/lib.browser
-        cp -r lib.node package/lib.node
+        cp -r lib package/lib
         # Copy package.json, on-install.js
         cp package.json package/package.json
         node util/update-package-json.js package/package.json
@@ -237,6 +250,11 @@ jobs:
       with:
         fetch-depth: 1
 
+    - name: Install Node.js@${{ env.NODE_VERSION }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
     - name: Install Node.js dependencies
       run: npm ci
 
@@ -247,18 +265,16 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         name: secp256k1-x64-linux.so
-        path: lib.node
+        path: lib
 
     - name: Download compiled wasm
       uses: actions/download-artifact@v2
       with:
         name: wasm
-        path: lib.node
+        path: lib
 
     - name: Install benchmark dependencies
       run: cd benches && npm ci
 
     - name: Run benchmark
-      run: |
-        cp lib.node/secp256k1.wasm lib.browser/secp256k1.wasm
-        cd benches && npm start
+      run: cd benches && npm start

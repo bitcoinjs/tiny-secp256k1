@@ -1,9 +1,8 @@
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const fs = require("fs");
+import fs from "fs";
 
 const location = process.argv[2];
 const text = fs.readFileSync(location, "utf-8");
-const package = JSON.parse(text);
+const pkg = JSON.parse(text);
 
 const fields = [
   "name",
@@ -13,17 +12,18 @@ const fields = [
   "bugs",
   "repository",
   "license",
+  "type",
   "main",
   "browser",
   "types",
   "scripts",
   "engines",
 ];
-for (const key of Object.keys(package)) {
+for (const key of Object.keys(pkg)) {
   if (!fields.includes(key)) {
-    delete package[key];
+    delete pkg[key];
   }
 }
-package.scripts = { install: "node on-install.js" };
+pkg.scripts = { install: "node on-install.js" };
 
-fs.writeFileSync(location, JSON.stringify(package, null, 2));
+fs.writeFileSync(location, JSON.stringify(pkg, null, 2));

@@ -1,6 +1,6 @@
 import tiny_secp256k1_prev_js from "tiny-secp256k1/js.js";
 import tiny_secp256k1_prev_native from "tiny-secp256k1/native.js";
-import * as tiny_secp256k1 from "../";
+import * as tiny_secp256k1 from "../lib/index.js";
 import * as cryptocoinjs_secp256k1 from "./cryptocoinjs_secp256k1.js";
 import noble_secp256k1 from "./noble_secp256k1.js";
 import { fecdsa, fpoints, fprivates } from "./fixtures.js";

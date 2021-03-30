@@ -1,14 +1,15 @@
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const path = require("path");
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const webpack = require("webpack");
+import { createRequire } from "module";
+import { URL } from "url";
+import webpack from "webpack";
 
-module.exports = {
+const require = createRequire(import.meta.url);
+
+export default {
   target: "web",
   mode: "development",
   entry: "./tests/index.js",
   output: {
-    path: path.resolve(__dirname, "browser"),
+    path: new URL("browser", import.meta.url).pathname,
     filename: "index.js",
   },
   experiments: {

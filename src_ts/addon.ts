@@ -1,4 +1,5 @@
 import * as path from "path";
+import { URL } from "url";
 import createApi from "./api.js";
 import { Secp256k1InternalApi, Secp256k1Api } from "./api.js";
 import { generateSeed } from "./rand.js";
@@ -40,11 +41,12 @@ function getLocalBuildLibName(): string {
 
 function getPrebuildLibLocation(): string {
   const name = `secp256k1-${process.arch}-${process.platform}.${getLibExt()}`;
-  return path.join(__dirname, name);
+  return new URL(name, import.meta.url).pathname;
 }
 
 function getLocalBuildLibLocation(mode: string): string {
-  return path.join(__dirname, "..", "target", mode, getLocalBuildLibName());
+  const sublocation = path.join("..", "target", mode, getLocalBuildLibName());
+  return new URL(sublocation, import.meta.url).pathname;
 }
 
 function dlopen(location: string): Secp256k1InternalApi {

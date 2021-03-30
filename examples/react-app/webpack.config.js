@@ -1,9 +1,10 @@
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const path = require("path");
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const webpack = require("webpack");
+import { createRequire } from "module";
+import { URL } from "url";
+import webpack from "webpack";
 
-module.exports = {
+const require = createRequire(import.meta.url);
+
+export default {
   mode: process.env.NODE_ENV || "development",
   entry: "./index.js",
   module: {
@@ -14,7 +15,7 @@ module.exports = {
         use: {
           loader: "babel-loader",
           options: {
-            presets: ["@babel/preset-env", "@babel/preset-react"],
+            presets: ["@babel/preset-react"],
           },
         },
       },
@@ -22,10 +23,10 @@ module.exports = {
   },
   output: {
     filename: "bundle.js",
-    path: path.resolve(__dirname, "dist"),
+    path: new URL("dist", import.meta.url).pathname,
   },
   devServer: {
-    contentBase: path.resolve(__dirname, "dist"),
+    contentBase: new URL("dist", import.meta.url).pathname,
   },
   experiments: {
     asyncWebAssembly: true,

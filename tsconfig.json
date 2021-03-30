@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2015",
-    "module": "commonjs",
+    "module": "ES2020",
     "checkJs": true,
     "declaration": true,
     "declarationDir": "./types",
-    "outDir": "./lib.node",
+    "outDir": "./lib",
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

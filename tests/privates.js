@@ -1,4 +1,4 @@
-import { test } from "tape";
+import test from "tape";
 import { fromHex } from "./util.js";
 import fprivates from "./fixtures/privates.json";
 
