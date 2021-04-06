@@ -44,6 +44,7 @@ clean:
 		coverage \
 		examples/random-in-node/node_modules \
 		examples/react-app/dist/*.js \
+		examples/react-app/dist/*.txt \
 		examples/react-app/dist/*.wasm \
 		examples/react-app/node_modules \
 		lib \
