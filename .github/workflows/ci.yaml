@@ -219,10 +219,11 @@ jobs:
         cp README.md package/README.md
         # Copy js, addon, wasm
         cp -r lib package/lib
-        # Copy package.json, on-install.js
+        # Copy package.json, on-install.js, rust-toolchain
         cp package.json package/package.json
         node util/update-package-json.js package/package.json
         cp util/on-install.js package/on-install.js
+        cp rust-toolchain package/rust-toolchain
         # Copy addon source
         cp -r secp256k1 package/secp256k1
         cp -r secp256k1-node package/secp256k1-node
