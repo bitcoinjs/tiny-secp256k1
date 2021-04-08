@@ -15,6 +15,7 @@ RUN apt update && \
     software-properties-common \
     # Electron
     libasound2 \
+    libgbm1 \
     libgdk-pixbuf2.0-0 \
     libgtk-3-0 \
     libnss3 \

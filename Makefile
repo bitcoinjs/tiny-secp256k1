@@ -82,7 +82,7 @@ test-browser-build-raw:
 .PHONY: test-browser-build
 test-browser-build: build-js build-wasm-debug test-browser-build-raw
 
-test_browser_raw = cat tests/browser/index.js | npx browser-run --static tests/browser | npx tap-summary
+test_browser_raw = node tests/browser-run.js | npx tap-summary
 
 .PHONY: test-browser-raw
 test-browser-raw:
