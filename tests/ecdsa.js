@@ -1,107 +1,173 @@
-const tape = require('tape')
-const fecdsa = require('./fixtures/ecdsa.json')
+import test from "tape";
+import { fromHex, toHex } from "./util.js";
+import fecdsa from "./fixtures/ecdsa.json";
 
-const buf1 = Buffer.from('0000000000000000000000000000000000000000000000000000000000000000', 'hex')
-const buf2 = Buffer.from('0000000000000000000000000000000000000000000000000000000000000001', 'hex')
-const buf3 = Buffer.from('6e723d3fd94ed5d2b6bdd4f123364b0f3ca52af829988a63f8afe91d29db1c33', 'hex')
-const buf4 = Buffer.from('fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141', 'hex')
-const buf5 = Buffer.from('ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 'hex')
+const buf1 = fromHex(
+  "0000000000000000000000000000000000000000000000000000000000000000"
+);
+const buf2 = fromHex(
+  "0000000000000000000000000000000000000000000000000000000000000001"
+);
+const buf3 = fromHex(
+  "6e723d3fd94ed5d2b6bdd4f123364b0f3ca52af829988a63f8afe91d29db1c33"
+);
+const buf4 = fromHex(
+  "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141"
+);
+const buf5 = fromHex(
+  "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+);
 
-function corrupt (x) {
-  function randomUInt8 () {
-    return Math.floor(Math.random() * 0xff)
+function corrupt(x) {
+  function randomUInt8() {
+    return Math.floor(Math.random() * 0xff);
   }
 
-  x = Buffer.from(x)
-  const mask = 1 << (randomUInt8() % 8)
-  x[randomUInt8() % 32] ^= mask
-  return x
+  x = Uint8Array.from(x);
+  const mask = 1 << randomUInt8() % 8;
+  x[randomUInt8() % 32] ^= mask;
+  return x;
 }
 
-function test (binding) {
-  tape('sign', (t) => {
-    fecdsa.valid.forEach((f) => {
-      const d = Buffer.from(f.d, 'hex')
-      const m = Buffer.from(f.m, 'hex')
-      const expected = Buffer.from(f.signature, 'hex')
+export default function (secp256k1) {
+  test("sign", (t) => {
+    for (const f of fecdsa.valid) {
+      const d = fromHex(f.d);
+      const m = fromHex(f.m);
+      const expected = fromHex(f.signature);
 
-      t.same(binding.sign(m, d), expected, `sign(${f.m}, ...) == ${f.signature}`)
-    })
+      t.same(
+        secp256k1.sign(m, d),
+        expected,
+        `sign(${f.m}, ...) == ${f.signature}`
+      );
+    }
 
-    fecdsa.extraEntropy.forEach((f) => {
-      const d = Buffer.from(f.d, 'hex')
-      const m = Buffer.from(f.m, 'hex')
-      const expectedSig = Buffer.from(f.signature, 'hex')
-      const expectedExtraEntropy0 = Buffer.from(f.extraEntropy0, 'hex')
-      const expectedExtraEntropy1 = Buffer.from(f.extraEntropy1, 'hex')
-      const expectedExtraEntropyRand = Buffer.from(f.extraEntropyRand, 'hex')
-      const expectedExtraEntropyN = Buffer.from(f.extraEntropyN, 'hex')
-      const expectedExtraEntropyMax = Buffer.from(f.extraEntropyMax, 'hex')
+    for (const f of fecdsa.extraEntropy) {
+      const d = fromHex(f.d);
+      const m = fromHex(f.m);
+      const expectedSig = fromHex(f.signature);
+      const expectedExtraEntropy0 = fromHex(f.extraEntropy0);
+      const expectedExtraEntropy1 = fromHex(f.extraEntropy1);
+      const expectedExtraEntropyRand = fromHex(f.extraEntropyRand);
+      const expectedExtraEntropyN = fromHex(f.extraEntropyN);
+      const expectedExtraEntropyMax = fromHex(f.extraEntropyMax);
 
-      const sig = binding.sign(m, d)
+      const extraEntropyUndefined = secp256k1.sign(m, d);
+      const extraEntropy0 = secp256k1.sign(m, d, buf1);
+      const extraEntropy1 = secp256k1.sign(m, d, buf2);
+      const extraEntropyRand = secp256k1.sign(m, d, buf3);
+      const extraEntropyN = secp256k1.sign(m, d, buf4);
+      const extraEntropyMax = secp256k1.sign(m, d, buf5);
 
-      const extraEntropyUndefined = binding.signWithEntropy(m, d, undefined)
-      const extraEntropy0 = binding.signWithEntropy(m, d, buf1)
-      const extraEntropy1 = binding.signWithEntropy(m, d, buf2)
-      const extraEntropyRand = binding.signWithEntropy(m, d, buf3)
-      const extraEntropyN = binding.signWithEntropy(m, d, buf4)
-      const extraEntropyMax = binding.signWithEntropy(m, d, buf5)
+      t.same(
+        extraEntropyUndefined,
+        expectedSig,
+        `sign(${f.m}, ..., undefined) == ${f.signature}`
+      );
+      t.same(
+        extraEntropy0,
+        expectedExtraEntropy0,
+        `sign(${f.m}, ..., 0) == ${f.signature}`
+      );
+      t.same(
+        extraEntropy1,
+        expectedExtraEntropy1,
+        `sign(${f.m}, ..., 1) == ${f.signature}`
+      );
+      t.same(
+        extraEntropyRand,
+        expectedExtraEntropyRand,
+        `sign(${f.m}, ..., rand) == ${f.signature}`
+      );
+      t.same(
+        extraEntropyN,
+        expectedExtraEntropyN,
+        `sign(${f.m}, ..., n) == ${f.signature}`
+      );
+      t.same(
+        extraEntropyMax,
+        expectedExtraEntropyMax,
+        `sign(${f.m}, ..., max256) == ${f.signature}`
+      );
+    }
 
-      t.same(sig, expectedSig, `sign(${f.m}, ...) == ${f.signature}`)
-      t.same(extraEntropyUndefined, expectedSig, `sign(${f.m}, ..., undefined) == ${f.signature}`)
-      t.same(extraEntropy0, expectedExtraEntropy0, `sign(${f.m}, ..., 0) == ${f.signature}`)
-      t.same(extraEntropy1, expectedExtraEntropy1, `sign(${f.m}, ..., 1) == ${f.signature}`)
-      t.same(extraEntropyRand, expectedExtraEntropyRand, `sign(${f.m}, ..., rand) == ${f.signature}`)
-      t.same(extraEntropyN, expectedExtraEntropyN, `sign(${f.m}, ..., n) == ${f.signature}`)
-      t.same(extraEntropyMax, expectedExtraEntropyMax, `sign(${f.m}, ..., max256) == ${f.signature}`)
-    })
+    for (const f of fecdsa.invalid.sign) {
+      const d = fromHex(f.d);
+      const m = fromHex(f.m);
 
-    fecdsa.invalid.sign.forEach((f) => {
-      const d = Buffer.from(f.d, 'hex')
-      const m = Buffer.from(f.m, 'hex')
+      t.throws(
+        () => {
+          secp256k1.sign(m, d);
+        },
+        new RegExp(f.exception),
+        `${f.description} throws ${f.exception}`
+      );
+    }
 
-      t.throws(() => {
-        binding.sign(m, d)
-      }, new RegExp(f.exception), `${f.description} throws ${f.exception}`)
-    })
+    t.end();
+  });
 
-    t.end()
-  })
+  test("verify", (t) => {
+    for (const f of fecdsa.valid) {
+      const d = fromHex(f.d);
+      const Q = secp256k1.pointFromScalar(d, true);
+      const Qu = secp256k1.pointFromScalar(d, false);
+      const m = fromHex(f.m);
+      const signature = fromHex(f.signature);
+      const bad = corrupt(signature);
 
-  tape('verify', (t) => {
-    fecdsa.valid.forEach((f) => {
-      const d = Buffer.from(f.d, 'hex')
-      const Q = binding.pointFromScalar(d, true)
-      const Qu = binding.pointFromScalar(d, false)
-      const m = Buffer.from(f.m, 'hex')
-      const signature = Buffer.from(f.signature, 'hex')
-      const bad = corrupt(signature)
+      t.equal(
+        secp256k1.verify(m, Q, signature),
+        true,
+        `verify(${f.signature}) is OK`
+      );
+      t.equal(
+        secp256k1.verify(m, Q, bad),
+        false,
+        `verify(${toHex(bad)}) is rejected`
+      );
+      t.equal(
+        secp256k1.verify(m, Qu, signature),
+        true,
+        `verify(${f.signature}) is OK`
+      );
+      t.equal(
+        secp256k1.verify(m, Qu, bad),
+        false,
+        `verify(${toHex(bad)}) is rejected`
+      );
+    }
 
-      t.equal(binding.verify(m, Q, signature), true, `verify(${f.signature}) is OK`)
-      t.equal(binding.verify(m, Q, bad), false, `verify(${bad.toString('hex')}) is rejected`)
-      t.equal(binding.verify(m, Qu, signature), true, `verify(${f.signature}) is OK`)
-      t.equal(binding.verify(m, Qu, bad), false, `verify(${bad.toString('hex')}) is rejected`)
-    })
-
-    fecdsa.invalid.verify.forEach((f) => {
-      const Q = Buffer.from(f.Q, 'hex')
-      const m = Buffer.from(f.m, 'hex')
-      const signature = Buffer.from(f.signature, 'hex')
+    for (const f of fecdsa.invalid.verify) {
+      const Q = fromHex(f.Q);
+      const m = fromHex(f.m);
+      const signature = fromHex(f.signature);
 
       if (f.exception) {
-        t.throws(() => {
-          binding.verify(m, Q, signature)
-        }, new RegExp(f.exception), `${f.description} throws ${f.exception}`)
+        t.throws(
+          () => {
+            secp256k1.verify(m, Q, signature);
+          },
+          new RegExp(f.exception),
+          `${f.description} throws ${f.exception}`
+        );
       } else {
-        t.equal(binding.verify(m, Q, signature, f.strict), false, `verify(${f.signature}) is rejected`)
+        t.equal(
+          secp256k1.verify(m, Q, signature, f.strict),
+          false,
+          `verify(${f.signature}) is rejected`
+        );
         if (f.strict === true) {
-          t.equal(binding.verify(m, Q, signature, false), true, `verify(${f.signature}) is OK without strict`)
+          t.equal(
+            secp256k1.verify(m, Q, signature, false),
+            true,
+            `verify(${f.signature}) is OK without strict`
+          );
         }
       }
-    })
+    }
 
-    t.end()
-  })
+    t.end();
+  });
 }
-
-module.exports = test

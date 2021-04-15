@@ -1,5 +1,11 @@
-build/
-coverage/
-node_modules/
-tests/bundle.js
-package-lock.json
+/.nyc_output
+/benches/node_modules
+/coverage
+/examples/random-in-node/node_modules
+/examples/react-app/dist
+/examples/react-app/node_modules
+/lib
+/node_modules
+/target
+/tests/browser
+/types

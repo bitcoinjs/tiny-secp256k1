@@ -1,161 +1,200 @@
-const tape = require('tape')
-const fpoints = require('./fixtures/points.json')
+import test from "tape";
+import { fromHex } from "./util.js";
+import fpoints from "./fixtures/points.json";
 
-function test (binding) {
-  tape('isPoint', (t) => {
-    fpoints.valid.isPoint.forEach((f) => {
-      const p = Buffer.from(f.P, 'hex')
+export default function (secp256k1) {
+  test("isPoint", (t) => {
+    for (const f of fpoints.valid.isPoint) {
+      const p = fromHex(f.P);
+      t.equal(
+        secp256k1.isPoint(p),
+        f.expected,
+        `${f.P} is ${f.expected ? "OK" : "rejected"}`
+      );
+    }
 
-      t.equal(binding.isPoint(p), f.expected, `${f.P} is ${f.expected ? 'OK' : 'rejected'}`)
-    })
+    t.end();
+  });
 
-    t.end()
-  })
+  test("isPointCompressed", (t) => {
+    for (const f of fpoints.valid.isPoint) {
+      if (!f.expected) continue;
+      const p = fromHex(f.P);
+      const e = p.length === 33;
+      t.equal(
+        secp256k1.isPointCompressed(p),
+        e,
+        `${f.P} is ${e ? "compressed" : "uncompressed"}`
+      );
+    }
 
-  tape('isPointCompressed', (t) => {
-    fpoints.valid.isPoint.forEach((f) => {
-      if (!f.expected) return
-      const p = Buffer.from(f.P, 'hex')
-      const e = p.length === 33
+    t.end();
+  });
 
-      t.equal(binding.isPointCompressed(p), e, `${f.P} is ${e ? 'compressed' : 'uncompressed'}`)
-    })
+  test("pointAdd", (t) => {
+    for (const f of fpoints.valid.pointAdd) {
+      const p = fromHex(f.P);
+      const q = fromHex(f.Q);
+      const expected = f.expected ? fromHex(f.expected) : null;
+      let description = `${f.P} + ${f.Q} = ${f.expected ? f.expected : null}`;
+      if (f.description) description += ` (${f.description})`;
+      t.same(secp256k1.pointAdd(p, q), expected, description);
+      if (expected === null) continue;
+      t.same(
+        secp256k1.pointAdd(p, q, true),
+        secp256k1.pointCompress(expected, true),
+        description
+      );
+      t.same(
+        secp256k1.pointAdd(p, q, false),
+        secp256k1.pointCompress(expected, false),
+        description
+      );
+    }
 
-    t.end()
-  })
+    for (const f of fpoints.invalid.pointAdd) {
+      const p = fromHex(f.P);
+      const q = fromHex(f.Q);
+      t.throws(
+        () => {
+          secp256k1.pointAdd(p, q);
+        },
+        new RegExp(f.exception),
+        `${f.description} throws ${f.exception}`
+      );
+    }
 
-  tape('pointAdd', (t) => {
-    fpoints.valid.pointAdd.forEach((f) => {
-      const p = Buffer.from(f.P, 'hex')
-      const q = Buffer.from(f.Q, 'hex')
+    t.end();
+  });
 
-      const expected = f.expected ? Buffer.from(f.expected, 'hex') : null
-      let description = `${f.P} + ${f.Q} = ${f.expected ? f.expected : null}`
-      if (f.description) description += ` (${f.description})`
+  test("pointAddScalar", (t) => {
+    for (const f of fpoints.valid.pointAddScalar) {
+      const p = fromHex(f.P);
+      const d = fromHex(f.d);
+      const expected = f.expected ? fromHex(f.expected) : null;
+      let description = `${f.P} + ${f.d} = ${f.expected ? f.expected : null}`;
+      if (f.description) description += ` (${f.description})`;
+      t.same(secp256k1.pointAddScalar(p, d), expected, description);
+      if (expected === null) continue;
+      t.same(
+        secp256k1.pointAddScalar(p, d, true),
+        secp256k1.pointCompress(expected, true),
+        description
+      );
+      t.same(
+        secp256k1.pointAddScalar(p, d, false),
+        secp256k1.pointCompress(expected, false),
+        description
+      );
+    }
 
-      t.same(binding.pointAdd(p, q), expected, description)
-      if (expected === null) return
+    for (const f of fpoints.invalid.pointAddScalar) {
+      const p = fromHex(f.P);
+      const d = fromHex(f.d);
+      t.throws(
+        () => {
+          secp256k1.pointAddScalar(p, d);
+        },
+        new RegExp(f.exception),
+        `${f.description} throws ${f.exception}`
+      );
+    }
 
-      t.same(binding.pointAdd(p, q, true), binding.pointCompress(expected, true), description)
-      t.same(binding.pointAdd(p, q, false), binding.pointCompress(expected, false), description)
-    })
+    t.end();
+  });
 
-    fpoints.invalid.pointAdd.forEach((f) => {
-      const p = Buffer.from(f.P, 'hex')
-      const q = Buffer.from(f.Q, 'hex')
-
-      t.throws(() => {
-        binding.pointAdd(p, q)
-      }, new RegExp(f.exception), `${f.description} throws ${f.exception}`)
-    })
-
-    t.end()
-  })
-
-  tape('pointAddScalar', (t) => {
-    fpoints.valid.pointAddScalar.forEach((f) => {
-      const p = Buffer.from(f.P, 'hex')
-      const d = Buffer.from(f.d, 'hex')
-
-      const expected = f.expected ? Buffer.from(f.expected, 'hex') : null
-      let description = `${f.P} + ${f.d} = ${f.expected ? f.expected : null}`
-      if (f.description) description += ` (${f.description})`
-
-      t.same(binding.pointAddScalar(p, d), expected, description)
-      if (expected === null) return
-
-      t.same(binding.pointAddScalar(p, d, true), binding.pointCompress(expected, true), description)
-      t.same(binding.pointAddScalar(p, d, false), binding.pointCompress(expected, false), description)
-    })
-
-    fpoints.invalid.pointAddScalar.forEach((f) => {
-      const p = Buffer.from(f.P, 'hex')
-      const d = Buffer.from(f.d, 'hex')
-
-      t.throws(() => {
-        binding.pointAddScalar(p, d)
-      }, new RegExp(f.exception), `${f.description} throws ${f.exception}`)
-    })
-
-    t.end()
-  })
-
-  tape('pointCompress', (t) => {
-    fpoints.valid.pointCompress.forEach((f) => {
-      const p = Buffer.from(f.P, 'hex')
-      const expected = Buffer.from(f.expected, 'hex')
-
+  test("pointCompress", (t) => {
+    for (const f of fpoints.valid.pointCompress) {
+      const p = fromHex(f.P);
+      const expected = fromHex(f.expected);
       if (f.noarg) {
-        t.same(binding.pointCompress(p), expected)
+        t.same(secp256k1.pointCompress(p), expected);
       } else {
-        t.same(binding.pointCompress(p, f.compress), expected)
+        t.same(secp256k1.pointCompress(p, f.compress), expected);
       }
-    })
+    }
 
-    fpoints.invalid.pointCompress.forEach((f) => {
-      const p = Buffer.from(f.P, 'hex')
+    for (const f of fpoints.invalid.pointCompress) {
+      const p = fromHex(f.P);
+      t.throws(
+        () => {
+          secp256k1.pointCompress(p);
+        },
+        new RegExp(f.exception),
+        `${f.description} throws ${f.exception}`
+      );
+    }
 
-      t.throws(() => {
-        binding.pointCompress(p)
-      }, new RegExp(f.exception), `${f.description} throws ${f.exception}`)
-    })
+    t.end();
+  });
 
-    t.end()
-  })
+  test("pointFromScalar", (t) => {
+    for (const f of fpoints.valid.pointFromScalar) {
+      const d = fromHex(f.d);
+      const expected = fromHex(f.expected);
+      let description = `${f.d} * G = ${f.expected}`;
+      if (f.description) description += ` (${f.description})`;
+      t.same(secp256k1.pointFromScalar(d), expected, description);
+      if (expected === null) continue;
+      t.same(
+        secp256k1.pointFromScalar(d, true),
+        secp256k1.pointCompress(expected, true),
+        description
+      );
+      t.same(
+        secp256k1.pointFromScalar(d, false),
+        secp256k1.pointCompress(expected, false),
+        description
+      );
+    }
 
-  tape('pointFromScalar', (t) => {
-    fpoints.valid.pointFromScalar.forEach((f) => {
-      const d = Buffer.from(f.d, 'hex')
+    for (const f of fpoints.invalid.pointFromScalar) {
+      const d = fromHex(f.d);
+      t.throws(
+        () => {
+          secp256k1.pointFromScalar(d);
+        },
+        new RegExp(f.exception),
+        `${f.description} throws ${f.exception}`
+      );
+    }
 
-      const expected = Buffer.from(f.expected, 'hex')
-      let description = `${f.d} * G = ${f.expected}`
-      if (f.description) description += ` (${f.description})`
+    t.end();
+  });
 
-      t.same(binding.pointFromScalar(d), expected, description)
-      if (expected === null) return
+  test("pointMultiply", (t) => {
+    for (const f of fpoints.valid.pointMultiply) {
+      const p = fromHex(f.P);
+      const d = fromHex(f.d);
+      const expected = f.expected ? fromHex(f.expected) : null;
+      let description = `${f.P} * ${f.d} = ${f.expected ? f.expected : null}`;
+      if (f.description) description += ` (${f.description})`;
+      t.same(secp256k1.pointMultiply(p, d), expected, description);
+      if (expected === null) continue;
+      t.same(
+        secp256k1.pointMultiply(p, d, true),
+        secp256k1.pointCompress(expected, true),
+        description
+      );
+      t.same(
+        secp256k1.pointMultiply(p, d, false),
+        secp256k1.pointCompress(expected, false),
+        description
+      );
+    }
 
-      t.same(binding.pointFromScalar(d, true), binding.pointCompress(expected, true), description)
-      t.same(binding.pointFromScalar(d, false), binding.pointCompress(expected, false), description)
-    })
+    for (const f of fpoints.invalid.pointMultiply) {
+      const p = fromHex(f.P);
+      const d = fromHex(f.d);
+      t.throws(
+        () => {
+          secp256k1.pointMultiply(p, d);
+        },
+        new RegExp(f.exception),
+        `${f.description} throws ${f.exception}`
+      );
+    }
 
-    fpoints.invalid.pointFromScalar.forEach((f) => {
-      const d = Buffer.from(f.d, 'hex')
-
-      t.throws(() => {
-        binding.pointFromScalar(d)
-      }, new RegExp(f.exception), `${f.description} throws ${f.exception}`)
-    })
-
-    t.end()
-  })
-
-  tape('pointMultiply', (t) => {
-    fpoints.valid.pointMultiply.forEach((f) => {
-      const p = Buffer.from(f.P, 'hex')
-      const d = Buffer.from(f.d, 'hex')
-
-      const expected = f.expected ? Buffer.from(f.expected, 'hex') : null
-      let description = `${f.P} * ${f.d} = ${f.expected ? f.expected : null}`
-      if (f.description) description += ` (${f.description})`
-
-      t.same(binding.pointMultiply(p, d), expected, description)
-      if (expected === null) return
-
-      t.same(binding.pointMultiply(p, d, true), binding.pointCompress(expected, true), description)
-      t.same(binding.pointMultiply(p, d, false), binding.pointCompress(expected, false), description)
-    })
-
-    fpoints.invalid.pointMultiply.forEach((f) => {
-      const p = Buffer.from(f.P, 'hex')
-      const d = Buffer.from(f.d, 'hex')
-
-      t.throws(() => {
-        binding.pointMultiply(p, d)
-      }, new RegExp(f.exception), `${f.description} throws ${f.exception}`)
-    })
-
-    t.end()
-  })
+    t.end();
+  });
 }
-
-module.exports = test

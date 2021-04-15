@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches:
+    - main
+
+env:
+  NODE_VERSION: 14.0.0
+
+jobs:
+  publish-react-app:
+    name: Publish react example
+    runs-on: ubuntu-latest
+    steps:
+    - name: Fetch code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 1
+
+    - name: Install Rust nightly with wasm32-unknown-unknown
+      run: rustup toolchain install nightly --target wasm32-unknown-unknown
+
+    - name: Install Node.js dependencies
+      run: |
+        npm ci
+        cd examples/react-app && npm ci
+
+    - uses: actions/cache@v2
+      id: binaryen-cache
+      with:
+        path: binaryen-version_100
+        key: binaryen-version_100
+
+    - name: Install wasm-opt (binaryen)
+      if: steps.binaryen-cache.outputs.cache-hit != 'true'
+      run: |
+        wget https://github.com/WebAssembly/binaryen/releases/download/version_100/binaryen-version_100-x86_64-linux.tar.gz
+        tar zxvf binaryen-version_100-x86_64-linux.tar.gz binaryen-version_100/bin/wasm-opt
+
+    - name: Build wasm
+      run: export PATH=$PATH:./binaryen-version_100/bin/ && make build-wasm
+
+    - name: Build JS
+      run: make build-js
+
+    - name: Build react-app
+      run: cd examples/react-app && npm run build
+
+    - name: Deploy 🚀
+      uses: JamesIves/github-pages-deploy-action@4.1.1
+      with:
+        branch: gh-pages
+        folder: examples/react-app/dist
