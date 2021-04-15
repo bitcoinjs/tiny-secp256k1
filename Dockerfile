@@ -7,7 +7,8 @@ RUN apt update && \
     curl \
     g++ \
     gcc \
-    git \make \
+    git \
+    make \
     wget \
     # LLVM script
     gnupg \

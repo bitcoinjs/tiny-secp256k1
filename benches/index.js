@@ -17,12 +17,8 @@ const modules = [
   //   secp256k1: loadAddon("./opt-level-3.so"),
   // },
   {
-    name: "tiny-secp256k1 (Rust addon, N-API)",
-    secp256k1: tiny_secp256k1.__addon,
-  },
-  {
     name: "tiny-secp256k1 (WASM)",
-    secp256k1: tiny_secp256k1.__wasm,
+    secp256k1: tiny_secp256k1,
   },
   {
     name: "tiny-secp256k1@1.1.6 (C++ addon, NAN/V8)",
