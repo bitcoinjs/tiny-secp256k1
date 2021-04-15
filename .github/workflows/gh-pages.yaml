@@ -1,9 +1,9 @@
-name: CI
+name: ReactExample
 
 on:
   push:
     branches:
-    - main
+    - master
 
 env:
   NODE_VERSION: 14.0.0
