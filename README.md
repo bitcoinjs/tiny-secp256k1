@@ -1,10 +1,8 @@
 # tiny-secp256k1
 
-[![Build Status](https://travis-ci.org/bitcoinjs/tiny-secp256k1.png?branch=master)](https://travis-ci.org/bitcoinjs/tiny-secp256k1)
 [![NPM](https://img.shields.io/npm/v/tiny-secp256k1.svg)](https://www.npmjs.org/package/tiny-secp256k1)
-[![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)
 
-This library is under development, and, like the [secp256k1](https://github.com/bitcoin-core/secp256k1) C library it depends on, this is a research effort to determine an optimal API for end-users of the bitcoinjs ecosystem.
+This library is under development, and, like the [secp256k1](https://github.com/bitcoin-core/secp256k1) C library (through [secp256k1-sys](https://github.com/rust-bitcoin/rust-secp256k1/) Rust crate) it depends on, this is a research effort to determine an optimal API for end-users of the bitcoinjs ecosystem.
 
 ## Installation
 
@@ -19,6 +17,50 @@ npm install tiny-secp256k1
 ```bash
 yarn add tiny-secp256k1
 ```
+
+## WebAssembly and Node.js version
+
+Previous version of `tiny-secp256k1` implement [C++ addon](https://nodejs.org/api/addons.html) through [NAN (Native Abstractions for Node.js)](https://github.com/nodejs/nan) and [elliptic](https://github.com/indutny/elliptic) as fallback when addon can not be built or in browser-like environement.
+
+Current version use Rust crate (which use C library) compiled to [WebAssembly](https://developer.mozilla.org/en-US/docs/WebAssembly). With Wasm same code executed in any environment. Wasm is faster than `elliptic` but slower than node bindings ([results in PR](https://github.com/bitcoinjs/tiny-secp256k1/pull/53#issuecomment-801844450) or you can run own benchmark in `benches` directory).
+
+## Building
+
+For building locally you need C/C++ toolchain, Rust nightly version and `wasm-opt` from [binaryen](https://github.com/WebAssembly/binaryen).
+
+[rustup](https://rustup.rs/) is a recommended way to install `Rust`. You also will need `wasm32-unknown-unknown` target.
+
+```
+rustup toolchain install nightly --target wasm32-unknown-unknown --component clippy --component rustfmt
+```
+
+After installing development dependencies with `npm` you can build Wasm:
+
+```
+make build-wasm
+```
+
+or run tests:
+
+```
+make test
+```
+
+Alternative way is to use [Docker](https://www.docker.com/):
+
+```
+% docker build -t tiny-secp256k1 .
+% docker run -it --rm -v `pwd`:/tiny-secp256k1 -w /tiny-secp256k1 tiny-secp256k1
+# npm install --unsafe-perm
+# make test
+# make clean
+```
+
+## Examples
+
+`tiny-secp256k1` includes two examples. First is [simple script for Node.js](examples/random-in-node) which generate random data and print arguments and methods results. Second is [React app](examples/react-app).
+
+React app is builded in GitHub Actions on each commit to master branch and uploaded to [gh-pages](https://github.com/bitcoinjs/tiny-secp256k1/tree/gh-pages) branch, which is always available online: https://bitcoinjs.github.io/tiny-secp256k1/
 
 ## Documentation
 
@@ -171,25 +213,6 @@ If `strict` is `true`, valid signatures with any of (r, s) values greater than `
 - `Expected Point` if `!isPoint(Q)`
 - `Expected Signature` if `signature` has any (r, s) values not in range `[0...order - 1]`
 - `Expected Scalar` if `h` is not 256-bit
-
----
-
-## Docker Build / Development Environment
-
-#### Build Docker image
-
-```
-docker build -t tiny-secp256k1 .
-```
-
-#### Run Docker container
-
-```
-docker run -it --rm -v `pwd`:/tiny-secp256k1 -w /tiny-secp256k1 tiny-secp256k1
-# npm install --unsafe-perm
-# make test
-# make clean
-```
 
 ## Credit
 
