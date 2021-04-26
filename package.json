@@ -1,6 +1,6 @@
 {
   "name": "tiny-secp256k1",
-  "version": "1.1.6",
+  "version": "2.0.0",
   "description": "A tiny secp256k1 JS",
   "homepage": "https://github.com/bitcoinjs/tiny-secp256k1#readme",
   "bugs": {
@@ -19,7 +19,8 @@
   },
   "types": "./types/index.d.ts",
   "files": [
-    "lib"
+    "lib",
+    "types"
   ],
   "devDependencies": {
     "@types/node": "^14.14.35",
