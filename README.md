@@ -26,12 +26,12 @@ Current version use Rust crate (which use C library) compiled to [WebAssembly](h
 
 ## Building
 
-For building locally you need C/C++ toolchain, Rust nightly version and `wasm-opt` from [binaryen](https://github.com/WebAssembly/binaryen).
+For building locally you need C/C++ toolchain, Rust version >=1.50.0 and `wasm-opt` from [binaryen](https://github.com/WebAssembly/binaryen).
 
 [rustup](https://rustup.rs/) is a recommended way to install `Rust`. You also will need `wasm32-unknown-unknown` target.
 
 ```
-rustup toolchain install nightly --target wasm32-unknown-unknown --component clippy --component rustfmt
+rustup toolchain install stable --target wasm32-unknown-unknown --component clippy --component rustfmt
 ```
 
 After installing development dependencies with `npm` you can build Wasm:
@@ -82,7 +82,15 @@ Returns `false` if
 isPointCompressed :: Buffer -> Bool
 ```
 
-Returns `false` if the signature is **not** compressed.
+Returns `false` if the pubkey is **not** compressed.
+
+### isXOnlyPoint (A)
+
+```haskell
+isXOnlyPoint :: Buffer -> Bool
+```
+
+Returns `false` if the pubkey is **not** an xOnlyPubkey.
 
 ### isPrivate (d)
 
@@ -143,6 +151,30 @@ Returns `null` if result is at infinity.
 
 - `Expected Private` if `!isPrivate(d)`
 
+### xOnlyPointFromScalar (d)
+
+```haskell
+xOnlyPointFromScalar :: Buffer -> Buffer
+```
+
+Returns the xOnlyPubkey for a given private key
+
+##### Throws:
+
+- `Expected Private` if `!isPrivate(d)`
+
+### xOnlyPointFromPoint (p)
+
+```haskell
+xOnlyPointFromPoint :: Buffer -> Buffer
+```
+
+Returns the xOnlyPubkey for a given DER public key
+
+##### Throws:
+
+- `Expected Point` if `!isPoint(p)`
+
 ### pointMultiply (A, tweak[, compressed])
 
 ```haskell
@@ -182,6 +214,36 @@ Returns `null` if result is equal to `0`.
 - `Expected Private` if `!isPrivate(d)`
 - `Expected Tweak` if `tweak` is not in `[0...order - 1]`
 
+### xOnlyPointAddTweak (p, tweak)
+
+```haskell
+xOnlyPointAddTweak :: Buffer -> Buffer -> { parity: 1 | 0; xOnlyPubkey: Buffer; }
+```
+
+Returns the tweaked xOnlyPubkey along with the parity bit (number type of 1|0)
+
+##### Throws:
+
+- `Expected Point` if `!isXOnlyPoint(p)`
+- `Expected Tweak` if `!isXOnlyPoint(tweak)`
+
+### xOnlyPointAddTweakCheck (p1, p2, tweak[, tweakParity])
+
+```haskell
+xOnlyPointAddTweakCheck :: Buffer -> Buffer -> Buffer [-> 1 | 0] -> Bool
+```
+
+Checks the tweaked pubkey (p2) against the original pubkey (p1) and tweak.
+This is slightly slower if you include tweakParity, tweakParity will make it
+faster for aggregation later on.
+
+##### Throws:
+
+- `Expected Point` if `!isXOnlyPoint(p1)`
+- `Expected Point` if `!isXOnlyPoint(p2)`
+- `Expected Tweak` if `!isXOnlyPoint(tweak)`
+- `Expected Parity` if `tweakParity is not 1 or 0`
+
 ### sign (h, d[, e])
 
 ```haskell
@@ -198,15 +260,45 @@ Adds `e` as Added Entropy to the deterministic k generation.
 - `Expected Scalar` if `h` is not 256-bit
 - `Expected Extra Data (32 bytes)` if `e` is not 256-bit
 
+### signSchnorr (h, d[, e])
+
+```haskell
+signSchnorr :: Buffer -> Buffer [-> Buffer] -> Buffer
+```
+
+Returns normalized schnorr signature.
+Uses BIP340 nonce generation.
+Adds `e` as Added Entropy.
+
+##### Throws:
+
+- `Expected Private` if `!isPrivate(d)`
+- `Expected Scalar` if `h` is not 256-bit
+- `Expected Extra Data (32 bytes)` if `e` is not 256-bit
+
 ### verify (h, Q, signature[, strict = false])
 
 ```haskell
-verify :: Buffer -> Buffer -> Buffer -> Bool
+verify :: Buffer -> Buffer -> Buffer [-> Bool] -> Bool
 ```
 
 Returns `false` if any of (r, s) values are equal to `0`, or if the signature is rejected.
 
 If `strict` is `true`, valid signatures with any of (r, s) values greater than `order / 2` are rejected.
+
+##### Throws:
+
+- `Expected Point` if `!isPoint(Q)`
+- `Expected Signature` if `signature` has any (r, s) values not in range `[0...order - 1]`
+- `Expected Scalar` if `h` is not 256-bit
+
+### verifySchnorr (h, Q, signature)
+
+```haskell
+verifySchnorr :: Buffer -> Buffer -> Buffer -> Bool
+```
+
+Returns `false` if any of (r, s) values are equal to `0`, or if the signature is rejected.
 
 ##### Throws:
 

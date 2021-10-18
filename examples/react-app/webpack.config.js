@@ -26,7 +26,7 @@ export default {
     path: new URL("dist", import.meta.url).pathname,
   },
   devServer: {
-    contentBase: new URL("dist", import.meta.url).pathname,
+    static: new URL("dist", import.meta.url).pathname,
   },
   experiments: {
     asyncWebAssembly: true,
@@ -38,6 +38,7 @@ export default {
   ],
   resolve: {
     fallback: {
+      buffer: require.resolve("buffer"),
       crypto: require.resolve("crypto-browserify"),
       process: require.resolve("process/browser"),
       stream: require.resolve("stream-browserify"),

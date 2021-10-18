@@ -31,6 +31,22 @@ export default function (secp256k1) {
     t.end();
   });
 
+  test("isXOnlyPoint", (t) => {
+    for (const f of fpoints.valid.isPoint) {
+      if (!f.expected) continue;
+      const p = fromHex(f.P);
+      const e = p.length === 33;
+      const p2 = e ? p.slice(1, 33) : p;
+      t.equal(
+        secp256k1.isXOnlyPoint(p2),
+        e,
+        `${f.P} is ${e ? "xonly" : "uncompressed"}`
+      );
+    }
+
+    t.end();
+  });
+
   test("pointAdd", (t) => {
     for (const f of fpoints.valid.pointAdd) {
       const p = fromHex(f.P);

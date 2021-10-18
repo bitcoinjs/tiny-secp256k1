@@ -6,11 +6,13 @@ import {
   ERROR_BAD_HASH,
   ERROR_BAD_EXTRA_DATA,
   ERROR_BAD_SIGNATURE,
+  ERROR_BAD_PARITY,
 } from "./validate_error.js";
 
 export const PRIVATE_KEY_SIZE = 32;
 export const PUBLIC_KEY_COMPRESSED_SIZE = 33;
 export const PUBLIC_KEY_UNCOMPRESSED_SIZE = 65;
+export const X_ONLY_PUBLIC_KEY_SIZE = 32;
 export const TWEAK_SIZE = 32;
 export const HASH_SIZE = 32;
 export const EXTRA_DATA_SIZE = 32;
@@ -18,38 +20,8 @@ export const SIGNATURE_SIZE = 64;
 
 const BN32_ZERO = new Uint8Array(32);
 const BN32_N = new Uint8Array([
-  255,
-  255,
-  255,
-  255,
-  255,
-  255,
-  255,
-  255,
-  255,
-  255,
-  255,
-  255,
-  255,
-  255,
-  255,
-  254,
-  186,
-  174,
-  220,
-  230,
-  175,
-  72,
-  160,
-  59,
-  191,
-  210,
-  94,
-  140,
-  208,
-  54,
-  65,
-  65,
+  255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+  254, 186, 174, 220, 230, 175, 72, 160, 59, 191, 210, 94, 140, 208, 54, 65, 65,
 ]);
 
 function isUint8Array(value: Uint8Array): boolean {
@@ -79,6 +51,19 @@ export function isPrivate(x: Uint8Array): boolean {
 }
 
 export function isPoint(p: Uint8Array): boolean {
+  return (
+    isUint8Array(p) &&
+    (p.length === PUBLIC_KEY_COMPRESSED_SIZE ||
+      p.length === PUBLIC_KEY_UNCOMPRESSED_SIZE ||
+      p.length === X_ONLY_PUBLIC_KEY_SIZE)
+  );
+}
+
+export function isXOnlyPoint(p: Uint8Array): boolean {
+  return isUint8Array(p) && p.length === X_ONLY_PUBLIC_KEY_SIZE;
+}
+
+export function isDERPoint(p: Uint8Array): boolean {
   return (
     isUint8Array(p) &&
     (p.length === PUBLIC_KEY_COMPRESSED_SIZE ||
@@ -115,12 +100,20 @@ function isSignature(signature: Uint8Array): boolean {
   );
 }
 
+export function validateParity(p: 1 | 0): void {
+  if (p !== 0 && p !== 1) throwError(ERROR_BAD_PARITY);
+}
+
 export function validatePrivate(d: Uint8Array): void {
   if (!isPrivate(d)) throwError(ERROR_BAD_PRIVATE);
 }
 
 export function validatePoint(p: Uint8Array): void {
   if (!isPoint(p)) throwError(ERROR_BAD_POINT);
+}
+
+export function validateXOnlyPoint(p: Uint8Array): void {
+  if (!isXOnlyPoint(p)) throwError(ERROR_BAD_POINT);
 }
 
 export function validateTweak(tweak: Uint8Array): void {

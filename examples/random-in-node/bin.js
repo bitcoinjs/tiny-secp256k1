@@ -4,6 +4,13 @@ import { generate } from "./index.js";
 const toHex = (v) =>
   v instanceof Uint8Array ? Buffer.from(v).toString("hex") : v;
 
+const JSONstring = (data, spacing) =>
+  JSON.stringify(
+    data,
+    (_, val) => (val instanceof Uint8Array ? toHex(val) : val),
+    spacing
+  );
+
 const lineDash = new Array(80).fill("-").join("");
 const lineEq = new Array(80).fill("=").join("");
 function print(items) {
@@ -18,7 +25,12 @@ function print(items) {
     for (let i = 0; i < item.args.length; ++i) {
       console.log(`Arg${(i + 1).toString()}: ${toHex(item.args[i])}`);
     }
-    console.log(`Result: ${toHex(secp256k1[item.name](...item.args))}`);
+    const result = secp256k1[item.name](...item.args);
+    console.log(
+      `Result: ${
+        result instanceof Uint8Array ? toHex(result) : JSONstring(result)
+      }`
+    );
     console.log(lineEq);
   }
 }
@@ -32,12 +44,36 @@ print([
   { name: "pointAddScalar", args: [data.pubkey, data.tweak] },
   { name: "pointCompress", args: [data.pubkey_uncompressed, true] },
   { name: "pointFromScalar", args: [data.seckey] },
+  { name: "xOnlyPointFromScalar", args: [data.seckey] },
+  { name: "xOnlyPointFromPoint", args: [data.pubkey] },
+  {
+    name: "xOnlyPointAddTweak",
+    args: [data.x_only_pubkey, data.x_only_pubkey2],
+  },
+  {
+    name: "xOnlyPointAddTweakCheck",
+    args: [
+      data.x_only_pubkey,
+      data.x_only_add_tweak,
+      data.x_only_pubkey2,
+      data.x_only_add_parity,
+    ],
+  },
   { name: "pointMultiply", args: [data.pubkey, data.tweak] },
   { name: "privateAdd", args: [data.seckey, data.tweak] },
   { name: "privateSub", args: [data.seckey, data.tweak] },
   { name: "sign", args: [data.hash, data.seckey, data.entropy] },
+  { name: "signSchnorr", args: [data.hash, data.seckey, data.entropy] },
   {
     name: "verify",
     args: [data.hash, data.pubkey, secp256k1.sign(data.hash, data.seckey)],
+  },
+  {
+    name: "verifySchnorr",
+    args: [
+      data.hash,
+      data.x_only_pubkey,
+      secp256k1.signSchnorr(data.hash, data.seckey),
+    ],
   },
 ]);

@@ -1,3 +1,4 @@
+import { compare } from "uint8array-tools";
 import * as validate from "./validate.js";
 import wasm from "./wasm_loader.js";
 
@@ -5,6 +6,8 @@ const WASM_BUFFER = new Uint8Array(wasm.memory.buffer);
 const WASM_PRIVATE_KEY_PTR = wasm.PRIVATE_INPUT.value;
 const WASM_PUBLIC_KEY_INPUT_PTR = wasm.PUBLIC_KEY_INPUT.value;
 const WASM_PUBLIC_KEY_INPUT_PTR2 = wasm.PUBLIC_KEY_INPUT2.value;
+const WASM_X_ONLY_PUBLIC_KEY_INPUT_PTR = wasm.X_ONLY_PUBLIC_KEY_INPUT.value;
+const WASM_X_ONLY_PUBLIC_KEY_INPUT2_PTR = wasm.X_ONLY_PUBLIC_KEY_INPUT2.value;
 const WASM_TWEAK_INPUT_PTR = wasm.TWEAK_INPUT.value;
 const WASM_HASH_INPUT_PTR = wasm.HASH_INPUT.value;
 const WASM_EXTRA_DATA_INPUT_PTR = wasm.EXTRA_DATA_INPUT.value;
@@ -21,6 +24,14 @@ const PUBLIC_KEY_INPUT = WASM_BUFFER.subarray(
 const PUBLIC_KEY_INPUT2 = WASM_BUFFER.subarray(
   WASM_PUBLIC_KEY_INPUT_PTR2,
   WASM_PUBLIC_KEY_INPUT_PTR2 + validate.PUBLIC_KEY_UNCOMPRESSED_SIZE
+);
+const X_ONLY_PUBLIC_KEY_INPUT = WASM_BUFFER.subarray(
+  WASM_X_ONLY_PUBLIC_KEY_INPUT_PTR,
+  WASM_X_ONLY_PUBLIC_KEY_INPUT_PTR + validate.X_ONLY_PUBLIC_KEY_SIZE
+);
+const X_ONLY_PUBLIC_KEY_INPUT2 = WASM_BUFFER.subarray(
+  WASM_X_ONLY_PUBLIC_KEY_INPUT2_PTR,
+  WASM_X_ONLY_PUBLIC_KEY_INPUT2_PTR + validate.X_ONLY_PUBLIC_KEY_SIZE
 );
 const TWEAK_INPUT = WASM_BUFFER.subarray(
   WASM_TWEAK_INPUT_PTR,
@@ -62,11 +73,15 @@ export function __initializeContext(): void {
 }
 
 export function isPoint(p: Uint8Array): boolean {
-  return validate.isPoint(p) && _isPoint(p);
+  return validate.isDERPoint(p) && _isPoint(p);
 }
 
 export function isPointCompressed(p: Uint8Array): boolean {
   return validate.isPointCompressed(p) && _isPoint(p);
+}
+
+export function isXOnlyPoint(p: Uint8Array): boolean {
+  return validate.isXOnlyPoint(p) && _isPoint(p);
 }
 
 export function isPrivate(d: Uint8Array): boolean {
@@ -142,6 +157,30 @@ export function pointFromScalar(
   }
 }
 
+export function xOnlyPointFromScalar(d: Uint8Array): Uint8Array {
+  validate.validatePrivate(d);
+  try {
+    PRIVATE_KEY_INPUT.set(d);
+    wasm.xOnlyPointFromScalar();
+    return X_ONLY_PUBLIC_KEY_INPUT.slice(0, validate.X_ONLY_PUBLIC_KEY_SIZE);
+  } finally {
+    PRIVATE_KEY_INPUT.fill(0);
+    X_ONLY_PUBLIC_KEY_INPUT.fill(0);
+  }
+}
+
+export function xOnlyPointFromPoint(p: Uint8Array): Uint8Array {
+  validate.validatePoint(p);
+  try {
+    PUBLIC_KEY_INPUT.set(p);
+    wasm.xOnlyPointFromPoint(p.length);
+    return X_ONLY_PUBLIC_KEY_INPUT.slice(0, validate.X_ONLY_PUBLIC_KEY_SIZE);
+  } finally {
+    PUBLIC_KEY_INPUT.fill(0);
+    X_ONLY_PUBLIC_KEY_INPUT.fill(0);
+  }
+}
+
 export function pointMultiply(
   p: Uint8Array,
   tweak: Uint8Array,
@@ -205,6 +244,66 @@ export function privateSub(
   }
 }
 
+export interface XOnlyPointAddTweakResult {
+  parity: 1 | 0;
+  xOnlyPubkey: Uint8Array;
+}
+export function xOnlyPointAddTweak(
+  p: Uint8Array,
+  tweak: Uint8Array
+): XOnlyPointAddTweakResult {
+  validate.validateXOnlyPoint(p);
+  validate.validateTweak(tweak);
+  try {
+    X_ONLY_PUBLIC_KEY_INPUT.set(p);
+    TWEAK_INPUT.set(tweak);
+    const parity = wasm.xOnlyPointAddTweak();
+    return {
+      parity,
+      xOnlyPubkey: X_ONLY_PUBLIC_KEY_INPUT.slice(
+        0,
+        validate.X_ONLY_PUBLIC_KEY_SIZE
+      ),
+    };
+  } finally {
+    X_ONLY_PUBLIC_KEY_INPUT.fill(0);
+    TWEAK_INPUT.fill(0);
+  }
+}
+
+export type TweakParity = 1 | 0;
+export function xOnlyPointAddTweakCheck(
+  p1: Uint8Array,
+  p2: Uint8Array,
+  tweak: Uint8Array,
+  tweakParity?: TweakParity
+): boolean {
+  validate.validateXOnlyPoint(p1);
+  validate.validateXOnlyPoint(p2);
+  validate.validateTweak(tweak);
+  const hasParity = tweakParity !== undefined;
+  if (hasParity) validate.validateParity(tweakParity);
+  try {
+    X_ONLY_PUBLIC_KEY_INPUT.set(p1);
+    X_ONLY_PUBLIC_KEY_INPUT2.set(p2);
+    TWEAK_INPUT.set(tweak);
+    if (hasParity) {
+      return wasm.xOnlyPointAddTweakCheck(tweakParity) === 1;
+    } else {
+      wasm.xOnlyPointAddTweak();
+      const newKey = X_ONLY_PUBLIC_KEY_INPUT.slice(
+        0,
+        validate.X_ONLY_PUBLIC_KEY_SIZE
+      );
+      return compare(newKey, p2) === 0;
+    }
+  } finally {
+    X_ONLY_PUBLIC_KEY_INPUT.fill(0);
+    X_ONLY_PUBLIC_KEY_INPUT2.fill(0);
+    TWEAK_INPUT.fill(0);
+  }
+}
+
 export function sign(h: Uint8Array, d: Uint8Array, e?: Uint8Array): Uint8Array {
   validate.validateHash(h);
   validate.validatePrivate(d);
@@ -214,6 +313,28 @@ export function sign(h: Uint8Array, d: Uint8Array, e?: Uint8Array): Uint8Array {
     PRIVATE_KEY_INPUT.set(d);
     if (e !== undefined) EXTRA_DATA_INPUT.set(e);
     wasm.sign(e === undefined ? 0 : 1);
+    return SIGNATURE_INPUT.slice(0, validate.SIGNATURE_SIZE);
+  } finally {
+    HASH_INPUT.fill(0);
+    PRIVATE_KEY_INPUT.fill(0);
+    if (e !== undefined) EXTRA_DATA_INPUT.fill(0);
+    SIGNATURE_INPUT.fill(0);
+  }
+}
+
+export function signSchnorr(
+  h: Uint8Array,
+  d: Uint8Array,
+  e?: Uint8Array
+): Uint8Array {
+  validate.validateHash(h);
+  validate.validatePrivate(d);
+  validate.validateExtraData(e);
+  try {
+    HASH_INPUT.set(h);
+    PRIVATE_KEY_INPUT.set(d);
+    if (e !== undefined) EXTRA_DATA_INPUT.set(e);
+    wasm.signSchnorr(e === undefined ? 0 : 1);
     return SIGNATURE_INPUT.slice(0, validate.SIGNATURE_SIZE);
   } finally {
     HASH_INPUT.fill(0);
@@ -240,6 +361,26 @@ export function verify(
   } finally {
     HASH_INPUT.fill(0);
     PUBLIC_KEY_INPUT.fill(0);
+    SIGNATURE_INPUT.fill(0);
+  }
+}
+
+export function verifySchnorr(
+  h: Uint8Array,
+  Q: Uint8Array,
+  signature: Uint8Array
+): boolean {
+  validate.validateHash(h);
+  validate.validateXOnlyPoint(Q);
+  validate.validateSignature(signature);
+  try {
+    HASH_INPUT.set(h);
+    X_ONLY_PUBLIC_KEY_INPUT.set(Q);
+    SIGNATURE_INPUT.set(signature);
+    return wasm.verifySchnorr() === 1 ? true : false;
+  } finally {
+    HASH_INPUT.fill(0);
+    X_ONLY_PUBLIC_KEY_INPUT.fill(0);
     SIGNATURE_INPUT.fill(0);
   }
 }

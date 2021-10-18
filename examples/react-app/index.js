@@ -20,6 +20,7 @@ import { generate } from "../random-in-node/index.js";
 const EMPTY_BUFFER = Buffer.allocUnsafe(0);
 function toUint8Array(value) {
   if (typeof value !== "string") return value;
+  if (value.match(/^\d{1,20}$/)) return parseInt(value);
   const data = Buffer.from(value, "hex");
   return data.toString("hex") === value ? data : EMPTY_BUFFER;
 }
@@ -45,6 +46,9 @@ const validate = {
       _secp256k1.isPrivate(signature.slice(0, 32)) &&
       _secp256k1.isPrivate(signature.slice(32, 64))
     );
+  },
+  isParity(parity) {
+    return parity === 1 || parity === 0;
   },
 };
 const secp256k1 = {
@@ -155,7 +159,11 @@ const App = withStyles(useStyles)(
     onGenerate() {
       const data = generate();
       for (const key of Object.keys(data)) {
-        data[key] = Buffer.from(data[key]).toString("hex");
+        if (data[key] instanceof Uint8Array) {
+          data[key] = Buffer.from(data[key]).toString("hex");
+        } else if (typeof data[key] === "number") {
+          data[key] = data[key].toString(10);
+        }
       }
       this.setState({ data });
     }
@@ -220,6 +228,34 @@ const App = withStyles(useStyles)(
                 />
               </Box>
               <Box className={this.props.classes.methodBox}>
+                <ApiXOnlyPointFromScalar
+                  classes={this.props.classes}
+                  seckey={this.state.data?.seckey}
+                />
+              </Box>
+              <Box className={this.props.classes.methodBox}>
+                <ApiXOnlyPointFromPoint
+                  classes={this.props.classes}
+                  pubkey={this.state.data?.pubkey}
+                />
+              </Box>
+              <Box className={this.props.classes.methodBox}>
+                <ApiXOnlyPointAddTweak
+                  classes={this.props.classes}
+                  x_only_pubkey={this.state.data?.x_only_pubkey}
+                  x_only_pubkey2={this.state.data?.x_only_pubkey2}
+                />
+              </Box>
+              <Box className={this.props.classes.methodBox}>
+                <ApiXOnlyPointAddTweakCheck
+                  classes={this.props.classes}
+                  x_only_pubkey={this.state.data?.x_only_pubkey}
+                  x_only_add_tweak={this.state.data?.x_only_add_tweak}
+                  x_only_pubkey2={this.state.data?.x_only_pubkey2}
+                  x_only_add_parity={this.state.data?.x_only_add_parity}
+                />
+              </Box>
+              <Box className={this.props.classes.methodBox}>
                 <ApiPointMultiply
                   classes={this.props.classes}
                   pubkey={this.state.data?.pubkey}
@@ -254,6 +290,22 @@ const App = withStyles(useStyles)(
                   hash={this.state.data?.hash}
                   pubkey={this.state.data?.pubkey}
                   signature={this.state.data?.signature}
+                />
+              </Box>
+              <Box className={this.props.classes.methodBox}>
+                <ApiSignSchnorr
+                  classes={this.props.classes}
+                  hash={this.state.data?.hash}
+                  seckey={this.state.data?.seckey}
+                  entropy={this.state.data?.entropy}
+                />
+              </Box>
+              <Box className={this.props.classes.methodBox}>
+                <ApiVerifySchnorr
+                  classes={this.props.classes}
+                  hash={this.state.data?.hash}
+                  x_only_pubkey={this.state.data?.x_only_pubkey}
+                  schnorr_signature={this.state.data?.schnorr_signature}
                 />
               </Box>
             </Paper>
@@ -665,7 +717,7 @@ const ApiPointFromScalar = withStyles(useStyles)(
             Uint8Array | null
           </Typography>
           <TextField
-            label="Public Key as HEX string"
+            label="Private Key as HEX string"
             onChange={createInputChange(this, "seckey")}
             value={this.state.seckey}
             fullWidth
@@ -694,6 +746,353 @@ const ApiPointFromScalar = withStyles(useStyles)(
             variant="outlined"
             InputProps={getInputProps(this.state.result, this.props.classes)}
           />
+        </>
+      );
+    }
+  }
+);
+
+const ApiXOnlyPointFromScalar = withStyles(useStyles)(
+  class extends Component {
+    constructor(props) {
+      super(props);
+      this.state = {
+        seckey: "",
+        result: undefined,
+      };
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+      if (prevProps.seckey !== this.props.seckey) {
+        this.setState({
+          seckey: this.props.seckey,
+        });
+      }
+
+      if (prevState.seckey !== this.state.seckey) {
+        const { seckey } = this.state;
+        const result =
+          seckey === "" ? undefined : secp256k1.xOnlyPointFromScalar(seckey);
+        this.setState({ result });
+      }
+    }
+
+    render() {
+      return (
+        <>
+          <Typography variant="h6">
+            xOnlyPointFromScalar(d: Uint8Array) =&gt; Uint8Array
+          </Typography>
+          <TextField
+            label="Private Key as HEX string"
+            onChange={createInputChange(this, "seckey")}
+            value={this.state.seckey}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(this.state.result, this.props.classes)}
+          />
+          <TextField
+            label="Output, Public Key as HEX string"
+            value={
+              this.state.result === undefined
+                ? ""
+                : this.state.result || "Invalid result"
+            }
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(this.state.result, this.props.classes)}
+          />
+        </>
+      );
+    }
+  }
+);
+
+const ApiXOnlyPointFromPoint = withStyles(useStyles)(
+  class extends Component {
+    constructor(props) {
+      super(props);
+      this.state = {
+        pubkey: "",
+        result: undefined,
+      };
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+      if (prevProps.pubkey !== this.props.pubkey) {
+        this.setState({
+          pubkey: this.props.pubkey,
+        });
+      }
+
+      if (prevState.pubkey !== this.state.pubkey) {
+        const { pubkey } = this.state;
+        const result =
+          pubkey === "" ? undefined : secp256k1.xOnlyPointFromPoint(pubkey);
+        this.setState({ result });
+      }
+    }
+
+    render() {
+      return (
+        <>
+          <Typography variant="h6">
+            xOnlyPointFromPoint(p: Uint8Array) =&gt; Uint8Array
+          </Typography>
+          <TextField
+            label="Public Key as HEX string"
+            onChange={createInputChange(this, "pubkey")}
+            value={this.state.pubkey}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(this.state.result, this.props.classes)}
+          />
+          <TextField
+            label="Output, Public Key as HEX string"
+            value={
+              this.state.result === undefined
+                ? ""
+                : this.state.result || "Invalid result"
+            }
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(this.state.result, this.props.classes)}
+          />
+        </>
+      );
+    }
+  }
+);
+
+const ApiXOnlyPointAddTweak = withStyles(useStyles)(
+  class extends Component {
+    constructor(props) {
+      super(props);
+      this.state = {
+        x_only_pubkey: "",
+        x_only_pubkey2: "",
+        result: undefined,
+      };
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+      if (
+        prevProps.x_only_pubkey !== this.props.x_only_pubkey ||
+        prevProps.x_only_pubkey2 !== this.props.x_only_pubkey2
+      ) {
+        this.setState({
+          x_only_pubkey: this.props.x_only_pubkey,
+          x_only_pubkey2: this.props.x_only_pubkey2,
+        });
+      }
+
+      if (
+        prevState.x_only_pubkey !== this.state.x_only_pubkey ||
+        prevState.x_only_pubkey2 !== this.state.x_only_pubkey2
+      ) {
+        const { x_only_pubkey, x_only_pubkey2 } = this.state;
+        const output =
+          x_only_pubkey === "" || x_only_pubkey2 === ""
+            ? undefined
+            : secp256k1.xOnlyPointAddTweak(x_only_pubkey, x_only_pubkey2);
+        this.setState({
+          result: Buffer.from(output.xOnlyPubkey).toString("hex"),
+        });
+      }
+    }
+
+    render() {
+      return (
+        <>
+          <Typography variant="h6">
+            xOnlyPointAddTweak(p: Uint8Array, p2: Uint8Array) =&gt; Uint8Array
+          </Typography>
+          <TextField
+            label="Public Key as HEX string"
+            onChange={createInputChange(this, "x_only_pubkey")}
+            value={this.state.x_only_pubkey}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(this.state.result, this.props.classes)}
+          />
+          <TextField
+            label="Tweak Key as HEX string"
+            onChange={createInputChange(this, "x_only_pubkey2")}
+            value={this.state.x_only_pubkey2}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(this.state.result, this.props.classes)}
+          />
+          <TextField
+            label="Output, Tweaked Key as HEX string"
+            value={
+              this.state.result === undefined
+                ? ""
+                : this.state.result || "Invalid result"
+            }
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(this.state.result, this.props.classes)}
+          />
+        </>
+      );
+    }
+  }
+);
+
+const ApiXOnlyPointAddTweakCheck = withStyles(useStyles)(
+  class extends Component {
+    constructor(props) {
+      super(props);
+      this.state = {
+        x_only_pubkey: "",
+        x_only_pubkey_valid: undefined,
+        x_only_add_tweak: "",
+        x_only_add_tweak_valid: undefined,
+        x_only_pubkey2: "",
+        x_only_pubkey2_valid: undefined,
+        x_only_add_parity: "",
+        x_only_add_parity_valid: undefined,
+        result: undefined,
+      };
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+      if (
+        prevProps.x_only_pubkey !== this.props.x_only_pubkey ||
+        prevProps.x_only_add_tweak !== this.props.x_only_add_tweak ||
+        prevProps.x_only_pubkey2 !== this.props.x_only_pubkey2 ||
+        prevProps.x_only_add_parity !== this.props.x_only_add_parity
+      ) {
+        this.setState({
+          x_only_pubkey: this.props.x_only_pubkey,
+          x_only_add_tweak: this.props.x_only_add_tweak,
+          x_only_pubkey2: this.props.x_only_pubkey2,
+          x_only_add_parity: this.props.x_only_add_parity,
+        });
+      }
+
+      if (
+        prevState.x_only_pubkey !== this.state.x_only_pubkey ||
+        prevState.x_only_add_tweak !== this.state.x_only_add_tweak ||
+        prevState.x_only_pubkey2 !== this.state.x_only_pubkey2 ||
+        prevState.x_only_add_parity !== this.state.x_only_add_parity
+      ) {
+        const {
+          x_only_pubkey,
+          x_only_add_tweak,
+          x_only_pubkey2,
+          x_only_add_parity,
+        } = this.state;
+        const x_only_pubkey_valid =
+          x_only_pubkey === ""
+            ? undefined
+            : secp256k1.isXOnlyPoint(x_only_pubkey);
+        const x_only_add_tweak_valid =
+          x_only_add_tweak === ""
+            ? undefined
+            : secp256k1.isXOnlyPoint(x_only_add_tweak);
+        const x_only_pubkey2_valid =
+          x_only_pubkey2 === ""
+            ? undefined
+            : secp256k1.isXOnlyPoint(x_only_pubkey2);
+        const x_only_add_parity_valid =
+          x_only_add_parity === ""
+            ? undefined
+            : validate.isParity(parseInt(x_only_add_parity));
+        const result =
+          x_only_pubkey_valid === "" &&
+          x_only_add_tweak_valid === "" &&
+          x_only_pubkey2_valid === "" &&
+          x_only_add_parity_valid === ""
+            ? undefined
+            : secp256k1.xOnlyPointAddTweakCheck(
+                x_only_pubkey,
+                x_only_add_tweak,
+                x_only_pubkey2,
+                x_only_add_parity
+              );
+        this.setState({
+          x_only_pubkey_valid,
+          x_only_add_tweak_valid,
+          x_only_pubkey2_valid,
+          x_only_add_parity_valid,
+          result,
+        });
+      }
+    }
+
+    render() {
+      return (
+        <>
+          <Typography variant="h6">
+            xOnlyPointAddTweakCheck(p1: Uint8Array, p2: Uint8Array, tweak:
+            Uint8Array, parity: 1 | 0) =&gt; boolean
+          </Typography>
+          <TextField
+            label="xOnlyPublicKey as HEX string"
+            onChange={createInputChange(this, "x_only_pubkey")}
+            value={this.state.x_only_pubkey}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.x_only_pubkey_valid,
+              this.props.classes
+            )}
+          />
+          <TextField
+            label="Tweaked Key as HEX string"
+            onChange={createInputChange(this, "x_only_add_tweak")}
+            value={this.state.x_only_add_tweak}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.x_only_add_tweak_valid,
+              this.props.classes
+            )}
+          />
+          <TextField
+            label="Tweak Key as HEX string"
+            onChange={createInputChange(this, "x_only_pubkey2")}
+            value={this.state.x_only_pubkey2}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.x_only_pubkey2_valid,
+              this.props.classes
+            )}
+          />
+          <TextField
+            label="Parity bit as 1 or 0"
+            onChange={createInputChange(this, "x_only_add_parity")}
+            value={this.state.x_only_add_parity}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.x_only_add_parity_valid,
+              this.props.classes
+            )}
+          />
+          {this.state.result !== undefined && (
+            <Box align="center">
+              {this.state.result === true ? (
+                <CheckIcon />
+              ) : (
+                <CloseIcon color="error" />
+              )}
+            </Box>
+          )}
         </>
       );
     }
@@ -1182,6 +1581,224 @@ const ApiVerify = withStyles(useStyles)(
               />
             }
             label="Strict"
+          />
+          {this.state.result !== undefined && (
+            <Box align="center">
+              {this.state.result ? <CheckIcon /> : <CloseIcon color="error" />}
+            </Box>
+          )}
+        </>
+      );
+    }
+  }
+);
+
+const ApiSignSchnorr = withStyles(useStyles)(
+  class extends Component {
+    constructor(props) {
+      super(props);
+      this.state = {
+        hash: "",
+        hash_valid: undefined,
+        seckey: "",
+        seckey_valid: undefined,
+        entropy: "",
+        entropy_valid: undefined,
+        result: undefined,
+      };
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+      if (
+        prevProps.hash !== this.props.hash ||
+        prevProps.seckey !== this.props.seckey ||
+        prevProps.entropy !== this.props.entropy
+      ) {
+        this.setState({
+          hash: this.props.hash,
+          seckey: this.props.seckey,
+          entropy: this.props.entropy,
+        });
+      }
+
+      if (
+        prevState.hash !== this.state.hash ||
+        prevState.seckey !== this.state.seckey ||
+        prevState.entropy !== this.state.entropy
+      ) {
+        const { hash, seckey, entropy } = this.state;
+        const hash_valid = hash === "" ? undefined : validate.isHash(hash);
+        const seckey_valid =
+          seckey === "" ? undefined : secp256k1.isPrivate(seckey);
+        const entropy_valid =
+          entropy === "" ? undefined : validate.isExtraData(entropy);
+        const result =
+          hash === "" && seckey === "" && entropy === ""
+            ? undefined
+            : secp256k1.signSchnorr(hash, seckey, entropy);
+        this.setState({ hash_valid, seckey_valid, entropy_valid, result });
+      }
+    }
+
+    render() {
+      return (
+        <>
+          <Typography variant="h6">
+            signSchnorr(h: Uint8Array, d: Uint8Array, e: Uint8Array) =&gt;
+            Uint8Array
+          </Typography>
+          <TextField
+            label="Hash as HEX string"
+            onChange={createInputChange(this, "hash")}
+            value={this.state.hash}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.hash_valid,
+              this.props.classes
+            )}
+          />
+          <TextField
+            label="Private Key as HEX string"
+            onChange={createInputChange(this, "seckey")}
+            value={this.state.seckey}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.seckey_valid,
+              this.props.classes
+            )}
+          />
+          <TextField
+            label="Extra Data as HEX string"
+            onChange={createInputChange(this, "entropy")}
+            value={this.state.entropy}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.entropy_valid,
+              this.props.classes
+            )}
+          />
+          <TextField
+            label="Output, Signature as HEX string"
+            value={
+              this.state.result === undefined
+                ? ""
+                : this.state.result || "Invalid result"
+            }
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(this.state.result, this.props.classes)}
+          />
+        </>
+      );
+    }
+  }
+);
+
+const ApiVerifySchnorr = withStyles(useStyles)(
+  class extends Component {
+    constructor(props) {
+      super(props);
+      this.state = {
+        hash: "",
+        hash_valid: undefined,
+        x_only_pubkey: "",
+        x_only_pubkey_valid: undefined,
+        schnorr_signature: "",
+        schnorr_signature_valid: undefined,
+        result: undefined,
+      };
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+      if (
+        prevProps.hash !== this.props.hash ||
+        prevProps.x_only_pubkey !== this.props.x_only_pubkey ||
+        prevProps.schnorr_signature !== this.props.schnorr_signature
+      ) {
+        this.setState({
+          hash: this.props.hash,
+          x_only_pubkey: this.props.x_only_pubkey,
+          schnorr_signature: this.props.schnorr_signature,
+        });
+      }
+
+      if (
+        prevState.hash !== this.state.hash ||
+        prevState.x_only_pubkey !== this.state.x_only_pubkey ||
+        prevState.schnorr_signature !== this.state.schnorr_signature
+      ) {
+        const { hash, x_only_pubkey, schnorr_signature } = this.state;
+        const hash_valid = hash === "" ? undefined : validate.isHash(hash);
+        const x_only_pubkey_valid =
+          x_only_pubkey === ""
+            ? undefined
+            : secp256k1.isXOnlyPoint(x_only_pubkey);
+        const schnorr_signature_valid =
+          schnorr_signature === ""
+            ? undefined
+            : validate.isSignature(schnorr_signature);
+        const result =
+          hash === "" && x_only_pubkey === "" && schnorr_signature === ""
+            ? undefined
+            : secp256k1.verifySchnorr(hash, x_only_pubkey, schnorr_signature);
+        this.setState({
+          hash_valid,
+          x_only_pubkey_valid,
+          schnorr_signature_valid,
+          result,
+        });
+      }
+    }
+
+    render() {
+      return (
+        <>
+          <Typography variant="h6">
+            verifySchnorr(h: Uint8Array, Q: Uint8Array, signature: Uint8Array)
+            =&gt; boolean
+          </Typography>
+          <TextField
+            label="Hash as HEX string"
+            onChange={createInputChange(this, "hash")}
+            value={this.state.hash}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.hash_valid,
+              this.props.classes
+            )}
+          />
+          <TextField
+            label="Public Key as HEX string"
+            onChange={createInputChange(this, "x_only_pubkey")}
+            value={this.state.x_only_pubkey}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.x_only_pubkey_valid,
+              this.props.classes
+            )}
+          />
+          <TextField
+            label="Signature as HEX string"
+            onChange={createInputChange(this, "schnorr_signature")}
+            value={this.state.schnorr_signature}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.schnorr_signature_valid,
+              this.props.classes
+            )}
           />
           {this.state.result !== undefined && (
             <Box align="center">

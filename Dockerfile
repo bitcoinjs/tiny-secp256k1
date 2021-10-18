@@ -32,9 +32,9 @@ RUN apt update && \
   # Install Node.js:14
   curl -fsSL https://deb.nodesource.com/setup_14.x | bash - && \
   apt install nodejs -y && \
-  # Install Rust nightly
+  # Install Rust stable
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y \
-    --default-toolchain nightly \
+    --default-toolchain stable \
     --profile minimal \
     --component clippy,rustfmt,rust-src \
     --target wasm32-unknown-unknown && \
