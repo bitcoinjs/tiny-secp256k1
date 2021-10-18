@@ -51,9 +51,7 @@ Alternative way is to use [Docker](https://www.docker.com/):
 ```
 % docker build -t tiny-secp256k1 .
 % docker run -it --rm -v `pwd`:/tiny-secp256k1 -w /tiny-secp256k1 tiny-secp256k1
-# npm install --unsafe-perm
-# make test
-# make clean
+# make build
 ```
 
 ## Examples
