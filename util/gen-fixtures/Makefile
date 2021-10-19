@@ -2,7 +2,13 @@ all: json-privates json-points json-ecdsa
 
 .PHONY: secp256k1
 secp256k1:
-	cd secp256k1 && ./autogen.sh && ./configure && make
+	cd secp256k1 && \
+	./autogen.sh && \
+	./configure \
+	--enable-experimental \
+	--enable-module-extrakeys \
+	--enable-module-schnorrsig \
+	&& make
 
 privates: secp256k1
 privates: privates.cpp shared.hpp
@@ -17,7 +23,7 @@ ecdsa: ecdsa.cpp shared.hpp
 	g++ $< -Lsecp256k1/.libs/ -lgmp -lcrypto -lssl -l:libsecp256k1.a -o $@
 
 clean:
-	rm privates points ecdsa && cd secp256k1 && make clean
+	rm -f privates points ecdsa && cd secp256k1 && make clean
 
 json-points: points
 	./points | jq . > ../../tests/fixtures/points.json
