@@ -251,20 +251,22 @@ export interface XOnlyPointAddTweakResult {
 export function xOnlyPointAddTweak(
   p: Uint8Array,
   tweak: Uint8Array
-): XOnlyPointAddTweakResult {
+): XOnlyPointAddTweakResult | null {
   validate.validateXOnlyPoint(p);
   validate.validateTweak(tweak);
   try {
     X_ONLY_PUBLIC_KEY_INPUT.set(p);
     TWEAK_INPUT.set(tweak);
     const parity = wasm.xOnlyPointAddTweak();
-    return {
-      parity,
-      xOnlyPubkey: X_ONLY_PUBLIC_KEY_INPUT.slice(
-        0,
-        validate.X_ONLY_PUBLIC_KEY_SIZE
-      ),
-    };
+    return parity !== -1
+      ? {
+          parity,
+          xOnlyPubkey: X_ONLY_PUBLIC_KEY_INPUT.slice(
+            0,
+            validate.X_ONLY_PUBLIC_KEY_SIZE
+          ),
+        }
+      : null;
   } finally {
     X_ONLY_PUBLIC_KEY_INPUT.fill(0);
     TWEAK_INPUT.fill(0);

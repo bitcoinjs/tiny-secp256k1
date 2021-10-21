@@ -18,7 +18,7 @@ export function parseTweakAddVector(f) {
     pubkey: fromHex(f.pubkey),
     tweak: fromHex(f.tweak),
     parity: f.parity,
-    result: fromHex(f.result),
+    result: f.result ? fromHex(f.result) : f.result,
   };
 }
 
@@ -102,10 +102,16 @@ export default function (secp256k1) {
   test("xonly pubkey tweak add schnorr", (t) => {
     for (const fHex of fschnorr.tweakaddvectors) {
       const f = parseTweakAddVector(fHex);
-      const { parity, xOnlyPubkey: result } = secp256k1.xOnlyPointAddTweak(
-        f.pubkey,
-        f.tweak
-      );
+      const res = secp256k1.xOnlyPointAddTweak(f.pubkey, f.tweak);
+      if (f.result === null) {
+        t.same(
+          res,
+          f.result,
+          `xOnlyPointAddTweak returns null when G pubkey and n - 1 tweak used`
+        );
+        continue;
+      }
+      const { parity, xOnlyPubkey: result } = res;
       t.same(
         result,
         f.result,
@@ -116,7 +122,9 @@ export default function (secp256k1) {
         f.parity,
         `xOnlyPointAddTweak(${fHex.pubkey},${fHex.tweak}) == ${fHex.parity} parity`
       );
-      t.ok(secp256k1.xOnlyPointAddTweakCheck(f.pubkey, f.result, f.tweak, f.parity));
+      t.ok(
+        secp256k1.xOnlyPointAddTweakCheck(f.pubkey, f.result, f.tweak, f.parity)
+      );
       t.ok(secp256k1.xOnlyPointAddTweakCheck(f.pubkey, f.result, f.tweak));
       const dummyKey = randPubKey();
       t.notOk(

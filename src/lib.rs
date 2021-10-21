@@ -54,7 +54,7 @@ const SIGNATURE_SIZE: usize = 64;
 
 const ERROR_BAD_PRIVATE: usize = 0;
 const ERROR_BAD_POINT: usize = 1;
-const ERROR_BAD_TWEAK: usize = 2;
+// const ERROR_BAD_TWEAK: usize = 2;
 // const ERROR_BAD_HASH: usize = 3;
 const ERROR_BAD_SIGNATURE: usize = 4;
 // const ERROR_BAD_EXTRA_DATA: usize = 5;
@@ -276,7 +276,8 @@ pub extern "C" fn x_only_point_add_tweak() -> i32 {
             TWEAK_INPUT.as_ptr(),
         ) != 1
         {
-            throw_error(ERROR_BAD_TWEAK);
+            // infinity point
+            return -1;
         }
         let mut parity: i32 = 0;
         x_only_pubkey_from_pubkey_struct(&mut xonly_pk, &mut parity, &pubkey);

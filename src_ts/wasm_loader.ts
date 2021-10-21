@@ -43,7 +43,7 @@ interface Secp256k1WASM {
   pointFromScalar: (outputlen: number) => number;
   xOnlyPointFromScalar: () => number;
   xOnlyPointFromPoint: (inputLen: number) => number;
-  xOnlyPointAddTweak: () => 1 | 0;
+  xOnlyPointAddTweak: () => 1 | 0 | -1;
   xOnlyPointAddTweakCheck: (parity: number) => number;
   pointMultiply: (p: number, outputlen: number) => number;
   privateAdd: () => number;
