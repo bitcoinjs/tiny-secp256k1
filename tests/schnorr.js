@@ -13,6 +13,15 @@ export function parseBip340Vector(f) {
   };
 }
 
+export function parseTweakAddVector(f) {
+  return {
+    pubkey: fromHex(f.pubkey),
+    tweak: fromHex(f.tweak),
+    parity: f.parity,
+    result: fromHex(f.result),
+  };
+}
+
 export default function (secp256k1) {
   const rand = () => Math.floor(Math.random() * 254) + 1; // [1..254];
   const randPubKey = () =>
@@ -91,20 +100,29 @@ export default function (secp256k1) {
   });
 
   test("xonly pubkey tweak add schnorr", (t) => {
-    for (let i = 0; i < 50; i++) {
-      const pubkey = randPubKey();
-      const tweak = randPubKey();
+    for (const fHex of fschnorr.tweakaddvectors) {
+      const f = parseTweakAddVector(fHex);
       const { parity, xOnlyPubkey: result } = secp256k1.xOnlyPointAddTweak(
-        pubkey,
-        tweak
+        f.pubkey,
+        f.tweak
       );
-      t.ok(secp256k1.xOnlyPointAddTweakCheck(pubkey, result, tweak, parity));
-      t.ok(secp256k1.xOnlyPointAddTweakCheck(pubkey, result, tweak));
+      t.same(
+        result,
+        f.result,
+        `xOnlyPointAddTweak(${fHex.pubkey},${fHex.tweak}) == ${fHex.result} result`
+      );
+      t.same(
+        parity,
+        f.parity,
+        `xOnlyPointAddTweak(${fHex.pubkey},${fHex.tweak}) == ${fHex.parity} parity`
+      );
+      t.ok(secp256k1.xOnlyPointAddTweakCheck(f.pubkey, f.result, f.tweak, f.parity));
+      t.ok(secp256k1.xOnlyPointAddTweakCheck(f.pubkey, f.result, f.tweak));
       const dummyKey = randPubKey();
       t.notOk(
-        secp256k1.xOnlyPointAddTweakCheck(pubkey, dummyKey, tweak, parity)
+        secp256k1.xOnlyPointAddTweakCheck(f.pubkey, dummyKey, f.tweak, f.parity)
       );
-      t.notOk(secp256k1.xOnlyPointAddTweakCheck(pubkey, dummyKey, tweak));
+      t.notOk(secp256k1.xOnlyPointAddTweakCheck(f.pubkey, dummyKey, f.tweak));
     }
 
     t.end();

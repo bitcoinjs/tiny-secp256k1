@@ -113,5 +113,307 @@
       "exception": "Expected Point",
       "comment": "public key is not a valid X coordinate because it exceeds the field size"
     }
+  ],
+  "tweakaddvectors": [
+    {
+      "pubkey": "1617d38ed8d8657da4d4761e8057bc396ea9e4b9d29776d4be096016dbd2509b",
+      "tweak": "a8397a935f0dfceba6ba9618f6451ef4d80637abf4e6af2669fbc9de6a8fd2ac",
+      "parity": 1,
+      "result": "e478f99dab91052ab39a33ea35fd5e6e4933f4d28023cd597c9a1f6760346adf"
+    },
+    {
+      "pubkey": "2f1b310f4c065331bc0d79ba4661bb9822d67d7c4a1b0a1892e1fd0cd23aa68d",
+      "tweak": "40ab636041bb695843ac7f220344565bed3b5dca919e256b7e31e19d69b36fad",
+      "parity": 1,
+      "result": "5786150f0ac36a2aaeb8d11aaeb7aa2d03ad63c528cc307a7cd5648c84041f34"
+    },
+    {
+      "pubkey": "e7e9acacbdb43fc9fb71a8db1536c0f866caa78def49f666fa121a6f7954bb01",
+      "tweak": "1ad613216778a70490c8a681a4901d4ca880d76916deb69979b5ac52d2760e09",
+      "parity": 1,
+      "result": "ae10fa880c85848cc1faf056f56a64b7d45c68838cfb308d03ca2be9b485c130"
+    },
+    {
+      "pubkey": "2c0b7cf95324a07d05398b240174dc0c2be444d96b159aa6c7f7b1e668680991",
+      "tweak": "823c3cd2142744b075a87eade7e1b8678ba308d566226a0056ca2b7a76f86b47",
+      "parity": 0,
+      "result": "9534f8dc8c6deda2dc007655981c78b49c5d96c778fbf363462a11ec9dfd948c"
+    },
+    {
+      "pubkey": "8f19ee7677713806c662078a9f2b2c7b930376d22f2d617bce50b5e444839a7c",
+      "tweak": "7df1f4b66058f8be34b6b7d17be9bcf35ba5c98edf8d4e763b95964bad655fe4",
+      "parity": 1,
+      "result": "74619a5990750928d0728817b02bb0d398062dad0e568f46ea5348d35bef914f"
+    },
+    {
+      "pubkey": "2bda68b3aa0239d382f185ca2d8c31ce604cc26220cef3eb65223f47a0088d87",
+      "tweak": "e5a018b3a2e155316109d9cdc5eab739759c0e07e0c00bf9fccb8237fe4d7f02",
+      "parity": 0,
+      "result": "84479dc6bf70762721b10b89c8798e00d525507edc3fabbfc89ad915b6509379"
+    },
+    {
+      "pubkey": "9611ba340bce00a594f1ffb1294974af80e1301e49597378732fd77bbdedf454",
+      "tweak": "bbb8ec1f063522953a4a9f90ff4e849560e0f0597458529ea13b8868f255c7c7",
+      "parity": 0,
+      "result": "30bebfdad18b87b646f60e51d3c45c6658fbb4364c94b1b33d925a4515b66757"
+    },
+    {
+      "pubkey": "d9f5792078a845303c1f1ea88aec79ed0fd9f0c49e9e7bff2765877e79b4dd52",
+      "tweak": "531fe6068134503d2723133227c867ac8fa6c83c537e9a44c3c5bdbdcb1fe337",
+      "parity": 0,
+      "result": "fe5dd39f0491af71711454eee5b6a9c99779c422dd97f5e7f75d7ce7be7b32f0"
+    },
+    {
+      "pubkey": "40ab636041bb695843ac7f220344565bed3b5dca919e256b7e31e19d69b36fad",
+      "tweak": "048968943184ce8a0239ab2141641e8eaead35a6dc8e6b55ad33ac1eca975a47",
+      "parity": 1,
+      "result": "6c8245a62201887c5e3aeb022fff06e6c110f3e58ad6d37cc20e877082b72c58"
+    },
+    {
+      "pubkey": "6aa3da9b5c1d61956076cb3014ffdaa0996bacdae29ba4b89e39b4088f86ec78",
+      "tweak": "ff8adab52623bcb2717fc71d7edc6f55e98396e6c234dff01f307a12b2af1c99",
+      "parity": 1,
+      "result": "d6080b5df61525fe8be31a823f3943e5fc9354d5a091b2dea195985c7c395787"
+    },
+    {
+      "pubkey": "24653eac434488002cc06bbfb7f10fe18991e35f9fe4302dbea6d2353dc0ab1c",
+      "tweak": "9e5f7dbe6d62ade5aab476b40559852ea1b5fc7bb99a61a42eab550f69ffafb4",
+      "parity": 0,
+      "result": "58289ee230fcf6a78cb9878cae5102cc9104490abab9d03f3eccc2f0cd07de5f"
+    },
+    {
+      "pubkey": "e5a018b3a2e155316109d9cdc5eab739759c0e07e0c00bf9fccb8237fe4d7f02",
+      "tweak": "bde750d93efe821813df9c15ee676f2e9c63386336c164f5a15cf240ac653c06",
+      "parity": 0,
+      "result": "9a1ae919c5c78da635d94a92b3053e46b2261b81ec70db82a382f5bff474bec4"
+    },
+    {
+      "pubkey": "bc14bc97e2d818ee360a9ba7782bd6a6dfc2c1e335fffc584a095fdac5fea641",
+      "tweak": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+      "parity": 1,
+      "result": "19a7416f4f95f36c5e48dc7630ffea8b292e1721cecfa9cc5f794c83973e41d6"
+    },
+    {
+      "pubkey": "35e9d7c48e3a5254d5881b60abf004cf6eedc6ab842393caa2fdd20d6d0ad170",
+      "tweak": "18bb586dc109adf49ffb42e0ac293d2a2965e49a0a4900c2be776b426b7cbfde",
+      "parity": 0,
+      "result": "fa7cca72580bb686fbbae09ded801c7d109fa378f52e8a5f43a1922e442e44c1"
+    },
+    {
+      "pubkey": "67bff656551f25009ac8ed88664736c08074a15dbd2268292f5de7ca7e718338",
+      "tweak": "b96359049e97f49d871e856f37e54d0978bae2cc936b4484d96df984cd20daa1",
+      "parity": 0,
+      "result": "dd081d737da17fb4f6686f8497cac56b16ea06e1dc05859633f735fb304e7e5a"
+    },
+    {
+      "pubkey": "5b0da52533a1620fe947cb658c35e1772f39ef1253753493b7dc4b8d8f31f40e",
+      "tweak": "3d481f46056f2da27870a5d00c0c7bf484036780a83bbcc2e2da2f03bc33bff0",
+      "parity": 1,
+      "result": "164e13b54edc89673f94563120d87db4a47b12e49c40c195ac51ea7bc50f22e1"
+    },
+    {
+      "pubkey": "0612c5e8c98a9677a2ddd13770e26f5f1e771a088c88ce519a1e1b65872423f9",
+      "tweak": "dbcfa1c73674cba4aa1b6992ebdc6a77008d38f6c6ec068c3c862b9ff6d287f2",
+      "parity": 0,
+      "result": "82fc6954352b7189a156e4678d0c315c122431fa9551961b8e3c811b55a42c8b"
+    },
+    {
+      "pubkey": "9ac20335eb38768d2052be1dbbc3c8f6178407458e51e6b4ad22f1d91758895b",
+      "tweak": "6aa3da9b5c1d61956076cb3014ffdaa0996bacdae29ba4b89e39b4088f86ec78",
+      "parity": 1,
+      "result": "cf9065a7e2c9f909becc1c95f9884ed9fbe19c4a8954ed17880f02d94ae96a63"
+    },
+    {
+      "pubkey": "9fbe8ad98eb962605c09d4541bf3ea4f95323236e3d729824e946376160f7031",
+      "tweak": "1492bc6a132ac91cb8b9f57d2b809dd2bdb8e1a294d3edbb6c6f7fc03bf11cac",
+      "parity": 1,
+      "result": "41984ea55b4f94b5c4a5f6144d1d49f2ecd1485936204458e0e49542e52bc841"
+    },
+    {
+      "pubkey": "989c0b76cb563971fdc9bef31ec06c3560f3249d6ee9e5d83c57625596e05f6f",
+      "tweak": "2ed557f5ad336b31a49857e4e9664954ac33385aa20a93e2d64bfe7f08f51277",
+      "parity": 1,
+      "result": "92926f1546f34ef0e79d32493696df7079f3d7f32035c958302256445593fab7"
+    },
+    {
+      "pubkey": "e11f40af6b41f494bfbc27c47a178ce572e8b8ca687cc67e1298514861ac5e48",
+      "tweak": "71102fc86b5c576c72f411e083cc03eb83d1b55065406ba2a483208dbb5074ab",
+      "parity": 0,
+      "result": "5a1fde699f6064decc1de9e16c56337b22eaae3e9331ffbf5a359067f59fd5cb"
+    },
+    {
+      "pubkey": "bbb8ec1f063522953a4a9f90ff4e849560e0f0597458529ea13b8868f255c7c7",
+      "tweak": "005c66633351cf963cd91a549b2b2d57fdbf7014d25fc989c717d7e9b3fec05f",
+      "parity": 1,
+      "result": "74a563c522ccc443579cd7c52144c32031d700565c97b990a0a6378f599e055a"
+    },
+    {
+      "pubkey": "23da3838ba0217e0f3ed6bc2df5dc81b200311692b562ae00f6334187bc2611f",
+      "tweak": "2bbe83ba1af230dc06a960207aacbe4cb50172058e7d51d1fcd589a18a1ad1b0",
+      "parity": 1,
+      "result": "00d1b37149d2bc528ebf731fa2251abb5a7e352ca69a8ba8d3a54d993615b38b"
+    },
+    {
+      "pubkey": "cb144659ef300200912762786a173663150592d78f4408390c47e9956d9a6c31",
+      "tweak": "1313016e9670deb49779c1b0c646d6a25a545712658f9781995f623bcd0d0b3d",
+      "parity": 0,
+      "result": "90c2d909bc986a5de12ab3f82dc11a77467abb978e2cf64f212b8d964c383801"
+    },
+    {
+      "pubkey": "1b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f",
+      "tweak": "9c1f585aa80762f9f4458f6806978b7befb46c7b68af82d399630793ff1a2b50",
+      "parity": 1,
+      "result": "11eee2319405ac0ccdaba2a5fb9b48451ddff8a4382568138c64078a9cd14bd4"
+    },
+    {
+      "pubkey": "690fc5a3818e2a7174c33a2493e6279c0eede280dc3f54e1a8a307998d128118",
+      "tweak": "bb3c6b06898709f1541dbb2b4a9d660f1528051a2111d66cf7beb20a8900c7ce",
+      "parity": 0,
+      "result": "e9c30d79ca02eb6d5ea1534018b30047bd424554f21bae5af7d0ea0acdab49d5"
+    },
+    {
+      "pubkey": "40ab636041bb695843ac7f220344565bed3b5dca919e256b7e31e19d69b36fad",
+      "tweak": "e90f208fb3cf3a276404b8213af59fa30bff2aa1fb92cc2c7f433a9f0331d123",
+      "parity": 0,
+      "result": "d10cfb71a775af1d7a016d87c5ae6bc8e0f0ac68a9ff76b6f32c24f35862e983"
+    },
+    {
+      "pubkey": "8a3ba5c99568d26602f4cf8038371da3c86057a96eb1b6a8de1b4f1be723c236",
+      "tweak": "85b68888f6734bf4b7107f2c49b714235b56c3b5c8d5b065482a57d23bce9580",
+      "parity": 0,
+      "result": "65bb32d7a1b543b57ae527d645a502ffb5f56acf320d3ed6972e54a5f512e542"
+    },
+    {
+      "pubkey": "bef64d55efcd09b5ccb57f70a9163ee307cbe9c74872f0d8d10811d8838ea04e",
+      "tweak": "0daa0115280b6220c319beaa3ca7e285418c0373a6a100df5367e52264b4248b",
+      "parity": 1,
+      "result": "0126d4ae5b95fccc8377d8792fe2b711b90277b5defcee91ae7325fd3c848cd6"
+    },
+    {
+      "pubkey": "56466703cab270bc0567b5c525163fc3f382fec0c6714067f0eb3b112a2a866d",
+      "tweak": "07031187fb14f770d521389c502321abb0e41e5ab87181d24e8faa0aeed83798",
+      "parity": 1,
+      "result": "91e4c30e0f97c26728e15be560a22bd08b7f6c987288f4f643b3b2861170d991"
+    },
+    {
+      "pubkey": "f76a39d05686e34a4420897e359371836145dd3973e3982568b60f8433adde6e",
+      "tweak": "56b77e6f0c45d179a1a1435a19f6d58b5c58ed226b6eb1a8ea1fb1e587e49624",
+      "parity": 0,
+      "result": "bdb04550b63ad2a45b0a2109808753e692a40348b36e18a4c4a8ee1b672b7520"
+    },
+    {
+      "pubkey": "2ed557f5ad336b31a49857e4e9664954ac33385aa20a93e2d64bfe7f08f51277",
+      "tweak": "989c0b76cb563971fdc9bef31ec06c3560f3249d6ee9e5d83c57625596e05f6f",
+      "parity": 1,
+      "result": "0aa3dbf610c64742acf4c51b065ff6f6e299c76b4493ff226d5cc274826ec36f"
+    },
+    {
+      "pubkey": "dbd871b943875bbc04dbe75f8a99e7dfa4dff848e63574cabb958106d5ae4e71",
+      "tweak": "edabbd16b41c8371b92ef2f04c1185b4f03b6dcd52ba9b78d9d7c89c8f221145",
+      "parity": 0,
+      "result": "dcaadca08f9cac9866664e0e044ead80f6a310c1d075217bdb1dab0dacd50950"
+    },
+    {
+      "pubkey": "7962d45b38e8bcf82fa8efa8432a01f20c9a53e24c7d3f11df197cb8e70926da",
+      "tweak": "6193538406d8233d800441d538a5a96c9206421929699f2c5890e4d2721940e3",
+      "parity": 0,
+      "result": "25f227a55a79685de603375b641b4422a8535e5d0461a17c4c7ec904f74542a1"
+    },
+    {
+      "pubkey": "13aa20bcecaaf8d7cbe7f3cd041c3d5a3795ad983b594963bfaca74e213ae0a8",
+      "tweak": "7f31ebc5462c1fdce1b737ecff52d37d75dea43ce11c74d25aa297165faa2007",
+      "parity": 1,
+      "result": "cf08a3b629a0bcc64385ef551149528553c25cb1ae16b6b552249a3c412e223c"
+    },
+    {
+      "pubkey": "e7e9acacbdb43fc9fb71a8db1536c0f866caa78def49f666fa121a6f7954bb01",
+      "tweak": "a28d56b9e90fe12994febd70faa1d366a8144758a5853bbb4d15596807625474",
+      "parity": 1,
+      "result": "03640401930407d9d60de6f9c1b760d2df86af90c960d38766c69192eb0a1348"
+    },
+    {
+      "pubkey": "d793631af7aa0e709439dd47fc001acd0b0727670b6670ea528ac83cb0127f4a",
+      "tweak": "35e9d7c48e3a5254d5881b60abf004cf6eedc6ab842393caa2fdd20d6d0ad170",
+      "parity": 1,
+      "result": "c76af2152305b4d7ace2a9a673307a08933a742b75090671f1de4561eacf656a"
+    },
+    {
+      "pubkey": "01cb053ed82840d1b8520348a51ab9e45ca6dc4a457644fb385375030a5567fd",
+      "tweak": "4bc2a31265153f07e70e0bab08724e6b85e217f8cd628ceb62974247bb493382",
+      "parity": 1,
+      "result": "e04cc609944ce94305d6ae1e20094367b679cbd048e96afa297d2515d970e2d7"
+    },
+    {
+      "pubkey": "048968943184ce8a0239ab2141641e8eaead35a6dc8e6b55ad33ac1eca975a47",
+      "tweak": "b21db47a75ceee5c010f69f66d48d5a017e4e2f46b47b496ddf03498c26e1cec",
+      "parity": 0,
+      "result": "e5dcffeda0e499f4a9528dda30b5c519ca0516a48d56da57c65536b5f0f3d0d1"
+    },
+    {
+      "pubkey": "bb3c6b06898709f1541dbb2b4a9d660f1528051a2111d66cf7beb20a8900c7ce",
+      "tweak": "03b888304b5ba3c29f22814dcca7c7635e766234ad8c094507104e17c7642e9c",
+      "parity": 0,
+      "result": "d485bc968ca52178589ff80f79959a2a22e9ff8ea9c75b89226d6ae2ab90a7d7"
+    },
+    {
+      "pubkey": "bfbf53e90a04d0d743fb213adaa57b92ec74d9ca1b3068f5f18733e35eec81a2",
+      "tweak": "3c72addb4fdf09af94f0c94d7fe92a386a7e70cf8a1d85916386bb2535c7b1b1",
+      "parity": 0,
+      "result": "db128eb5c2b9abee576c85f1b6c528d3645516c27833f0959a3b7f77a1f6bfdf"
+    },
+    {
+      "pubkey": "438a4f623099e7c238970a8481b03d449fd45cc2c2185e739b28f28ce5342bb3",
+      "tweak": "74306da530af516569ccc486261db3dd67a4ee87f11c96c8ac14725dc07f293e",
+      "parity": 0,
+      "result": "d6593f73a6a21f77412567d419d879c01c84731e33b49cfe401e1201ee24251f"
+    },
+    {
+      "pubkey": "3359f5234ce62e0eb80460046d8fd1aae018cc8b9e687b40aa2c047e352409b4",
+      "tweak": "9b356f2b79a71fd947ba03820f5750039d65ce666c95664a90f233a151eac971",
+      "parity": 0,
+      "result": "3dae7967842c930293761475d559cdff430c15527c65c7934b2061af55738016"
+    },
+    {
+      "pubkey": "d3b2dc63e23279fde948e6f0b6991ef7e2f07f08a1bb865a454241f66a67d84b",
+      "tweak": "81a9505483eae70bbac50ab1ad3343b36d5abab397a2d5c8e04afdfaf702e2be",
+      "parity": 0,
+      "result": "a4bf277d94a503dccaa0e36e228510416331587ae2a7f75998535a21b34454c8"
+    },
+    {
+      "pubkey": "989c0b76cb563971fdc9bef31ec06c3560f3249d6ee9e5d83c57625596e05f6f",
+      "tweak": "5be5e9478209674a96e60f1f037f6176540fd001fa1d64694770c56a7709c42c",
+      "parity": 1,
+      "result": "599d0f10f8cda798963bdfb5b9e7ca2b6109d3813c2454258ad8c0473aa2594b"
+    },
+    {
+      "pubkey": "35e9d7c48e3a5254d5881b60abf004cf6eedc6ab842393caa2fdd20d6d0ad170",
+      "tweak": "d793631af7aa0e709439dd47fc001acd0b0727670b6670ea528ac83cb0127f4a",
+      "parity": 0,
+      "result": "1cce0e93792ceef405af9314b6bc66e804ff74291ed9427874ae1e10e0ff5fac"
+    },
+    {
+      "pubkey": "18bb586dc109adf49ffb42e0ac293d2a2965e49a0a4900c2be776b426b7cbfde",
+      "tweak": "6a27aedb12c9a3015ecdf2ead78755cfc3ef72d2c60ccd0033da18fbf9979641",
+      "parity": 0,
+      "result": "7124e32c16829aacd3c9f362c30eb0780a55112ad42aac56c6177d5e0c7301fe"
+    },
+    {
+      "pubkey": "9ac20335eb38768d2052be1dbbc3c8f6178407458e51e6b4ad22f1d91758895b",
+      "tweak": "bb58b5feca505c74edc000d8282fc556e51a1024fc8e7d7e56c6f887c5c8d5f2",
+      "parity": 0,
+      "result": "2c78bf74691072d2efc0606ea85fceea7947c69c873f1516ef5d72d3f2fa3b8d"
+    },
+    {
+      "pubkey": "db776e8adb1c9eaad7b81a32e3a1644383e364f5d4f906dca8f8448c85970409",
+      "tweak": "68680737c76dabb801cb2204f57dbe4e4579e4f710cd67dc1b4227592c81e9b5",
+      "parity": 1,
+      "result": "5ed885693fc4445af170aea2e64d8a3fae455f90536e5efb4c1a88174e2fa6e6"
+    },
+    {
+      "pubkey": "25f0f6f900ae144b17d30a5c3a08e648382c21359d659226cbed204c142d5a53",
+      "tweak": "13aa20bcecaaf8d7cbe7f3cd041c3d5a3795ad983b594963bfaca74e213ae0a8",
+      "parity": 0,
+      "result": "9d4ce11f746e0fe11b4899195022be8366b67274c2b05f43c7b64e182fdf3348"
+    }
   ]
 }
