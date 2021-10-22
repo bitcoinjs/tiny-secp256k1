@@ -275,19 +275,19 @@ export function xOnlyPointAddTweak(
 
 export type TweakParity = 1 | 0;
 export function xOnlyPointAddTweakCheck(
-  p1: Uint8Array,
-  p2: Uint8Array,
+  point: Uint8Array,
   tweak: Uint8Array,
+  resultToCheck: Uint8Array,
   tweakParity?: TweakParity
 ): boolean {
-  validate.validateXOnlyPoint(p1);
-  validate.validateXOnlyPoint(p2);
+  validate.validateXOnlyPoint(point);
+  validate.validateXOnlyPoint(resultToCheck);
   validate.validateTweak(tweak);
   const hasParity = tweakParity !== undefined;
   if (hasParity) validate.validateParity(tweakParity);
   try {
-    X_ONLY_PUBLIC_KEY_INPUT.set(p1);
-    X_ONLY_PUBLIC_KEY_INPUT2.set(p2);
+    X_ONLY_PUBLIC_KEY_INPUT.set(point);
+    X_ONLY_PUBLIC_KEY_INPUT2.set(resultToCheck);
     TWEAK_INPUT.set(tweak);
     if (hasParity) {
       return wasm.xOnlyPointAddTweakCheck(tweakParity) === 1;
@@ -297,7 +297,7 @@ export function xOnlyPointAddTweakCheck(
         0,
         validate.X_ONLY_PUBLIC_KEY_SIZE
       );
-      return compare(newKey, p2) === 0;
+      return compare(newKey, resultToCheck) === 0;
     }
   } finally {
     X_ONLY_PUBLIC_KEY_INPUT.fill(0);

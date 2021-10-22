@@ -122,15 +122,38 @@ export default function (secp256k1) {
         f.parity,
         `xOnlyPointAddTweak(${fHex.pubkey},${fHex.tweak}) == ${fHex.parity} parity`
       );
+      // test check method
       t.ok(
-        secp256k1.xOnlyPointAddTweakCheck(f.pubkey, f.result, f.tweak, f.parity)
+        secp256k1.xOnlyPointAddTweakCheck(
+          f.pubkey,
+          f.tweak,
+          f.result,
+          f.parity
+        ),
+        `xOnlyPointAddTweakCheck(${fHex.pubkey},${fHex.tweak},${fHex.result},${fHex.parity}) == true`
       );
-      t.ok(secp256k1.xOnlyPointAddTweakCheck(f.pubkey, f.result, f.tweak));
+      t.ok(
+        secp256k1.xOnlyPointAddTweakCheck(f.pubkey, f.tweak, f.result),
+        `xOnlyPointAddTweakCheck(${fHex.pubkey},${fHex.tweak},${fHex.result}) == true`
+      );
       const dummyKey = randPubKey();
       t.notOk(
-        secp256k1.xOnlyPointAddTweakCheck(f.pubkey, dummyKey, f.tweak, f.parity)
+        secp256k1.xOnlyPointAddTweakCheck(
+          f.pubkey,
+          f.tweak,
+          dummyKey,
+          f.parity
+        ),
+        `xOnlyPointAddTweakCheck(${fHex.pubkey},${fHex.tweak},${toHex(
+          dummyKey
+        )},${fHex.parity}) == false`
       );
-      t.notOk(secp256k1.xOnlyPointAddTweakCheck(f.pubkey, dummyKey, f.tweak));
+      t.notOk(
+        secp256k1.xOnlyPointAddTweakCheck(f.pubkey, f.tweak, dummyKey),
+        `xOnlyPointAddTweakCheck(${fHex.pubkey},${fHex.tweak},${toHex(
+          dummyKey
+        )}) == false`
+      );
     }
 
     t.end();
