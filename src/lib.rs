@@ -17,11 +17,9 @@ use secp256k1_sys::{
     secp256k1_ec_pubkey_tweak_add, secp256k1_ec_pubkey_tweak_mul, secp256k1_ec_seckey_negate,
     secp256k1_ec_seckey_tweak_add, secp256k1_ecdsa_sign, secp256k1_ecdsa_signature_normalize,
     secp256k1_ecdsa_signature_parse_compact, secp256k1_ecdsa_signature_serialize_compact,
-    secp256k1_ecdsa_verify, secp256k1_keypair_create, secp256k1_keypair_xonly_pub,
-    secp256k1_nonce_function_bip340, secp256k1_nonce_function_rfc6979, secp256k1_schnorrsig_sign,
-    secp256k1_schnorrsig_verify, secp256k1_xonly_pubkey_from_pubkey, secp256k1_xonly_pubkey_parse,
-    secp256k1_xonly_pubkey_serialize, secp256k1_xonly_pubkey_tweak_add,
-    secp256k1_xonly_pubkey_tweak_add_check, types::c_void, Context, KeyPair, PublicKey, Signature,
+    secp256k1_ecdsa_verify, secp256k1_keypair_create, secp256k1_nonce_function_bip340,
+    secp256k1_nonce_function_rfc6979, secp256k1_schnorrsig_sign, secp256k1_schnorrsig_verify,
+    secp256k1_xonly_pubkey_parse, types::c_void, Context, KeyPair, PublicKey, Signature,
     XOnlyPublicKey, SECP256K1_SER_COMPRESSED, SECP256K1_SER_UNCOMPRESSED, SECP256K1_START_SIGN,
     SECP256K1_START_VERIFY,
 };
@@ -52,7 +50,7 @@ const HASH_SIZE: usize = 32;
 const EXTRA_DATA_SIZE: usize = 32;
 const SIGNATURE_SIZE: usize = 64;
 
-const ERROR_BAD_PRIVATE: usize = 0;
+// const ERROR_BAD_PRIVATE: usize = 0;
 const ERROR_BAD_POINT: usize = 1;
 // const ERROR_BAD_TWEAK: usize = 2;
 // const ERROR_BAD_HASH: usize = 3;
@@ -70,8 +68,6 @@ pub static PUBLIC_KEY_INPUT2: [u8; PUBLIC_KEY_UNCOMPRESSED_SIZE] =
     [0; PUBLIC_KEY_UNCOMPRESSED_SIZE];
 #[no_mangle]
 pub static mut X_ONLY_PUBLIC_KEY_INPUT: [u8; X_ONLY_PUBLIC_KEY_SIZE] = [0; X_ONLY_PUBLIC_KEY_SIZE];
-#[no_mangle]
-pub static mut X_ONLY_PUBLIC_KEY_INPUT2: [u8; X_ONLY_PUBLIC_KEY_SIZE] = [0; X_ONLY_PUBLIC_KEY_SIZE];
 #[no_mangle]
 pub static mut TWEAK_INPUT: [u8; TWEAK_SIZE] = [0; TWEAK_SIZE];
 #[no_mangle]
@@ -128,34 +124,6 @@ fn get_context() -> *const Context {
     }
 }
 
-unsafe fn create_keypair(input: *const u8) -> InvalidInputResult<KeyPair> {
-    let mut kp = KeyPair::new();
-    if secp256k1_keypair_create(get_context(), &mut kp, input) == 1 {
-        Ok(kp)
-    } else {
-        Err(ERROR_BAD_PRIVATE)
-    }
-}
-
-unsafe fn x_only_pubkey_from_pubkey(input: *const u8, inputlen: usize) -> (XOnlyPublicKey, i32) {
-    let mut xonly_pk = XOnlyPublicKey::new();
-    let mut parity: i32 = 0;
-    let pubkey = jstry!(pubkey_parse(input, inputlen), (xonly_pk, parity));
-    x_only_pubkey_from_pubkey_struct(&mut xonly_pk, &mut parity, &pubkey)
-}
-
-unsafe fn x_only_pubkey_from_pubkey_struct(
-    xonly_pk: &mut XOnlyPublicKey,
-    parity: &mut i32,
-    pubkey: &PublicKey,
-) -> (XOnlyPublicKey, i32) {
-    assert_eq!(
-        secp256k1_xonly_pubkey_from_pubkey(get_context(), xonly_pk, parity, pubkey),
-        1
-    );
-    (*xonly_pk, *parity)
-}
-
 unsafe fn pubkey_parse(input: *const u8, inputlen: usize) -> InvalidInputResult<PublicKey> {
     let mut pk = PublicKey::new();
     if secp256k1_ec_pubkey_parse(secp256k1_context_no_precomp, &mut pk, input, inputlen) == 1 {
@@ -192,17 +160,6 @@ unsafe fn pubkey_serialize(pk: &PublicKey, output: *mut u8, mut outputlen: usize
     );
 }
 
-unsafe fn x_only_pubkey_serialize(pk: &XOnlyPublicKey, output: *mut u8) {
-    assert_eq!(
-        secp256k1_xonly_pubkey_serialize(
-            secp256k1_context_no_precomp,
-            output,
-            pk.as_ptr() as *const XOnlyPublicKey,
-        ),
-        1
-    );
-}
-
 #[no_mangle]
 #[export_name = "initializeContext"]
 pub extern "C" fn initialize_context() {
@@ -212,13 +169,7 @@ pub extern "C" fn initialize_context() {
 #[no_mangle]
 #[export_name = "isPoint"]
 pub extern "C" fn is_point(inputlen: usize) -> usize {
-    unsafe {
-        if inputlen == X_ONLY_PUBLIC_KEY_SIZE {
-            x_only_pubkey_parse(PUBLIC_KEY_INPUT.as_ptr()).map_or_else(|_error| 0, |_pk| 1)
-        } else {
-            pubkey_parse(PUBLIC_KEY_INPUT.as_ptr(), inputlen).map_or_else(|_error| 0, |_pk| 1)
-        }
-    }
+    unsafe { pubkey_parse(PUBLIC_KEY_INPUT.as_ptr(), inputlen).map_or_else(|_error| 0, |_pk| 1) }
 }
 
 #[no_mangle]
@@ -264,47 +215,6 @@ pub extern "C" fn point_add_scalar(inputlen: usize, outputlen: usize) -> i32 {
 }
 
 #[no_mangle]
-#[export_name = "xOnlyPointAddTweak"]
-pub extern "C" fn x_only_point_add_tweak() -> i32 {
-    unsafe {
-        let mut xonly_pk = jstry!(x_only_pubkey_parse(X_ONLY_PUBLIC_KEY_INPUT.as_ptr()), 0);
-        let mut pubkey = PublicKey::new();
-        if secp256k1_xonly_pubkey_tweak_add(
-            get_context(),
-            &mut pubkey,
-            &xonly_pk,
-            TWEAK_INPUT.as_ptr(),
-        ) != 1
-        {
-            // infinity point
-            return -1;
-        }
-        let mut parity: i32 = 0;
-        x_only_pubkey_from_pubkey_struct(&mut xonly_pk, &mut parity, &pubkey);
-        x_only_pubkey_serialize(&xonly_pk, X_ONLY_PUBLIC_KEY_INPUT.as_mut_ptr());
-        parity
-    }
-}
-
-#[no_mangle]
-#[export_name = "xOnlyPointAddTweakCheck"]
-pub extern "C" fn x_only_point_add_tweak_check(tweaked_parity: i32) -> i32 {
-    unsafe {
-        let xonly_pk = jstry!(x_only_pubkey_parse(X_ONLY_PUBLIC_KEY_INPUT.as_ptr()), 0);
-        let tweaked_key_ptr = X_ONLY_PUBLIC_KEY_INPUT2.as_ptr();
-        jstry!(x_only_pubkey_parse(tweaked_key_ptr), 0);
-
-        secp256k1_xonly_pubkey_tweak_add_check(
-            get_context(),
-            tweaked_key_ptr,
-            tweaked_parity,
-            &xonly_pk,
-            TWEAK_INPUT.as_ptr(),
-        )
-    }
-}
-
-#[no_mangle]
 #[export_name = "pointCompress"]
 pub extern "C" fn point_compress(inputlen: usize, outputlen: usize) {
     unsafe {
@@ -324,32 +234,6 @@ pub extern "C" fn point_from_scalar(outputlen: usize) -> i32 {
         } else {
             0
         }
-    }
-}
-
-#[no_mangle]
-#[export_name = "xOnlyPointFromScalar"]
-pub extern "C" fn x_only_point_from_scalar() -> i32 {
-    unsafe {
-        let keypair = jstry!(create_keypair(PRIVATE_INPUT.as_ptr()), 0);
-        let mut xonly_pk = XOnlyPublicKey::new();
-        let mut parity: i32 = 0; // TODO: Should we return this somehow?
-        assert_eq!(
-            secp256k1_keypair_xonly_pub(get_context(), &mut xonly_pk, &mut parity, &keypair),
-            1
-        );
-        x_only_pubkey_serialize(&xonly_pk, X_ONLY_PUBLIC_KEY_INPUT.as_mut_ptr());
-        1
-    }
-}
-
-#[no_mangle]
-#[export_name = "xOnlyPointFromPoint"]
-pub extern "C" fn x_only_point_from_point(inputlen: usize) -> i32 {
-    unsafe {
-        let (xonly_pk, _parity) = x_only_pubkey_from_pubkey(PUBLIC_KEY_INPUT.as_ptr(), inputlen);
-        x_only_pubkey_serialize(&xonly_pk, X_ONLY_PUBLIC_KEY_INPUT.as_mut_ptr());
-        1
     }
 }
 

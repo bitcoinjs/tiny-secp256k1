@@ -2,12 +2,12 @@ import { compare } from "uint8array-tools";
 import * as validate from "./validate.js";
 import wasm from "./wasm_loader.js";
 
+const EVEN_Y_VALUE = 2;
 const WASM_BUFFER = new Uint8Array(wasm.memory.buffer);
 const WASM_PRIVATE_KEY_PTR = wasm.PRIVATE_INPUT.value;
 const WASM_PUBLIC_KEY_INPUT_PTR = wasm.PUBLIC_KEY_INPUT.value;
 const WASM_PUBLIC_KEY_INPUT_PTR2 = wasm.PUBLIC_KEY_INPUT2.value;
 const WASM_X_ONLY_PUBLIC_KEY_INPUT_PTR = wasm.X_ONLY_PUBLIC_KEY_INPUT.value;
-const WASM_X_ONLY_PUBLIC_KEY_INPUT2_PTR = wasm.X_ONLY_PUBLIC_KEY_INPUT2.value;
 const WASM_TWEAK_INPUT_PTR = wasm.TWEAK_INPUT.value;
 const WASM_HASH_INPUT_PTR = wasm.HASH_INPUT.value;
 const WASM_EXTRA_DATA_INPUT_PTR = wasm.EXTRA_DATA_INPUT.value;
@@ -28,10 +28,6 @@ const PUBLIC_KEY_INPUT2 = WASM_BUFFER.subarray(
 const X_ONLY_PUBLIC_KEY_INPUT = WASM_BUFFER.subarray(
   WASM_X_ONLY_PUBLIC_KEY_INPUT_PTR,
   WASM_X_ONLY_PUBLIC_KEY_INPUT_PTR + validate.X_ONLY_PUBLIC_KEY_SIZE
-);
-const X_ONLY_PUBLIC_KEY_INPUT2 = WASM_BUFFER.subarray(
-  WASM_X_ONLY_PUBLIC_KEY_INPUT2_PTR,
-  WASM_X_ONLY_PUBLIC_KEY_INPUT2_PTR + validate.X_ONLY_PUBLIC_KEY_SIZE
 );
 const TWEAK_INPUT = WASM_BUFFER.subarray(
   WASM_TWEAK_INPUT_PTR,
@@ -59,6 +55,13 @@ function assumeCompression(compressed?: boolean, p?: Uint8Array): number {
     : validate.PUBLIC_KEY_UNCOMPRESSED_SIZE;
 }
 
+function xOnlyToPoint(p: Uint8Array): Uint8Array {
+  const pubkey = new Uint8Array(33);
+  pubkey[0] = EVEN_Y_VALUE;
+  pubkey.set(p, 1);
+  return pubkey;
+}
+
 function _isPoint(p: Uint8Array): boolean {
   try {
     PUBLIC_KEY_INPUT.set(p);
@@ -81,7 +84,7 @@ export function isPointCompressed(p: Uint8Array): boolean {
 }
 
 export function isXOnlyPoint(p: Uint8Array): boolean {
-  return validate.isXOnlyPoint(p) && _isPoint(p);
+  return validate.isXOnlyPoint(p) && _isPoint(xOnlyToPoint(p));
 }
 
 export function isPrivate(d: Uint8Array): boolean {
@@ -157,28 +160,14 @@ export function pointFromScalar(
   }
 }
 
-export function xOnlyPointFromScalar(d: Uint8Array): Uint8Array {
-  validate.validatePrivate(d);
-  try {
-    PRIVATE_KEY_INPUT.set(d);
-    wasm.xOnlyPointFromScalar();
-    return X_ONLY_PUBLIC_KEY_INPUT.slice(0, validate.X_ONLY_PUBLIC_KEY_SIZE);
-  } finally {
-    PRIVATE_KEY_INPUT.fill(0);
-    X_ONLY_PUBLIC_KEY_INPUT.fill(0);
-  }
+export function xOnlyPointFromScalar(d: Uint8Array): Uint8Array | null {
+  const p = pointFromScalar(d);
+  return p ? p.slice(1, 33) : p;
 }
 
 export function xOnlyPointFromPoint(p: Uint8Array): Uint8Array {
   validate.validatePoint(p);
-  try {
-    PUBLIC_KEY_INPUT.set(p);
-    wasm.xOnlyPointFromPoint(p.length);
-    return X_ONLY_PUBLIC_KEY_INPUT.slice(0, validate.X_ONLY_PUBLIC_KEY_SIZE);
-  } finally {
-    PUBLIC_KEY_INPUT.fill(0);
-    X_ONLY_PUBLIC_KEY_INPUT.fill(0);
-  }
+  return p.slice(1, 33);
 }
 
 export function pointMultiply(
@@ -254,23 +243,13 @@ export function xOnlyPointAddTweak(
 ): XOnlyPointAddTweakResult | null {
   validate.validateXOnlyPoint(p);
   validate.validateTweak(tweak);
-  try {
-    X_ONLY_PUBLIC_KEY_INPUT.set(p);
-    TWEAK_INPUT.set(tweak);
-    const parity = wasm.xOnlyPointAddTweak();
-    return parity !== -1
-      ? {
-          parity,
-          xOnlyPubkey: X_ONLY_PUBLIC_KEY_INPUT.slice(
-            0,
-            validate.X_ONLY_PUBLIC_KEY_SIZE
-          ),
-        }
-      : null;
-  } finally {
-    X_ONLY_PUBLIC_KEY_INPUT.fill(0);
-    TWEAK_INPUT.fill(0);
-  }
+  const result = pointAddScalar(xOnlyToPoint(p), tweak, true);
+  return result
+    ? {
+        parity: (result[0] & 1) as 1 | 0,
+        xOnlyPubkey: result.slice(1, 33),
+      }
+    : null;
 }
 
 export type TweakParity = 1 | 0;
@@ -283,27 +262,10 @@ export function xOnlyPointAddTweakCheck(
   validate.validateXOnlyPoint(point);
   validate.validateXOnlyPoint(resultToCheck);
   validate.validateTweak(tweak);
-  const hasParity = tweakParity !== undefined;
-  if (hasParity) validate.validateParity(tweakParity);
-  try {
-    X_ONLY_PUBLIC_KEY_INPUT.set(point);
-    X_ONLY_PUBLIC_KEY_INPUT2.set(resultToCheck);
-    TWEAK_INPUT.set(tweak);
-    if (hasParity) {
-      return wasm.xOnlyPointAddTweakCheck(tweakParity) === 1;
-    } else {
-      wasm.xOnlyPointAddTweak();
-      const newKey = X_ONLY_PUBLIC_KEY_INPUT.slice(
-        0,
-        validate.X_ONLY_PUBLIC_KEY_SIZE
-      );
-      return compare(newKey, resultToCheck) === 0;
-    }
-  } finally {
-    X_ONLY_PUBLIC_KEY_INPUT.fill(0);
-    X_ONLY_PUBLIC_KEY_INPUT2.fill(0);
-    TWEAK_INPUT.fill(0);
-  }
+  const result = xOnlyPointAddTweak(point, tweak);
+  if (!result) return false;
+  if (tweakParity !== undefined && tweakParity !== result.parity) return false;
+  return compare(result.xOnlyPubkey, resultToCheck) === 0;
 }
 
 export function sign(h: Uint8Array, d: Uint8Array, e?: Uint8Array): Uint8Array {
