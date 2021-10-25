@@ -5,11 +5,7 @@ const toHex = (v) =>
   v instanceof Uint8Array ? Buffer.from(v).toString("hex") : v;
 
 const JSONstring = (data, spacing) =>
-  JSON.stringify(
-    data,
-    (_, val) => (val instanceof Uint8Array ? toHex(val) : val),
-    spacing
-  );
+  JSON.stringify(data, (_, val) => toHex(val), spacing);
 
 const lineDash = new Array(80).fill("-").join("");
 const lineEq = new Array(80).fill("=").join("");
