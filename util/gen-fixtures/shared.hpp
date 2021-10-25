@@ -138,19 +138,6 @@ auto _privSub (uint8_t_32 key, uint8_t_32 tweak, bool& ok) {
 	return key;
 }
 
-auto _xOnlyPubkeyTweak (uint8_t_32 pubkey_in, uint8_t_32 tweak, int *pk_parity, bool& ok) {
-	secp256k1_pubkey pubkey_mid;
-	secp256k1_xonly_pubkey xkey;
-
-	ok &= secp256k1_xonly_pubkey_parse(ctx, &xkey, pubkey_in.data());
-	if (!ok) return xkey;
-	ok &= secp256k1_xonly_pubkey_tweak_add(ctx, &pubkey_mid, &xkey, tweak.data());
-	if (!ok) return xkey;
-	ok &= secp256k1_xonly_pubkey_from_pubkey(ctx, &xkey, pk_parity, &pubkey_mid);
-	if (!ok) return xkey;
-	return xkey;
-}
-
 template <typename A>
 uint8_t_vec _ec_pubkey_to_vec (const secp256k1_pubkey& public_key, bool& ok) {
 	static_assert(sizeof(A) == 33 || sizeof(A) == 65);
@@ -189,6 +176,15 @@ auto _pointAddScalar (const V p, const uint8_t_32 d, bool& ok) {
 	ok &= secp256k1_ec_pubkey_parse(ctx, &public_key, p.data(), p.size());
 	ok &= secp256k1_ec_pubkey_tweak_add(ctx, &public_key, d.data());
 	return _ec_pubkey_to_vec<A>(public_key, ok);
+}
+
+auto _xOnlyPubkeyTweak (uint8_t_32 pubkey_in, uint8_t_32 tweak, bool& ok) {
+	secp256k1_pubkey pubkey_mid;
+	secp256k1_xonly_pubkey xkey;
+
+	ok &= secp256k1_xonly_pubkey_parse(ctx, &xkey, pubkey_in.data());
+	ok &= secp256k1_xonly_pubkey_tweak_add(ctx, &pubkey_mid, &xkey, tweak.data());
+	return _ec_pubkey_to_vec<uint8_t_33>(pubkey_mid, ok);
 }
 
 uint8_t_vec _pointFlip (const uint8_t_vec& p) {

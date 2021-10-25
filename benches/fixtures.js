@@ -1,3 +1,4 @@
+import * as crypto from "crypto";
 import * as tiny_secp256k1 from "../lib/index.js";
 import _fecdsa from "../tests/fixtures/ecdsa.json";
 import _fpoints from "../tests/fixtures/points.json";
@@ -5,9 +6,8 @@ import _fprivates from "../tests/fixtures/privates.json";
 import _fschnorr from "../tests/fixtures/schnorr.json";
 import { parseBip340Vector } from "../tests/schnorr.js";
 
-const rand = () => Math.floor(Math.random() * 254) + 1; // [1..254];
 const randPubKey = () =>
-  tiny_secp256k1.xOnlyPointFromScalar(new Uint8Array(32).fill(rand()));
+  tiny_secp256k1.xOnlyPointFromScalar(Uint8Array.from(crypto.randomBytes(32)));
 
 export const fecdsa = _fecdsa.valid.map((f) => ({
   d: Buffer.from(f.d, "hex"),

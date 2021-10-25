@@ -25,7 +25,14 @@ RUN apt update && \
     libxi6 \
     libxss1 \
     libxtst6 \
-    xvfb
+    xvfb && \
+    # Install node v14
+    curl -fsSL https://deb.nodesource.com/setup_14.x | bash - && \
+    apt install nodejs -y && \
+    # Install npm v8 so preserve package-lock.json format
+    npm i -g npm@8 && \
+    # Clear apt cache
+    rm -rf /var/lib/{apt,dpkg,cache,log}/
 
 # Install LLVM:12
 RUN curl -sSf https://apt.llvm.org/llvm.sh | bash -s -- 12 && \
@@ -38,14 +45,6 @@ RUN git clone --depth 1 --branch version_100 https://github.com/WebAssembly/bina
   make -j$(nproc) && \
   make install && \
   rm -rf /binaryen
-
-# Install Node.js:14
-RUN curl -fsSL https://deb.nodesource.com/setup_14.x | bash - && \
-  apt install nodejs -y && \
-  npm i -g npm@8
-
-# Remove apt files
-RUN rm -rf /var/lib/{apt,dpkg,cache,log}/
 
 # Add non-root user
 RUN useradd -ms /bin/bash builduser
