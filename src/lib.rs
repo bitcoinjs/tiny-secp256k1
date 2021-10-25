@@ -1,4 +1,5 @@
-#![allow(clippy::missing_safety_doc)]
+#![deny(clippy::all)]
+#![deny(clippy::pedantic)]
 #![no_std]
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -40,7 +41,8 @@ extern "C" {
 
 type InvalidInputResult<T> = Result<T, usize>;
 
-static CONTEXT_BUFFER: [u8; 1114320] = [0; 1114320];
+#[allow(clippy::large_stack_arrays)]
+static CONTEXT_BUFFER: [u8; 1_114_320] = [0; 1_114_320];
 static mut CONTEXT_SEED: [u8; 32] = [0; 32];
 
 const PRIVATE_KEY_SIZE: usize = 32;
@@ -122,7 +124,7 @@ fn get_context() -> *const Context {
             CONTEXT_SEED[0] = 1;
             CONTEXT_SEED[1..].fill(0);
             assert_eq!(retcode, 1);
-            CONTEXT = ctx
+            CONTEXT = ctx;
         }
         CONTEXT
     }
@@ -185,7 +187,7 @@ unsafe fn pubkey_serialize(pk: &PublicKey, output: *mut u8, mut outputlen: usize
             secp256k1_context_no_precomp,
             output,
             &mut outputlen,
-            pk.as_ptr() as *const PublicKey,
+            pk.as_ptr().cast::<PublicKey>(),
             flags,
         ),
         1
@@ -197,7 +199,7 @@ unsafe fn x_only_pubkey_serialize(pk: &XOnlyPublicKey, output: *mut u8) {
         secp256k1_xonly_pubkey_serialize(
             secp256k1_context_no_precomp,
             output,
-            pk.as_ptr() as *const XOnlyPublicKey,
+            pk.as_ptr().cast::<XOnlyPublicKey>(),
         ),
         1
     );
@@ -221,6 +223,9 @@ pub extern "C" fn is_point(inputlen: usize) -> usize {
     }
 }
 
+// We know (ptrs.len() as i32) will not trunc or wrap since it is always 2.
+#[allow(clippy::cast_possible_truncation)]
+#[allow(clippy::cast_possible_wrap)]
 #[no_mangle]
 #[export_name = "pointAdd"]
 pub extern "C" fn point_add(inputlen: usize, inputlen2: usize, outputlen: usize) -> i32 {
@@ -232,7 +237,7 @@ pub extern "C" fn point_add(inputlen: usize, inputlen2: usize, outputlen: usize)
         if secp256k1_ec_pubkey_combine(
             secp256k1_context_no_precomp,
             &mut pk,
-            ptrs.as_ptr() as *const *const PublicKey,
+            ptrs.as_ptr().cast::<*const PublicKey>(),
             ptrs.len() as i32,
         ) == 1
         {
@@ -251,7 +256,7 @@ pub extern "C" fn point_add_scalar(inputlen: usize, outputlen: usize) -> i32 {
         let mut pk = jstry!(pubkey_parse(PUBLIC_KEY_INPUT.as_ptr(), inputlen), 0);
         if secp256k1_ec_pubkey_tweak_add(
             get_context(),
-            pk.as_mut_ptr() as *mut PublicKey,
+            pk.as_mut_ptr().cast::<PublicKey>(),
             TWEAK_INPUT.as_ptr(),
         ) == 1
         {
@@ -327,6 +332,7 @@ pub extern "C" fn point_from_scalar(outputlen: usize) -> i32 {
     }
 }
 
+#[allow(clippy::missing_panics_doc)]
 #[no_mangle]
 #[export_name = "xOnlyPointFromScalar"]
 pub extern "C" fn x_only_point_from_scalar() -> i32 {
@@ -384,6 +390,7 @@ pub extern "C" fn private_add() -> i32 {
     }
 }
 
+#[allow(clippy::missing_panics_doc)]
 #[no_mangle]
 #[export_name = "privateSub"]
 pub extern "C" fn private_sub() -> i32 {
@@ -405,15 +412,17 @@ pub extern "C" fn private_sub() -> i32 {
     }
 }
 
+#[allow(clippy::missing_panics_doc)]
 #[no_mangle]
 pub extern "C" fn sign(extra_data: i32) {
     unsafe {
         let mut sig = Signature::new();
-        let noncedata = if extra_data == 0 {
+        let noncedata = (if extra_data == 0 {
             core::ptr::null()
         } else {
             EXTRA_DATA_INPUT.as_ptr()
-        } as *const c_void;
+        })
+        .cast::<c_void>();
 
         assert_eq!(
             secp256k1_ecdsa_sign(
@@ -438,16 +447,18 @@ pub extern "C" fn sign(extra_data: i32) {
     }
 }
 
+#[allow(clippy::missing_panics_doc)]
 #[no_mangle]
 #[export_name = "signSchnorr"]
 pub extern "C" fn sign_schnorr(extra_data: i32) {
     unsafe {
         let mut keypair = KeyPair::new();
-        let noncedata = if extra_data == 0 {
+        let noncedata = (if extra_data == 0 {
             core::ptr::null()
         } else {
             EXTRA_DATA_INPUT.as_ptr()
-        } as *const c_void;
+        })
+        .cast::<c_void>();
 
         assert_eq!(
             secp256k1_keypair_create(get_context(), &mut keypair, PRIVATE_INPUT.as_ptr()),
