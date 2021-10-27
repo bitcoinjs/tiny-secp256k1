@@ -1,6 +1,6 @@
 {
   "name": "tiny-secp256k1",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "A tiny secp256k1 JS",
   "homepage": "https://github.com/bitcoinjs/tiny-secp256k1#readme",
   "bugs": {
