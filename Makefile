@@ -1,3 +1,12 @@
+.PHONY: build
+build: install-js-deps build-all-clean
+
+.PHONY: build-all
+build-all: build-js build-wasm
+
+.PHONY: build-all-clean
+build-all-clean: clean-built build-all
+
 .PHONY: build-js
 build-js:
 	npx tsc
@@ -14,21 +23,27 @@ build-wasm-debug:
 	mkdir -p lib && cp -f target/wasm32-unknown-unknown/debug/secp256k1_wasm.wasm lib/secp256k1.wasm
 
 .PHONY: clean
-clean:
+clean: clean-deps clean-built
+
+.PHONY: clean-deps
+clean-deps:
+	rm -rf \
+		benches/node_modules \
+		examples/random-in-node/node_modules \
+		examples/react-app/node_modules \
+		node_modules \
+		target
+
+.PHONY: clean-built
+clean-built:
 	rm -rf \
 		.nyc_output \
-		benches/node_modules \
 		coverage \
-		examples/random-in-node/node_modules \
 		examples/react-app/dist/*.js \
 		examples/react-app/dist/*.txt \
 		examples/react-app/dist/*.wasm \
-		examples/react-app/node_modules \
 		lib \
-		node_modules \
-		target \
-		tests/browser \
-		types
+		tests/browser
 
 eslint_files = benches/*.{js,json} examples/**/*.{js,json} src_ts/*.ts tests/*.js *.json *.cjs
 
@@ -40,6 +55,10 @@ format:
 		package.json \
 		benches/package.json \
 		examples/*/package.json
+
+.PHONY: install-js-deps
+install-js-deps:
+	npm ci
 
 .PHONY: lint
 lint:

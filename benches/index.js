@@ -3,7 +3,14 @@ import tiny_secp256k1_prev_native from "tiny-secp256k1/native.js";
 import * as tiny_secp256k1 from "../lib/index.js";
 import * as cryptocoinjs_secp256k1 from "./cryptocoinjs_secp256k1.js";
 import noble_secp256k1 from "./noble_secp256k1.js";
-import { fecdsa, fpoints, fprivates } from "./fixtures.js";
+import {
+  fecdsa,
+  fpoints,
+  fprivates,
+  fschnorrSign,
+  fschnorrVerify,
+  fschnorrTweak,
+} from "./fixtures.js";
 
 // import { loadAddon as _loadAddon } from "../lib/addon.js";
 // function loadAddon(location) {
@@ -109,6 +116,64 @@ const benchmarks = [
       secp256k1.verify(f.m, f.Q, f.signature)
     ),
   },
+  {
+    name: "signSchnorr",
+    bench: createBenchmarkFn(fschnorrSign, (secp256k1, f) =>
+      secp256k1.signSchnorr(f.m, f.d)
+    ),
+  },
+  {
+    name: "verifySchnorr",
+    bench: createBenchmarkFn(fschnorrVerify, (secp256k1, f) =>
+      secp256k1.verifySchnorr(f.m, f.Q, f.s)
+    ),
+  },
+  {
+    name: "xOnlyPointFromScalar",
+    bench: createBenchmarkFn(fschnorrSign, (secp256k1, f) =>
+      secp256k1.xOnlyPointFromScalar(f.d)
+    ),
+  },
+  {
+    name: "xOnlyPointFromPoint",
+    bench: createBenchmarkFn(fschnorrSign, (secp256k1, f) =>
+      secp256k1.xOnlyPointFromPoint(f.pubkey)
+    ),
+  },
+  {
+    name: "xOnlyPointAddTweak",
+    bench: createBenchmarkFn(fschnorrTweak, (secp256k1, f) =>
+      secp256k1.xOnlyPointAddTweak(f.Q, f.tweak)
+    ),
+  },
+  {
+    name: "xOnlyPointAddTweakCheck",
+    note: "Parity",
+    bench: createBenchmarkFn(fschnorrTweak, (secp256k1, f) =>
+      secp256k1.xOnlyPointAddTweakCheck(f.Q, f.output, f.tweak, f.parity)
+    ),
+  },
+  {
+    name: "xOnlyPointAddTweakCheck",
+    note: "No Parity",
+    bench: createBenchmarkFn(fschnorrTweak, (secp256k1, f) =>
+      secp256k1.xOnlyPointAddTweakCheck(f.Q, f.output, f.tweak)
+    ),
+  },
+  {
+    name: "xOnlyPointAddTweakCheck",
+    note: "Wrong + Parity",
+    bench: createBenchmarkFn(fschnorrTweak, (secp256k1, f) =>
+      secp256k1.xOnlyPointAddTweakCheck(f.Q, f.dummy, f.tweak, f.parity)
+    ),
+  },
+  {
+    name: "xOnlyPointAddTweakCheck",
+    note: "Wrong + No Parity",
+    bench: createBenchmarkFn(fschnorrTweak, (secp256k1, f) =>
+      secp256k1.xOnlyPointAddTweakCheck(f.Q, f.tweak, f.dummy)
+    ),
+  },
 ];
 
 // Covert milliseconds as Number to nanoseconds as BigInt
@@ -144,6 +209,7 @@ async function main() {
   for (const benchmark of benchmarks) {
     const {
       name,
+      note,
       bench,
       warmingUpMinIter,
       warmingUpMaxTime,
@@ -161,7 +227,7 @@ async function main() {
       console.log(lineEqual);
       isFirstResult = false;
     }
-    console.log(`Benchmarking function: ${name}`);
+    console.log(`Benchmarking function: ${name}${note ? ` (${note})` : ""}`);
     console.log(lineDash);
     const results = [];
     for (const module of modules) {

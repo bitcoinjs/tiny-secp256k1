@@ -6,7 +6,7 @@ createReadStream(new URL("browser/index.js", import.meta.url), "utf8")
   .pipe(
     browserRun({
       static: "tests/browser",
-      sandbox: process.getuid() !== 0,
+      sandbox: false,
     })
   )
   .pipe(process.stdout);

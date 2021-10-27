@@ -17,16 +17,18 @@
     "./lib/rand.js": "./lib/rand.browser.js",
     "./lib/wasm_loader.js": "./lib/wasm_loader.browser.js"
   },
-  "types": "./types/index.d.ts",
+  "types": "./lib/index.d.ts",
   "files": [
-    "lib",
-    "types"
+    "lib"
   ],
+  "dependencies": {
+    "uint8array-tools": "0.0.6"
+  },
   "devDependencies": {
     "@types/node": "^14.14.35",
     "@typescript-eslint/eslint-plugin": "^4.18.0",
     "@typescript-eslint/parser": "^4.18.0",
-    "browser-run": "^10.0.0",
+    "browser-run": "^10.1.0",
     "buffer": "^6.0.3",
     "eslint": "^7.22.0",
     "eslint-config-prettier": "^8.1.0",

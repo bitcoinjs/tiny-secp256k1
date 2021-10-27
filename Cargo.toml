@@ -4,6 +4,7 @@ version = "0.0.0"
 authors = ["Kirill Fomichev <fanatid@ya.ru>"]
 edition = "2018"
 description = "A Rust library for building tiny-secp256k1 WASM."
+rust-version = "1.50"
 license = "MIT"
 publish = false
 
@@ -12,11 +13,8 @@ crate-type = ["cdylib"]
 
 [dependencies]
 # `[patch.crates-io]` is not working :(
-# `more-features` branch add features: ecdh, extrakeys, schnorrsig.
-# This reuqired because LTO do not strip not used functions in resulted WASM file.
-# secp256k1-sys PR: https://github.com/rust-bitcoin/rust-secp256k1/pull/287
-secp256k1-sys = { version = "0.4.0", default-features = false, git = "https://github.com/TheBlueMatt/rust-secp256k1", branch = "2021-03-no-vis" }
-# secp256k1-sys = { version = "0.4.0", default-features = false, git = "https://github.com/fanatid/rust-secp256k1", branch = "more-features" }
+# This commit is where secp256k1-sys version changed to 0.4.1
+secp256k1-sys = { version = "0.4.1", default-features = false, git = "https://github.com/rust-bitcoin/rust-secp256k1", rev = "455ee57ba4051bb2cfea5f5f675378170fb42c7f" }
 
 [profile.release]
 lto = true

@@ -1,6 +1,10 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
 
 env:
   NODE_VERSION: 14.0.0
@@ -15,9 +19,9 @@ jobs:
       with:
         fetch-depth: 1
 
-    - name: Install Rust nightly with wasm32-unknown-unknown, clippy and rustfmt
+    - name: Install Rust stable with wasm32-unknown-unknown, clippy and rustfmt
       run: |
-        rustup toolchain install nightly \
+        rustup toolchain install stable \
           --target wasm32-unknown-unknown \
           --component clippy \
           --component rustfmt
@@ -43,8 +47,8 @@ jobs:
       with:
         fetch-depth: 1
 
-    - name: Install Rust nightly with wasm32-unknown-unknown
-      run: rustup toolchain install nightly --target wasm32-unknown-unknown
+    - name: Install Rust stable with wasm32-unknown-unknown
+      run: rustup toolchain install stable --target wasm32-unknown-unknown
 
     - name: Install Node.js@${{ env.NODE_VERSION }}
       uses: actions/setup-node@v2

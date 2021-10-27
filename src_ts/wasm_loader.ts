@@ -28,6 +28,8 @@ interface Secp256k1WASM {
   PRIVATE_INPUT: WebAssemblyGlobal;
   PUBLIC_KEY_INPUT: WebAssemblyGlobal;
   PUBLIC_KEY_INPUT2: WebAssemblyGlobal;
+  X_ONLY_PUBLIC_KEY_INPUT: WebAssemblyGlobal;
+  X_ONLY_PUBLIC_KEY_INPUT2: WebAssemblyGlobal;
   TWEAK_INPUT: WebAssemblyGlobal;
   HASH_INPUT: WebAssemblyGlobal;
   EXTRA_DATA_INPUT: WebAssemblyGlobal;
@@ -39,11 +41,17 @@ interface Secp256k1WASM {
   pointAddScalar: (p: number, outputlen: number) => number;
   pointCompress: (p: number, outputlen: number) => number;
   pointFromScalar: (outputlen: number) => number;
+  xOnlyPointFromScalar: () => number;
+  xOnlyPointFromPoint: (inputLen: number) => number;
+  xOnlyPointAddTweak: () => 1 | 0 | -1;
+  xOnlyPointAddTweakCheck: (parity: number) => number;
   pointMultiply: (p: number, outputlen: number) => number;
   privateAdd: () => number;
   privateSub: () => number;
   sign: (e: number) => void;
+  signSchnorr: (e: number) => void;
   verify: (Q: number, strict: number) => number;
+  verifySchnorr: () => number;
 }
 
-export default (instance.exports as unknown) as Secp256k1WASM;
+export default instance.exports as unknown as Secp256k1WASM;

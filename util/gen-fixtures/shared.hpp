@@ -7,7 +7,7 @@
 #include <sstream>
 #include <vector>
 
-#include "secp256k1/include/secp256k1.h"
+#include "secp256k1/include/secp256k1_schnorrsig.h"
 #include "hexxer.hpp"
 #include "json.hpp"
 
@@ -178,6 +178,15 @@ auto _pointAddScalar (const V p, const uint8_t_32 d, bool& ok) {
 	return _ec_pubkey_to_vec<A>(public_key, ok);
 }
 
+auto _xOnlyPubkeyTweak (uint8_t_32 pubkey_in, uint8_t_32 tweak, bool& ok) {
+	secp256k1_pubkey pubkey_mid;
+	secp256k1_xonly_pubkey xkey;
+
+	ok &= secp256k1_xonly_pubkey_parse(ctx, &xkey, pubkey_in.data());
+	ok &= secp256k1_xonly_pubkey_tweak_add(ctx, &pubkey_mid, &xkey, tweak.data());
+	return _ec_pubkey_to_vec<uint8_t_33>(pubkey_mid, ok);
+}
+
 uint8_t_vec _pointFlip (const uint8_t_vec& p) {
 	assert(!p.empty());
 
@@ -247,6 +256,24 @@ auto _eccVerify (const A& p, const uint8_t_32 message, const uint8_t_64 signatur
 	if (!ok) return false;
 
 	ok &= secp256k1_ecdsa_verify(ctx, &_signature, message.data(), &public_key);
+	return ok;
+}
+
+auto _schnorrSign (const uint8_t_32 d, const uint8_t_32 message, bool& ok) {
+	uint8_t_64 output;
+	secp256k1_keypair keypair;
+	ok &= secp256k1_keypair_create(ctx, &keypair, d.data());
+	ok &= secp256k1_schnorrsig_sign(ctx, output.data(), message.data(), &keypair, nullptr);
+	return output;
+}
+
+auto _schnorrVerify (const uint8_t_32 p, const uint8_t_32 message, const uint8_t_64 signature) {
+	secp256k1_xonly_pubkey public_key;
+	bool ok = true;
+	ok &= secp256k1_xonly_pubkey_parse(ctx, &public_key, p.data());
+	if (!ok) return false;
+
+	ok &= secp256k1_schnorrsig_verify(ctx, signature.data(), message.data(), message.size(), &public_key);
 	return ok;
 }
 
