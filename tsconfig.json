@@ -1,15 +1,13 @@
 {
+  "extends": "./tsconfig-base.json",
   "compilerOptions": {
     "target": "ES2015",
     "module": "ES2020",
-    "checkJs": true,
     "declaration": true,
     "outDir": "./lib",
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "moduleResolution": "node"
+    "paths": {
+      "#wasm_path": ["./wasm_path.js"]
+    }
   },
-  "include": ["src_ts/*.ts"]
+  "exclude": ["src_ts/wasm_path_cjs.ts"]
 }

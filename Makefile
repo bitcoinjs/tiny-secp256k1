@@ -9,7 +9,12 @@ build-all-clean: clean-built build-all
 
 .PHONY: build-js
 build-js:
-	npx tsc
+	npx tsc && \
+	sed -i -e 's/\.\/wasm_path\.js/.\/wasm_path_cjs.js/g' ./src_ts/wasm_loader.ts && \
+	npx tsc -p tsconfig-cjs.json && \
+	sed -i -e 's/\.\/wasm_path_cjs\.js/.\/wasm_path.js/g' ./src_ts/wasm_loader.ts && \
+	for f in ./lib/cjs/*.js; do mv -- "$$f" "$${f%.js}.cjs"; done && \
+	for f in ./lib/cjs/*.cjs; do sed -i -e 's/\(require(".*\)\.js");/\1.cjs");/g' -- "$$f"; done
 
 .PHONY: build-wasm
 build-wasm:

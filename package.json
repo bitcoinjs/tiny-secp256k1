@@ -12,7 +12,17 @@
   },
   "license": "MIT",
   "type": "module",
-  "main": "./lib/index.js",
+  "exports": {
+    ".": {
+      "node": {
+        "module": "./lib/index.js",
+        "require": "./lib/cjs/index.cjs",
+        "import": "./lib/index.js"
+      },
+      "browser": "./lib/index.js",
+      "default": "./lib/index.js"
+    }
+  },
   "browser": {
     "./lib/rand.js": "./lib/rand.browser.js",
     "./lib/wasm_loader.js": "./lib/wasm_loader.browser.js"
