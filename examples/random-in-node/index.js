@@ -128,6 +128,7 @@ function isValidData(data) {
 }
 
 export function generate() {
+  let retryCount = 30;
   for (;;) {
     const seckey = new Uint8Array(randomBytes(32));
     const seckey2 = new Uint8Array(randomBytes(32));
@@ -158,5 +159,7 @@ export function generate() {
     };
 
     if (isValidData(data)) return data;
+    if (retryCount <= 0) throw new Error(`Couldn't generate valid data.`);
+    retryCount--;
   }
 }
