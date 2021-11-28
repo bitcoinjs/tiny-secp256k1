@@ -1,38 +1,12 @@
+use super::consts::{PUBLIC_KEY_COMPRESSED_SIZE, PUBLIC_KEY_UNCOMPRESSED_SIZE};
+use super::error::Error;
+use super::types::{InvalidInputResult, PubkeySlice};
 use secp256k1_sys::{
     secp256k1_context_no_precomp, secp256k1_ec_pubkey_parse, secp256k1_ec_pubkey_serialize,
     secp256k1_keypair_create, secp256k1_xonly_pubkey_from_pubkey, secp256k1_xonly_pubkey_parse,
     secp256k1_xonly_pubkey_serialize, Context, KeyPair, PublicKey, XOnlyPublicKey,
     SECP256K1_SER_COMPRESSED, SECP256K1_SER_UNCOMPRESSED,
 };
-
-pub(crate) type InvalidInputResult<T> = Result<T, usize>;
-pub(crate) const ZERO32: [u8; 32] = [0_u8; 32];
-
-pub(crate) const PRIVATE_KEY_SIZE: usize = 32;
-pub(crate) const PUBLIC_KEY_COMPRESSED_SIZE: usize = 33;
-pub(crate) const PUBLIC_KEY_UNCOMPRESSED_SIZE: usize = 65;
-pub(crate) const X_ONLY_PUBLIC_KEY_SIZE: usize = 32;
-pub(crate) const TWEAK_SIZE: usize = 32;
-pub(crate) const HASH_SIZE: usize = 32;
-pub(crate) const EXTRA_DATA_SIZE: usize = 32;
-pub(crate) const SIGNATURE_SIZE: usize = 64;
-
-pub(crate) type PrivkeySlice = [u8; PRIVATE_KEY_SIZE];
-pub(crate) type PubkeySlice = ([u8; PUBLIC_KEY_UNCOMPRESSED_SIZE], usize);
-pub(crate) type XOnlyPubkeySlice = [u8; X_ONLY_PUBLIC_KEY_SIZE];
-pub(crate) type XOnlyPubkeyWithMaybeParity = ([u8; X_ONLY_PUBLIC_KEY_SIZE], Option<i32>);
-pub(crate) type TweakSlice = [u8; TWEAK_SIZE];
-pub(crate) type HashSlice = [u8; HASH_SIZE];
-pub(crate) type ExtraDataSlice = [u8; EXTRA_DATA_SIZE];
-pub(crate) type SignatureSlice = [u8; SIGNATURE_SIZE];
-
-pub(crate) const ERROR_BAD_PRIVATE: usize = 0;
-pub(crate) const ERROR_BAD_POINT: usize = 1;
-// pub(crate) const ERROR_BAD_TWEAK: usize = 2;
-// pub(crate) const ERROR_BAD_HASH: usize = 3;
-pub(crate) const ERROR_BAD_SIGNATURE: usize = 4;
-// pub(crate) const ERROR_BAD_EXTRA_DATA: usize = 5;
-// pub(crate) const ERROR_BAD_PARITY: usize = 6;
 
 #[allow(clippy::large_stack_arrays)]
 pub(crate) static CONTEXT_BUFFER: [u8; 1_114_320] = [0; 1_114_320];
@@ -67,7 +41,7 @@ pub(crate) unsafe fn create_keypair(input: *const u8) -> InvalidInputResult<KeyP
     if secp256k1_keypair_create(get_context(), &mut kp, input) == 1 {
         Ok(kp)
     } else {
-        Err(ERROR_BAD_PRIVATE)
+        Err(Error::BadPrivate)
     }
 }
 
@@ -101,7 +75,7 @@ pub(crate) unsafe fn pubkey_parse(
     if secp256k1_ec_pubkey_parse(secp256k1_context_no_precomp, &mut pk, input, inputlen) == 1 {
         Ok(pk)
     } else {
-        Err(ERROR_BAD_POINT)
+        Err(Error::BadPoint)
     }
 }
 
@@ -110,7 +84,7 @@ pub(crate) unsafe fn x_only_pubkey_parse(input: *const u8) -> InvalidInputResult
     if secp256k1_xonly_pubkey_parse(secp256k1_context_no_precomp, &mut pk, input) == 1 {
         Ok(pk)
     } else {
-        Err(ERROR_BAD_POINT)
+        Err(Error::BadPoint)
     }
 }
 

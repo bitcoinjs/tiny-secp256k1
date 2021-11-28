@@ -15,4 +15,4 @@ publish = false
 crate-type = ["cdylib"]
 
 [dependencies]
-tiny-secp256k1 = { path = "../tiny-secp256k1", features = ["no_std"] }
+tiny-secp256k1 = { path = "../tiny-secp256k1", features = [ "no_std", "minimal_validation" ] }

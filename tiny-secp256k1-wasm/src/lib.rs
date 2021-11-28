@@ -155,7 +155,7 @@ pub extern "C" fn x_only_point_add_tweak() -> i32 {
         );
         X_ONLY_PUBLIC_KEY_INPUT.get_mut()[..X_ONLY_PUBLIC_KEY_SIZE]
             .copy_from_slice(&x_only_point[..X_ONLY_PUBLIC_KEY_SIZE]);
-        parity.unwrap_or(-1)
+        parity
     }
 }
 
@@ -250,7 +250,10 @@ pub extern "C" fn point_multiply(inputlen: usize, compressed: usize) -> i32 {
 #[export_name = "privateAdd"]
 pub extern "C" fn private_add() -> i32 {
     unsafe {
-        let private = tiny_secp256k1::private_add(PRIVATE_INPUT.get_ref(), TWEAK_INPUT.get_ref());
+        let private = jstry!(
+            tiny_secp256k1::private_add(PRIVATE_INPUT.get_ref(), TWEAK_INPUT.get_ref()),
+            0
+        );
         PRIVATE_INPUT
             .get_mut()
             .copy_from_slice(&priv_or_ret!(private, 0));
@@ -262,7 +265,10 @@ pub extern "C" fn private_add() -> i32 {
 #[export_name = "privateSub"]
 pub extern "C" fn private_sub() -> i32 {
     unsafe {
-        let private = tiny_secp256k1::private_sub(PRIVATE_INPUT.get_ref(), TWEAK_INPUT.get_ref());
+        let private = jstry!(
+            tiny_secp256k1::private_sub(PRIVATE_INPUT.get_ref(), TWEAK_INPUT.get_ref()),
+            0
+        );
         PRIVATE_INPUT
             .get_mut()
             .copy_from_slice(&priv_or_ret!(private, 0));
@@ -275,7 +281,7 @@ pub extern "C" fn sign(extra_data: i32) {
     unsafe {
         SIGNATURE_INPUT
             .get_mut()
-            .copy_from_slice(&tiny_secp256k1::sign(
+            .copy_from_slice(&jstry!(tiny_secp256k1::sign(
                 HASH_INPUT.get_ref(),
                 PRIVATE_INPUT.get_ref(),
                 if extra_data == 0 {
@@ -283,7 +289,7 @@ pub extern "C" fn sign(extra_data: i32) {
                 } else {
                     Some(EXTRA_DATA_INPUT.get_ref())
                 },
-            ));
+            )));
     }
 }
 
@@ -293,7 +299,7 @@ pub extern "C" fn sign_schnorr(extra_data: i32) {
     unsafe {
         SIGNATURE_INPUT
             .get_mut()
-            .copy_from_slice(&tiny_secp256k1::sign_schnorr(
+            .copy_from_slice(&jstry!(tiny_secp256k1::sign_schnorr(
                 HASH_INPUT.get_ref(),
                 PRIVATE_INPUT.get_ref(),
                 if extra_data == 0 {
@@ -301,7 +307,7 @@ pub extern "C" fn sign_schnorr(extra_data: i32) {
                 } else {
                     Some(EXTRA_DATA_INPUT.get_ref())
                 },
-            ));
+            )));
     }
 }
 

@@ -4,6 +4,19 @@
 #![allow(clippy::missing_errors_doc)]
 #![cfg_attr(feature = "no_std", no_std)]
 
+mod consts;
+mod error;
+mod types;
+mod utils;
+pub use error::Error;
+
+#[cfg(not(feature = "minimal_validation"))]
+mod validate;
+#[cfg(not(feature = "minimal_validation"))]
+use validate::{
+    validate_parity, validate_point, validate_private, validate_signature, validate_tweak,
+};
+
 use secp256k1_sys::{
     secp256k1_context_no_precomp, secp256k1_context_preallocated_create,
     secp256k1_context_preallocated_size, secp256k1_context_randomize, secp256k1_ec_pubkey_combine,
@@ -17,14 +30,18 @@ use secp256k1_sys::{
     XOnlyPublicKey, SECP256K1_START_SIGN, SECP256K1_START_VERIFY,
 };
 
-mod utils;
+use consts::{
+    PRIVATE_KEY_SIZE, PUBLIC_KEY_UNCOMPRESSED_SIZE, SIGNATURE_SIZE, TWEAK_SIZE,
+    X_ONLY_PUBLIC_KEY_SIZE, ZERO32,
+};
+use types::{
+    ExtraDataSlice, HashSlice, InvalidInputResult, PrivkeySlice, PubkeySlice, SignatureSlice,
+    TweakSlice, XOnlyPubkeySlice, XOnlyPubkeyWithMaybeParity, XOnlyPubkeyWithParity,
+};
 use utils::{
     assume_compression, create_keypair, get_context, pubkey_parse, pubkey_serialize,
     x_only_pubkey_from_pubkey, x_only_pubkey_from_pubkey_struct, x_only_pubkey_parse,
-    x_only_pubkey_serialize, ExtraDataSlice, HashSlice, InvalidInputResult, PrivkeySlice,
-    PubkeySlice, SignatureSlice, TweakSlice, XOnlyPubkeySlice, XOnlyPubkeyWithMaybeParity, CONTEXT,
-    CONTEXT_BUFFER, CONTEXT_SET, ERROR_BAD_SIGNATURE, PRIVATE_KEY_SIZE,
-    PUBLIC_KEY_UNCOMPRESSED_SIZE, SIGNATURE_SIZE, TWEAK_SIZE, X_ONLY_PUBLIC_KEY_SIZE, ZERO32,
+    x_only_pubkey_serialize, CONTEXT, CONTEXT_BUFFER, CONTEXT_SET,
 };
 
 #[allow(clippy::missing_panics_doc)]
@@ -46,6 +63,12 @@ pub fn set_context(seed: [u8; 32]) -> *const Context {
 }
 
 pub fn is_point(pubkey: &PubkeySlice) -> bool {
+    #[cfg(not(feature = "minimal_validation"))]
+    {
+        if validate_point(pubkey).is_err() {
+            return false;
+        };
+    }
     unsafe {
         if pubkey.1 == X_ONLY_PUBLIC_KEY_SIZE {
             x_only_pubkey_parse(pubkey.0.as_ptr()).map_or_else(|_error| false, |_pk| true)
@@ -63,6 +86,11 @@ pub fn point_add(
     pubkey2: &PubkeySlice,
     compressed: Option<bool>,
 ) -> InvalidInputResult<Option<PubkeySlice>> {
+    #[cfg(not(feature = "minimal_validation"))]
+    {
+        validate_point(pubkey1)?;
+        validate_point(pubkey2)?;
+    }
     let outputlen = assume_compression(compressed, Some(pubkey1));
     unsafe {
         let pk1 = pubkey_parse(pubkey1.0.as_ptr(), pubkey1.1)?;
@@ -90,6 +118,11 @@ pub fn point_add_scalar(
     tweak: &TweakSlice,
     compressed: Option<bool>,
 ) -> InvalidInputResult<Option<PubkeySlice>> {
+    #[cfg(not(feature = "minimal_validation"))]
+    {
+        validate_point(pubkey)?;
+        validate_tweak(tweak)?;
+    }
     let outputlen = assume_compression(compressed, Some(pubkey));
     unsafe {
         let mut pk = pubkey_parse(pubkey.0.as_ptr(), pubkey.1)?;
@@ -111,7 +144,12 @@ pub fn point_add_scalar(
 pub fn x_only_point_add_tweak(
     pubkey: &XOnlyPubkeySlice,
     tweak: &TweakSlice,
-) -> InvalidInputResult<Option<XOnlyPubkeyWithMaybeParity>> {
+) -> InvalidInputResult<Option<XOnlyPubkeyWithParity>> {
+    #[cfg(not(feature = "minimal_validation"))]
+    {
+        // XOnlyPubkeySlice is specific enough a type we don't need simple checks
+        validate_tweak(tweak)?;
+    }
     unsafe {
         let mut xonly_pk = x_only_pubkey_parse(pubkey.as_ptr())?;
         let mut pubkey = PublicKey::new();
@@ -123,7 +161,7 @@ pub fn x_only_point_add_tweak(
         }
         let mut parity: i32 = 0;
         x_only_pubkey_from_pubkey_struct(&mut xonly_pk, &mut parity, &pubkey);
-        let mut output = ([0_u8; X_ONLY_PUBLIC_KEY_SIZE], Some(parity));
+        let mut output = ([0_u8; X_ONLY_PUBLIC_KEY_SIZE], parity);
         x_only_pubkey_serialize(&xonly_pk, output.0.as_mut_ptr());
         Ok(Some(output))
     }
@@ -134,6 +172,12 @@ pub fn x_only_point_add_tweak_check(
     result: &XOnlyPubkeyWithMaybeParity,
     tweak: &TweakSlice,
 ) -> InvalidInputResult<bool> {
+    #[cfg(not(feature = "minimal_validation"))]
+    {
+        // XOnlyPubkeySlice is specific enough a type we don't need simple checks
+        validate_parity(result.1.unwrap_or(0))?;
+        validate_tweak(tweak)?;
+    }
     // Currently there is almost no difference between
     // secp256k1_xonly_pubkey_tweak_add_check and doing it over and checking equality.
     // Later on, performance gains might be added for having parity, so we implement it.
@@ -160,6 +204,10 @@ pub fn point_compress(
     pubkey: &PubkeySlice,
     compressed: Option<bool>,
 ) -> InvalidInputResult<PubkeySlice> {
+    #[cfg(not(feature = "minimal_validation"))]
+    {
+        validate_point(pubkey)?;
+    }
     let outputlen = assume_compression(compressed, Some(pubkey));
     unsafe {
         let pk = pubkey_parse(pubkey.0.as_ptr(), pubkey.1)?;
@@ -173,6 +221,10 @@ pub fn point_from_scalar(
     private: &PrivkeySlice,
     compressed: Option<bool>,
 ) -> InvalidInputResult<Option<PubkeySlice>> {
+    #[cfg(not(feature = "minimal_validation"))]
+    {
+        validate_private(private)?;
+    }
     let outputlen = assume_compression(compressed, None);
     unsafe {
         let mut pk = PublicKey::new();
@@ -189,27 +241,33 @@ pub fn point_from_scalar(
 #[allow(clippy::missing_panics_doc)]
 pub fn x_only_point_from_scalar(
     private: &PrivkeySlice,
-) -> InvalidInputResult<XOnlyPubkeyWithMaybeParity> {
+) -> InvalidInputResult<XOnlyPubkeyWithParity> {
+    #[cfg(not(feature = "minimal_validation"))]
+    {
+        validate_private(private)?;
+    }
     unsafe {
         let keypair = create_keypair(private.as_ptr())?;
         let mut xonly_pk = XOnlyPublicKey::new();
-        let mut parity: i32 = 0; // TODO: Should we return this somehow?
+        let mut parity: i32 = 0;
         assert_eq!(
             secp256k1_keypair_xonly_pub(get_context(), &mut xonly_pk, &mut parity, &keypair),
             1
         );
-        let mut output = ([0_u8; 32], Some(parity));
+        let mut output = ([0_u8; 32], parity);
         x_only_pubkey_serialize(&xonly_pk, output.0.as_mut_ptr());
         Ok(output)
     }
 }
 
-pub fn x_only_point_from_point(
-    pubkey: &PubkeySlice,
-) -> InvalidInputResult<XOnlyPubkeyWithMaybeParity> {
+pub fn x_only_point_from_point(pubkey: &PubkeySlice) -> InvalidInputResult<XOnlyPubkeyWithParity> {
+    #[cfg(not(feature = "minimal_validation"))]
+    {
+        validate_point(pubkey)?;
+    }
     unsafe {
         let (xonly_pk, parity) = x_only_pubkey_from_pubkey(pubkey.0.as_ptr(), pubkey.1)?;
-        let mut output = ([0_u8; 32], Some(parity));
+        let mut output = ([0_u8; 32], parity);
         x_only_pubkey_serialize(&xonly_pk, output.0.as_mut_ptr());
         Ok(output)
     }
@@ -220,6 +278,11 @@ pub fn point_multiply(
     tweak: &TweakSlice,
     compressed: Option<bool>,
 ) -> InvalidInputResult<Option<PubkeySlice>> {
+    #[cfg(not(feature = "minimal_validation"))]
+    {
+        validate_point(pubkey)?;
+        validate_tweak(tweak)?;
+    }
     let outputlen = assume_compression(compressed, Some(pubkey));
     unsafe {
         let mut pk = pubkey_parse(pubkey.0.as_ptr(), pubkey.1)?;
@@ -233,7 +296,15 @@ pub fn point_multiply(
     }
 }
 
-pub fn private_add(private: &PrivkeySlice, tweak: &TweakSlice) -> Option<PrivkeySlice> {
+pub fn private_add(
+    private: &PrivkeySlice,
+    tweak: &TweakSlice,
+) -> InvalidInputResult<Option<PrivkeySlice>> {
+    #[cfg(not(feature = "minimal_validation"))]
+    {
+        validate_private(private)?;
+        validate_tweak(tweak)?;
+    }
     let mut output: PrivkeySlice = [0_u8; PRIVATE_KEY_SIZE];
     output.copy_from_slice(private);
 
@@ -244,22 +315,30 @@ pub fn private_add(private: &PrivkeySlice, tweak: &TweakSlice) -> Option<Privkey
             tweak.as_ptr(),
         ) == 1
         {
-            Some(output)
+            Ok(Some(output))
         } else {
-            None
+            Ok(None)
         }
     }
 }
 
 #[allow(clippy::missing_panics_doc)]
-pub fn private_sub(private: &PrivkeySlice, tweak: &TweakSlice) -> Option<PrivkeySlice> {
+pub fn private_sub(
+    private: &PrivkeySlice,
+    tweak: &TweakSlice,
+) -> InvalidInputResult<Option<PrivkeySlice>> {
+    #[cfg(not(feature = "minimal_validation"))]
+    {
+        validate_private(private)?;
+        validate_tweak(tweak)?;
+    }
     let mut output: PrivkeySlice = [0_u8; PRIVATE_KEY_SIZE];
     output.copy_from_slice(private);
 
     // If tweak is 0, x - 0 = x. Also, secp256k1_ec_seckey_negate will error
     // if we try to negate 0.
     if tweak == &ZERO32 {
-        return Some(output);
+        return Ok(Some(output));
     }
 
     let mut tweak_c: TweakSlice = [0_u8; TWEAK_SIZE];
@@ -276,9 +355,9 @@ pub fn private_sub(private: &PrivkeySlice, tweak: &TweakSlice) -> Option<Privkey
             tweak_c.as_ptr(),
         ) == 1
         {
-            Some(output)
+            Ok(Some(output))
         } else {
-            None
+            Ok(None)
         }
     }
 }
@@ -288,7 +367,11 @@ pub fn sign(
     hash: &HashSlice,
     private: &PrivkeySlice,
     extra_data: Option<&ExtraDataSlice>,
-) -> SignatureSlice {
+) -> InvalidInputResult<SignatureSlice> {
+    #[cfg(not(feature = "minimal_validation"))]
+    {
+        validate_private(private)?;
+    }
     unsafe {
         let mut sig = Signature::new();
         let noncedata = extra_data
@@ -316,7 +399,7 @@ pub fn sign(
             ),
             1
         );
-        output
+        Ok(output)
     }
 }
 
@@ -325,7 +408,11 @@ pub fn sign_schnorr(
     hash: &HashSlice,
     private: &PrivkeySlice,
     extra_data: Option<&ExtraDataSlice>,
-) -> SignatureSlice {
+) -> InvalidInputResult<SignatureSlice> {
+    #[cfg(not(feature = "minimal_validation"))]
+    {
+        validate_private(private)?;
+    }
     unsafe {
         let mut keypair = KeyPair::new();
         let noncedata = extra_data.map_or(&ZERO32, |v| v).as_ptr().cast::<c_void>();
@@ -347,7 +434,7 @@ pub fn sign_schnorr(
             ),
             1
         );
-        output
+        Ok(output)
     }
 }
 
@@ -357,6 +444,11 @@ pub fn verify(
     sig: &SignatureSlice,
     strict: Option<bool>,
 ) -> InvalidInputResult<bool> {
+    #[cfg(not(feature = "minimal_validation"))]
+    {
+        validate_point(pubkey)?;
+        validate_signature(sig)?;
+    }
     unsafe {
         let pk = pubkey_parse(pubkey.0.as_ptr(), pubkey.1)?;
 
@@ -367,7 +459,7 @@ pub fn verify(
             sig.as_ptr(),
         ) == 0
         {
-            return Err(ERROR_BAD_SIGNATURE);
+            return Err(Error::BadSignature);
         }
 
         if !strict.unwrap_or(false) {
@@ -391,6 +483,10 @@ pub fn verify_schnorr(
     pubkey: &XOnlyPubkeySlice,
     signature: &SignatureSlice,
 ) -> InvalidInputResult<bool> {
+    #[cfg(not(feature = "minimal_validation"))]
+    {
+        validate_signature(signature)?;
+    }
     unsafe {
         let pk = x_only_pubkey_parse(pubkey.as_ptr())?;
         if secp256k1_schnorrsig_verify(get_context(), signature.as_ptr(), hash.as_ptr(), &pk) == 1 {

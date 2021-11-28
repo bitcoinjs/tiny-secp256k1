@@ -17,6 +17,7 @@ crate-type = ["lib"]
 [features]
 default = []
 no_std = []
+minimal_validation = []
 
 [dependencies]
 # `[patch.crates-io]` is not working :(
