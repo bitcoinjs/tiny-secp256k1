@@ -18,6 +18,6 @@ const ERRORS_MESSAGES = {
 
 export function throwError(errcode: number): never {
   const message =
-    ERRORS_MESSAGES[errcode.toString()] || `Unknow error code: ${errcode}`;
+    ERRORS_MESSAGES[errcode.toString()] || `Unknown error code: ${errcode}`;
   throw new TypeError(message);
 }

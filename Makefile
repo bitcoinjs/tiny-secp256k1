@@ -18,14 +18,14 @@ build-js:
 
 .PHONY: build-wasm
 build-wasm:
-	RUSTFLAGS="-C link-args=-zstack-size=655360" cargo build --target wasm32-unknown-unknown --release
-	mkdir -p lib && cp -f target/wasm32-unknown-unknown/release/secp256k1_wasm.wasm lib/secp256k1.wasm
+	RUSTFLAGS="-C link-args=-zstack-size=655360" cargo build --target wasm32-unknown-unknown -p tiny-secp256k1-wasm --release
+	mkdir -p lib && cp -f target/wasm32-unknown-unknown/release/tiny_secp256k1_wasm.wasm lib/secp256k1.wasm
 	wasm-opt -O4 --strip-debug --strip-producers --output lib/secp256k1.wasm lib/secp256k1.wasm
 
 .PHONY: build-wasm-debug
 build-wasm-debug:
-	RUSTFLAGS="-C link-args=-zstack-size=655360" cargo build --target wasm32-unknown-unknown
-	mkdir -p lib && cp -f target/wasm32-unknown-unknown/debug/secp256k1_wasm.wasm lib/secp256k1.wasm
+	RUSTFLAGS="-C link-args=-zstack-size=655360" cargo build --target wasm32-unknown-unknown -p tiny-secp256k1-wasm
+	mkdir -p lib && cp -f target/wasm32-unknown-unknown/debug/tiny_secp256k1_wasm.wasm lib/secp256k1.wasm
 
 .PHONY: clean
 clean: clean-deps clean-built

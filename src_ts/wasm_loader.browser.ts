@@ -2,4 +2,5 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import * as wasm from "./secp256k1.wasm";
+wasm.initializeContext();
 export default wasm;
