@@ -1,12 +1,20 @@
-use super::consts::{PUBLIC_KEY_COMPRESSED_SIZE, PUBLIC_KEY_UNCOMPRESSED_SIZE};
-use super::error::Error;
-use super::types::{InvalidInputResult, PubkeySlice};
+use super::{
+    consts::{PUBLIC_KEY_COMPRESSED_SIZE, PUBLIC_KEY_UNCOMPRESSED_SIZE},
+    error::Error,
+    types::{InvalidInputResult, PubkeySlice},
+};
+
 use secp256k1_sys::{
     secp256k1_context_no_precomp, secp256k1_ec_pubkey_parse, secp256k1_ec_pubkey_serialize,
     secp256k1_keypair_create, secp256k1_xonly_pubkey_from_pubkey, secp256k1_xonly_pubkey_parse,
     secp256k1_xonly_pubkey_serialize, Context, KeyPair, PublicKey, XOnlyPublicKey,
     SECP256K1_SER_COMPRESSED, SECP256K1_SER_UNCOMPRESSED,
 };
+
+#[cfg(feature = "rand")]
+use super::set_context;
+#[cfg(feature = "rand")]
+use rand::{self, RngCore};
 
 #[allow(clippy::large_stack_arrays)]
 pub(crate) static CONTEXT_BUFFER: [u8; 1_114_320] = [0; 1_114_320];
@@ -18,6 +26,13 @@ pub(crate) fn get_context() -> *const Context {
         if CONTEXT_SET {
             CONTEXT
         } else {
+            #[cfg(feature = "rand")]
+            {
+                let mut seed = [0_u8; 32];
+                rand::thread_rng().fill_bytes(&mut seed);
+                set_context(seed)
+            }
+            #[cfg(not(feature = "rand"))]
             panic!("No context");
         }
     }
