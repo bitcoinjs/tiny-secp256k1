@@ -80,7 +80,8 @@ dependencies = [
 [[package]]
 name = "secp256k1-sys"
 version = "0.4.1"
-source = "git+https://github.com/rust-bitcoin/rust-secp256k1?rev=455ee57ba4051bb2cfea5f5f675378170fb42c7f#455ee57ba4051bb2cfea5f5f675378170fb42c7f"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "827cb7cce42533829c792fc51b82fbf18b125b45a702ef2c8be77fce65463a7b"
 dependencies = [
  "cc",
 ]
