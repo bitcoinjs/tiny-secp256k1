@@ -127,13 +127,13 @@ jobs:
         path: lib
 
     - name: Create package
-      run: npm pack && shasum -a 256 tiny-secp256k1-*
+      run: npm pack && shasum -a 256 tiny-secp256k1-*.tgz
 
     - name: Upload package
       uses: actions/upload-artifact@v2
       with:
         name: package
-        path: tiny-secp256k1-*
+        path: tiny-secp256k1-*.tgz
 
   benchmark:
     name: Benchmark
