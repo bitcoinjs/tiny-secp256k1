@@ -60,11 +60,12 @@ pub(crate) unsafe fn x_only_pubkey_from_pubkey_struct(
 
 pub(crate) unsafe fn pubkey_parse(pubkey: &PubkeyRef) -> InvalidInputResult<PublicKey> {
     let mut pk = PublicKey::new();
-    let mut container = [0_u8; 65];
+    let mut container: [u8; 33];
 
     // Only use container if XOnly
     let (input, inputlen) = match pubkey {
         PubkeyRef::XOnly(v) => {
+            container = [0_u8; 33];
             container[0] = 2;
             container[1..33].copy_from_slice(&v[0..32]);
             (container.as_ptr(), 33)
