@@ -8,3 +8,7 @@ pub(crate) const EXTRA_DATA_SIZE: usize = 32;
 pub(crate) const SIGNATURE_SIZE: usize = 64;
 
 pub(crate) const ZERO32: [u8; 32] = [0_u8; 32];
+pub(crate) const ORDER: [u8; 32] = [
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 254, 186, 174, 220,
+    230, 175, 72, 160, 59, 191, 210, 94, 140, 208, 54, 65, 65,
+];

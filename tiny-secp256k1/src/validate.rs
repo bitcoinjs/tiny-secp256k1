@@ -1,29 +1,13 @@
 use super::{
-    consts::{
-        PUBLIC_KEY_COMPRESSED_SIZE, PUBLIC_KEY_UNCOMPRESSED_SIZE, X_ONLY_PUBLIC_KEY_SIZE, ZERO32,
-    },
+    consts::ORDER,
     error::Error,
-    types::{InvalidInputResult, PrivkeySlice, PubkeySlice, SignatureSlice, TweakSlice},
+    is_private,
+    types::{InvalidInputResult, PrivkeySlice, SignatureSlice, TweakSlice},
 };
-
-pub(crate) const ORDER: [u8; 32] = [
-    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 254, 186, 174, 220,
-    230, 175, 72, 160, 59, 191, 210, 94, 140, 208, 54, 65, 65,
-];
 
 // pub(crate) fn is_zero(v: &[u8; 32]) -> bool {
 //     v == &ZERO32
 // }
-
-pub(crate) fn is_private(v: &PrivkeySlice) -> bool {
-    v > &ZERO32 && v < &ORDER
-}
-
-pub(crate) fn is_point(v: &PubkeySlice) -> bool {
-    v.1 == PUBLIC_KEY_COMPRESSED_SIZE
-        || v.1 == PUBLIC_KEY_UNCOMPRESSED_SIZE
-        || v.1 == X_ONLY_PUBLIC_KEY_SIZE
-}
 
 // pub(crate) fn is_der_point(v: &PubkeySlice) -> bool {
 //     v.1 == PUBLIC_KEY_COMPRESSED_SIZE || v.1 == PUBLIC_KEY_UNCOMPRESSED_SIZE
@@ -60,14 +44,6 @@ pub(crate) fn validate_private(p: &PrivkeySlice) -> InvalidInputResult<()> {
         Ok(())
     } else {
         Err(Error::BadPrivate)
-    }
-}
-
-pub(crate) fn validate_point(p: &PubkeySlice) -> InvalidInputResult<()> {
-    if is_point(p) {
-        Ok(())
-    } else {
-        Err(Error::BadPoint)
     }
 }
 

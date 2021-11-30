@@ -1,46 +1,23 @@
 use super::{
     consts::{PUBLIC_KEY_COMPRESSED_SIZE, PUBLIC_KEY_UNCOMPRESSED_SIZE},
+    context::get_context,
     error::Error,
-    types::{InvalidInputResult, PubkeySlice},
+    pubkey::PubkeyRef,
+    types::InvalidInputResult,
 };
 
 use secp256k1_sys::{
     secp256k1_context_no_precomp, secp256k1_ec_pubkey_parse, secp256k1_ec_pubkey_serialize,
     secp256k1_keypair_create, secp256k1_xonly_pubkey_from_pubkey, secp256k1_xonly_pubkey_parse,
-    secp256k1_xonly_pubkey_serialize, Context, KeyPair, PublicKey, XOnlyPublicKey,
-    SECP256K1_SER_COMPRESSED, SECP256K1_SER_UNCOMPRESSED,
+    secp256k1_xonly_pubkey_serialize, KeyPair, PublicKey, XOnlyPublicKey, SECP256K1_SER_COMPRESSED,
+    SECP256K1_SER_UNCOMPRESSED,
 };
 
-#[cfg(feature = "rand")]
-use super::set_context;
-#[cfg(feature = "rand")]
-use rand::{self, RngCore};
-
-#[allow(clippy::large_stack_arrays)]
-pub(crate) static CONTEXT_BUFFER: [u8; 1_114_320] = [0; 1_114_320];
-pub(crate) static mut CONTEXT: *const Context = core::ptr::null();
-pub(crate) static mut CONTEXT_SET: bool = false;
-
-pub(crate) fn get_context() -> *const Context {
-    unsafe {
-        if CONTEXT_SET {
-            CONTEXT
-        } else {
-            #[cfg(feature = "rand")]
-            {
-                let mut seed = [0_u8; 32];
-                rand::thread_rng().fill_bytes(&mut seed);
-                set_context(seed)
-            }
-            #[cfg(not(feature = "rand"))]
-            panic!("No context");
-        }
-    }
-}
-
-pub(crate) fn assume_compression(compressed: Option<bool>, p: Option<&PubkeySlice>) -> usize {
+pub(crate) fn assume_compression(compressed: Option<bool>, p: Option<usize>) -> usize {
+    // To allow for XOnly PubkeyRef length to indicate compressed,
+    // We bitwise OR 1 (32 -> 33, while 33 and 65 stay unchanged)
     compressed.map_or_else(
-        || p.map_or(PUBLIC_KEY_COMPRESSED_SIZE, |v| v.1),
+        || p.map_or(PUBLIC_KEY_COMPRESSED_SIZE, |v| v | 1),
         |v| {
             if v {
                 PUBLIC_KEY_COMPRESSED_SIZE
@@ -61,12 +38,11 @@ pub(crate) unsafe fn create_keypair(input: *const u8) -> InvalidInputResult<KeyP
 }
 
 pub(crate) unsafe fn x_only_pubkey_from_pubkey(
-    input: *const u8,
-    inputlen: usize,
+    pubkey: &PubkeyRef,
 ) -> InvalidInputResult<(XOnlyPublicKey, i32)> {
     let mut xonly_pk = XOnlyPublicKey::new();
     let mut parity: i32 = 0;
-    let pubkey = pubkey_parse(input, inputlen)?;
+    let pubkey = pubkey_parse(pubkey)?;
     x_only_pubkey_from_pubkey_struct(&mut xonly_pk, &mut parity, &pubkey);
     Ok((xonly_pk, parity))
 }
@@ -82,11 +58,19 @@ pub(crate) unsafe fn x_only_pubkey_from_pubkey_struct(
     );
 }
 
-pub(crate) unsafe fn pubkey_parse(
-    input: *const u8,
-    inputlen: usize,
-) -> InvalidInputResult<PublicKey> {
+pub(crate) unsafe fn pubkey_parse(pubkey: &PubkeyRef) -> InvalidInputResult<PublicKey> {
     let mut pk = PublicKey::new();
+    let mut container = [0_u8; 65];
+
+    // Only use container if XOnly
+    let (input, inputlen) = match pubkey {
+        PubkeyRef::XOnly(v) => {
+            container[0] = 2;
+            container[1..33].copy_from_slice(&v[0..32]);
+            (container.as_ptr(), 33)
+        }
+        v => (v.as_ptr(), v.len()),
+    };
     if secp256k1_ec_pubkey_parse(secp256k1_context_no_precomp, &mut pk, input, inputlen) == 1 {
         Ok(pk)
     } else {

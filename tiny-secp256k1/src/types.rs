@@ -1,7 +1,7 @@
 pub(crate) use super::{
     consts::{
-        EXTRA_DATA_SIZE, HASH_SIZE, PRIVATE_KEY_SIZE, PUBLIC_KEY_UNCOMPRESSED_SIZE, SIGNATURE_SIZE,
-        TWEAK_SIZE, X_ONLY_PUBLIC_KEY_SIZE,
+        EXTRA_DATA_SIZE, HASH_SIZE, PRIVATE_KEY_SIZE, SIGNATURE_SIZE, TWEAK_SIZE,
+        X_ONLY_PUBLIC_KEY_SIZE,
     },
     error::Error,
 };
@@ -9,7 +9,6 @@ pub(crate) use super::{
 pub(crate) type InvalidInputResult<T> = Result<T, Error>;
 
 pub(crate) type PrivkeySlice = [u8; PRIVATE_KEY_SIZE];
-pub(crate) type PubkeySlice = ([u8; PUBLIC_KEY_UNCOMPRESSED_SIZE], usize);
 pub(crate) type XOnlyPubkeySlice = [u8; X_ONLY_PUBLIC_KEY_SIZE];
 pub(crate) type XOnlyPubkeyWithMaybeParity = (XOnlyPubkeySlice, Option<i32>);
 pub(crate) type XOnlyPubkeyWithParity = (XOnlyPubkeySlice, i32);

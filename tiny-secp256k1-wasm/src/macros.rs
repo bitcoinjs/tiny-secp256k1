@@ -61,3 +61,12 @@ macro_rules! priv_or_ret {
         }
     };
 }
+
+macro_rules! bad_point {
+    () => {
+        unsafe {
+            throw_error(tiny_secp256k1::Error::BadPoint as usize);
+        }
+        panic!("Bad Point");
+    };
+}

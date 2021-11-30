@@ -13,7 +13,9 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
 
 #[macro_use]
 mod macros;
+mod into_pubkey;
 use core::cell::UnsafeCell;
+use into_pubkey::GeneralKey;
 
 #[link(wasm_import_module = "./validate_error.js")]
 extern "C" {
@@ -99,8 +101,8 @@ pub extern "C" fn initialize_context() {
 #[export_name = "isPoint"]
 pub extern "C" fn is_point(inputlen: usize) -> usize {
     unsafe {
-        let pubkey = (*PUBLIC_KEY_INPUT.get_ref(), inputlen);
-        if tiny_secp256k1::is_point(&pubkey) {
+        let pubkey = GeneralKey(PUBLIC_KEY_INPUT.get_ref(), &inputlen);
+        if tiny_secp256k1::is_point(&pubkey.into()) {
             1
         } else {
             0
@@ -112,15 +114,16 @@ pub extern "C" fn is_point(inputlen: usize) -> usize {
 #[export_name = "pointAdd"]
 pub extern "C" fn point_add(inputlen: usize, inputlen2: usize, compressed: usize) -> i32 {
     unsafe {
-        let (point, size) = jstry_opt!(
+        let pubkey = jstry_opt!(
             tiny_secp256k1::point_add(
-                &(*PUBLIC_KEY_INPUT.get_ref(), inputlen),
-                &(*PUBLIC_KEY_INPUT2.get_ref(), inputlen2),
+                &GeneralKey(PUBLIC_KEY_INPUT.get_ref(), &inputlen).into(),
+                &GeneralKey(PUBLIC_KEY_INPUT2.get_ref(), &inputlen2).into(),
                 pubkey_size_to_opt_bool!(compressed)
             ),
             0
         );
-        PUBLIC_KEY_INPUT.get_mut()[..size].copy_from_slice(&point[..size]);
+        let size = pubkey.len();
+        PUBLIC_KEY_INPUT.get_mut()[..size].copy_from_slice(&pubkey.as_slice()[..size]);
         1
     }
 }
@@ -129,15 +132,16 @@ pub extern "C" fn point_add(inputlen: usize, inputlen2: usize, compressed: usize
 #[export_name = "pointAddScalar"]
 pub extern "C" fn point_add_scalar(inputlen: usize, compressed: usize) -> i32 {
     unsafe {
-        let (point, size) = jstry_opt!(
+        let pubkey = jstry_opt!(
             tiny_secp256k1::point_add_scalar(
-                &(*PUBLIC_KEY_INPUT.get_ref(), inputlen),
+                &GeneralKey(PUBLIC_KEY_INPUT.get_ref(), &inputlen).into(),
                 TWEAK_INPUT.get_ref(),
                 pubkey_size_to_opt_bool!(compressed)
             ),
             0
         );
-        PUBLIC_KEY_INPUT.get_mut()[..size].copy_from_slice(&point[..size]);
+        let size = pubkey.len();
+        PUBLIC_KEY_INPUT.get_mut()[..size].copy_from_slice(&pubkey.as_slice()[..size]);
         1
     }
 }
@@ -183,11 +187,12 @@ pub extern "C" fn x_only_point_add_tweak_check(tweaked_parity: i32) -> i32 {
 #[export_name = "pointCompress"]
 pub extern "C" fn point_compress(inputlen: usize, compressed: usize) {
     unsafe {
-        let (point, size) = jstry!(tiny_secp256k1::point_compress(
-            &(*PUBLIC_KEY_INPUT.get_ref(), inputlen),
+        let pubkey = jstry!(tiny_secp256k1::point_compress(
+            &GeneralKey(PUBLIC_KEY_INPUT.get_ref(), &inputlen).into(),
             pubkey_size_to_opt_bool!(compressed)
         ));
-        PUBLIC_KEY_INPUT.get_mut()[..size].copy_from_slice(&point[..size]);
+        let size = pubkey.len();
+        PUBLIC_KEY_INPUT.get_mut()[..size].copy_from_slice(&pubkey.as_slice()[..size]);
     }
 }
 
@@ -195,14 +200,15 @@ pub extern "C" fn point_compress(inputlen: usize, compressed: usize) {
 #[export_name = "pointFromScalar"]
 pub extern "C" fn point_from_scalar(compressed: usize) -> i32 {
     unsafe {
-        let (point, size) = jstry_opt!(
+        let pubkey = jstry_opt!(
             tiny_secp256k1::point_from_scalar(
                 PRIVATE_INPUT.get_ref(),
                 pubkey_size_to_opt_bool!(compressed)
             ),
             0
         );
-        PUBLIC_KEY_INPUT.get_mut()[..size].copy_from_slice(&point[..size]);
+        let size = pubkey.len();
+        PUBLIC_KEY_INPUT.get_mut()[..size].copy_from_slice(&pubkey.as_slice()[..size]);
         1
     }
 }
@@ -221,10 +227,9 @@ pub extern "C" fn x_only_point_from_scalar() {
 #[export_name = "xOnlyPointFromPoint"]
 pub extern "C" fn x_only_point_from_point(inputlen: usize) {
     unsafe {
-        let (point, _parity) = jstry!(tiny_secp256k1::x_only_point_from_point(&(
-            *PUBLIC_KEY_INPUT.get_ref(),
-            inputlen
-        )));
+        let (point, _parity) = jstry!(tiny_secp256k1::x_only_point_from_point(
+            &GeneralKey(PUBLIC_KEY_INPUT.get_ref(), &inputlen).into()
+        ));
         X_ONLY_PUBLIC_KEY_INPUT.get_mut().copy_from_slice(&point);
     }
 }
@@ -233,15 +238,16 @@ pub extern "C" fn x_only_point_from_point(inputlen: usize) {
 #[export_name = "pointMultiply"]
 pub extern "C" fn point_multiply(inputlen: usize, compressed: usize) -> i32 {
     unsafe {
-        let (point, size) = jstry_opt!(
+        let pubkey = jstry_opt!(
             tiny_secp256k1::point_multiply(
-                &(*PUBLIC_KEY_INPUT.get_ref(), inputlen),
+                &GeneralKey(PUBLIC_KEY_INPUT.get_ref(), &inputlen).into(),
                 TWEAK_INPUT.get_ref(),
                 pubkey_size_to_opt_bool!(compressed)
             ),
             0
         );
-        PUBLIC_KEY_INPUT.get_mut()[..size].copy_from_slice(&point[..size]);
+        let size = pubkey.len();
+        PUBLIC_KEY_INPUT.get_mut()[..size].copy_from_slice(&pubkey.as_slice()[..size]);
         1
     }
 }
@@ -317,7 +323,7 @@ pub extern "C" fn verify(inputlen: usize, strict: i32) -> i32 {
         if jstry!(
             tiny_secp256k1::verify(
                 HASH_INPUT.get_ref(),
-                &(*PUBLIC_KEY_INPUT.get_ref(), inputlen),
+                &GeneralKey(PUBLIC_KEY_INPUT.get_ref(), &inputlen).into(),
                 SIGNATURE_INPUT.get_ref(),
                 match strict {
                     1 => Some(true),
