@@ -70,7 +70,60 @@ pub(crate) fn get_context() -> *const Context {
                 set_context(seed)
             }
             #[cfg(not(feature = "rand"))]
-            panic!("No context");
+            set_context(simple_rand::get_rand())
         }
+    }
+}
+
+// Simple random seed generator.
+// Only for randomizing context when no seed it provided.
+#[cfg(not(feature = "rand"))]
+mod simple_rand {
+    struct Xorshift128(u32, u32, u32, u32);
+    impl Xorshift128 {
+        fn new(seed: u32) -> Self {
+            // Initial state is first 128 bits of
+            // secp256k1 generator point x value
+            Xorshift128(
+                0x79BE667E ^ seed,
+                0xF9DCBBAC ^ seed.wrapping_shl(13),
+                0x55A06295 ^ seed.wrapping_shr(7),
+                0xCE870B07 ^ seed.wrapping_shl(5),
+            )
+        }
+        fn next_32bytes(&mut self) -> [u8; 32] {
+            let ret = [0_u32; 8].map(|_| self.next_u32());
+            // We know this is safe
+            unsafe { core::mem::transmute::<[u32; 8], [u8; 32]>(ret) }
+        }
+
+        fn next_u32(&mut self) -> u32 {
+            /* Algorithm "xor128" from p. 5 of Marsaglia, "Xorshift RNGs" */
+            let mut t = self.3;
+
+            let s = self.0; /* Perform a contrived 32-bit shift. */
+            self.3 = self.2;
+            self.2 = self.1;
+            self.1 = s;
+
+            t ^= t.wrapping_shl(11);
+            t ^= t.wrapping_shr(8);
+            self.0 = t ^ s ^ s.wrapping_shr(19);
+            self.0
+        }
+    }
+
+    static mut USED: bool = false;
+    pub fn get_rand() -> [u8; 32] {
+        if unsafe { USED } {
+            panic!("Only use get_rand once!");
+        }
+        // xorshift128 seeded with ptr of a new stack variable
+        let ptr = (&[0u8; 4]).as_ptr() as u32;
+        let ret = Xorshift128::new(ptr).next_32bytes();
+        unsafe {
+            USED = true;
+        };
+        ret
     }
 }
