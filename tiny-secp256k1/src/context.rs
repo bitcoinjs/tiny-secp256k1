@@ -1,6 +1,8 @@
 #[cfg(feature = "rand")]
 use rand::{self, RngCore};
 
+use core::mem::ManuallyDrop;
+use secp256k1::{secp256k1_sys ,AllPreallocated, Secp256k1};
 use secp256k1_sys::{
     secp256k1_context_preallocated_create, secp256k1_context_preallocated_size,
     secp256k1_context_randomize, types::c_void, Context, SECP256K1_START_SIGN,
@@ -9,6 +11,7 @@ use secp256k1_sys::{
 
 #[allow(clippy::large_stack_arrays)]
 mod buffers {
+    use secp256k1::{AllPreallocated, Secp256k1, secp256k1_sys};
     use secp256k1_sys::Context;
 
     #[cfg(target_pointer_width = "32")]
@@ -18,8 +21,10 @@ mod buffers {
 
     pub(crate) static mut CONTEXT: *const Context = core::ptr::null();
     pub(crate) static mut CONTEXT_SET: bool = false;
+
+    pub(crate) static mut SECP256K1: Option<Secp256k1<AllPreallocated>> = None;
 }
-use buffers::{CONTEXT, CONTEXT_BUFFER, CONTEXT_SET};
+use buffers::{CONTEXT, CONTEXT_BUFFER, CONTEXT_SET, SECP256K1};
 
 #[allow(clippy::missing_panics_doc)]
 #[cfg(feature = "no_std")]
@@ -35,6 +40,9 @@ pub fn set_context(seed: [u8; 32]) -> *const Context {
         let retcode = secp256k1_context_randomize(ctx, seed.as_ptr());
         assert_eq!(retcode, 1);
         CONTEXT = ctx;
+        SECP256K1 = Some(ManuallyDrop::into_inner(Secp256k1::from_raw_all(
+            CONTEXT as *mut Context,
+        )));
         CONTEXT_SET = true;
         CONTEXT
     }
@@ -53,6 +61,9 @@ pub fn set_context(seed: [u8; 32]) -> *const Context {
         let retcode = secp256k1_context_randomize(ctx, seed.as_ptr());
         assert_eq!(retcode, 1);
         CONTEXT = ctx;
+        SECP256K1 = Some(ManuallyDrop::into_inner(Secp256k1::from_raw_all(
+            CONTEXT as *mut Context,
+        )));
         CONTEXT_SET = true;
         CONTEXT
     }
@@ -71,6 +82,27 @@ pub(crate) fn get_context() -> *const Context {
             }
             #[cfg(not(feature = "rand"))]
             set_context(simple_rand::get_rand())
+        }
+    }
+}
+
+pub(crate) fn get_hcontext() -> &'static Secp256k1<AllPreallocated<'static>> {
+    unsafe {
+        if CONTEXT_SET {
+            SECP256K1.as_ref().unwrap()
+        } else {
+            #[cfg(feature = "rand")]
+            {
+                let mut seed = [0_u8; 32];
+                rand::thread_rng().fill_bytes(&mut seed);
+                set_context(seed);
+                SECP256K1.as_ref().unwrap()
+            }
+            #[cfg(not(feature = "rand"))]
+            {
+                set_context(simple_rand::get_rand());
+                SECP256K1.as_ref().unwrap()
+            }
         }
     }
 }

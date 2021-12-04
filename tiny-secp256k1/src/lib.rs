@@ -8,6 +8,7 @@
 //! # tiny-secp256k1
 //!
 //! [![NPM](https://img.shields.io/npm/v/tiny-secp256k1.svg)](https://www.npmjs.org/package/tiny-secp256k1)
+//! [![docs.rs](https://img.shields.io/docsrs/tiny-secp256k1)](https://docs.rs/tiny-secp256k1/latest/tiny_secp256k1/)
 //!
 //! This library is under development, and, like the [secp256k1](https://github.com/bitcoin-core/secp256k1)
 //! C library (through [secp256k1-sys](https://github.com/rust-bitcoin/rust-secp256k1/) Rust crate) it depends
@@ -39,25 +40,27 @@ mod error;
 mod pubkey;
 mod types;
 mod utils;
-use context::get_context;
 #[doc(inline)]
 pub use context::set_context;
+use context::{get_context, get_hcontext};
 pub use error::Error;
 pub use pubkey::{Pubkey, PubkeyRef};
+use secp256k1::secp256k1_sys;
 
 #[cfg(not(feature = "minimal_validation"))]
 mod validate;
 #[cfg(not(feature = "minimal_validation"))]
 use validate::{validate_parity, validate_private, validate_signature, validate_tweak};
 
+use secp256k1;
+
 use secp256k1_sys::{
-    secp256k1_context_no_precomp, secp256k1_ec_pubkey_combine, secp256k1_ec_pubkey_create,
-    secp256k1_ec_pubkey_tweak_add, secp256k1_ec_pubkey_tweak_mul, secp256k1_ec_seckey_negate,
-    secp256k1_ec_seckey_tweak_add, secp256k1_ecdsa_sign, secp256k1_ecdsa_signature_normalize,
-    secp256k1_ecdsa_signature_parse_compact, secp256k1_ecdsa_signature_serialize_compact,
-    secp256k1_ecdsa_verify, secp256k1_keypair_create, secp256k1_keypair_xonly_pub,
-    secp256k1_nonce_function_bip340, secp256k1_nonce_function_rfc6979, secp256k1_schnorrsig_sign,
-    secp256k1_schnorrsig_verify, secp256k1_xonly_pubkey_tweak_add,
+    secp256k1_context_no_precomp, secp256k1_ec_pubkey_tweak_add, secp256k1_ec_pubkey_tweak_mul,
+    secp256k1_ec_seckey_negate, secp256k1_ec_seckey_tweak_add, secp256k1_ecdsa_sign,
+    secp256k1_ecdsa_signature_normalize, secp256k1_ecdsa_signature_parse_compact,
+    secp256k1_ecdsa_signature_serialize_compact, secp256k1_ecdsa_verify, secp256k1_keypair_create,
+    secp256k1_keypair_xonly_pub, secp256k1_nonce_function_bip340, secp256k1_nonce_function_rfc6979,
+    secp256k1_schnorrsig_sign, secp256k1_schnorrsig_verify, secp256k1_xonly_pubkey_tweak_add,
     secp256k1_xonly_pubkey_tweak_add_check, types::c_void, KeyPair, PublicKey, Signature,
     XOnlyPublicKey,
 };
@@ -95,26 +98,40 @@ pub fn point_add(
     pubkey2: &PubkeyRef,
     compressed: Option<bool>,
 ) -> InvalidInputResult<Option<Pubkey>> {
-    let outputlen = assume_compression(compressed, Some(pubkey1.len()));
-    unsafe {
-        let pk1 = pubkey_parse(pubkey1)?;
-        let pk2 = pubkey_parse(pubkey2)?;
-        let mut pk = PublicKey::new();
-        let ptrs = [pk1.as_ptr(), pk2.as_ptr()];
-        if secp256k1_ec_pubkey_combine(
-            secp256k1_context_no_precomp,
-            &mut pk,
-            ptrs.as_ptr().cast::<*const PublicKey>(),
-            ptrs.len() as i32,
-        ) == 1
-        {
-            let mut output = Pubkey::new_from_len(outputlen);
-            pubkey_serialize(&pk, output.as_mut_ptr(), outputlen);
-            Ok(Some(output))
-        } else {
-            Ok(None)
-        }
-    }
+    let compressed = assume_compression(compressed, Some(pubkey1.len()));
+    let key1 = secp256k1::PublicKey::from_slice(pubkey1.as_slice()).map_err(|_| Error::BadPoint)?;
+    let key2 = secp256k1::PublicKey::from_slice(pubkey2.as_slice()).map_err(|_| Error::BadPoint)?;
+
+    Ok(key1.combine(&key2).map_or_else(
+        |_| None,
+        |v| {
+            Some(if compressed == 33 {
+                Pubkey::Compressed(v.serialize())
+            } else {
+                Pubkey::Uncompressed(v.serialize_uncompressed())
+            })
+        },
+    ))
+    // let outputlen = assume_compression(compressed, Some(pubkey1.len()));
+    // unsafe {
+    //     let pk1 = pubkey_parse(pubkey1)?;
+    //     let pk2 = pubkey_parse(pubkey2)?;
+    //     let mut pk = PublicKey::new();
+    //     let ptrs = [pk1.as_ptr(), pk2.as_ptr()];
+    //     if secp256k1_ec_pubkey_combine(
+    //         secp256k1_context_no_precomp,
+    //         &mut pk,
+    //         ptrs.as_ptr().cast::<*const PublicKey>(),
+    //         ptrs.len() as i32,
+    //     ) == 1
+    //     {
+    //         let mut output = Pubkey::new_from_len(outputlen);
+    //         pubkey_serialize(&pk, output.as_mut_ptr(), outputlen);
+    //         Ok(Some(output))
+    //     } else {
+    //         Ok(None)
+    //     }
+    // }
 }
 
 pub fn point_add_scalar(
@@ -217,21 +234,29 @@ pub fn point_from_scalar(
     private: &PrivkeySlice,
     compressed: Option<bool>,
 ) -> InvalidInputResult<Option<Pubkey>> {
-    #[cfg(not(feature = "minimal_validation"))]
-    {
-        validate_private(private)?;
-    }
-    let outputlen = assume_compression(compressed, None);
-    unsafe {
-        let mut pk = PublicKey::new();
-        if secp256k1_ec_pubkey_create(get_context(), &mut pk, private.as_ptr()) == 1 {
-            let mut output = Pubkey::new_from_len(outputlen);
-            pubkey_serialize(&pk, output.as_mut_ptr(), outputlen);
-            Ok(Some(output))
-        } else {
-            Ok(None)
-        }
-    }
+    let compressed = assume_compression(compressed, None);
+    let pk = secp256k1::SecretKey::from_slice(&private[..]).map_err(|_| Error::BadPrivate)?;
+    let pb = secp256k1::PublicKey::from_secret_key(get_hcontext(), &pk);
+    Ok(Some(if compressed == 33 {
+        Pubkey::Compressed(pb.serialize())
+    } else {
+        Pubkey::Uncompressed(pb.serialize_uncompressed())
+    }))
+    // #[cfg(not(feature = "minimal_validation"))]
+    // {
+    //     validate_private(private)?;
+    // }
+    // let outputlen = assume_compression(compressed, None);
+    // unsafe {
+    //     let mut pk = PublicKey::new();
+    //     if secp256k1_ec_pubkey_create(get_context(), &mut pk, private.as_ptr()) == 1 {
+    //         let mut output = Pubkey::new_from_len(outputlen);
+    //         pubkey_serialize(&pk, output.as_mut_ptr(), outputlen);
+    //         Ok(Some(output))
+    //     } else {
+    //         Ok(None)
+    //     }
+    // }
 }
 
 #[allow(clippy::missing_panics_doc)]

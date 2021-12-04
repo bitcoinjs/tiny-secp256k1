@@ -78,6 +78,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "secp256k1"
+version = "0.20.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "97d03ceae636d0fed5bae6a7f4f664354c5f4fcedf6eef053fef17e49f837d0a"
+dependencies = [
+ "secp256k1-sys",
+]
+
+[[package]]
 name = "secp256k1-sys"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -88,10 +97,10 @@ dependencies = [
 
 [[package]]
 name = "tiny-secp256k1"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "rand",
- "secp256k1-sys",
+ "secp256k1",
 ]
 
 [[package]]

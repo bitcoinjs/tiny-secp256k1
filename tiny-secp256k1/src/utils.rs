@@ -6,7 +6,7 @@ use super::{
     types::InvalidInputResult,
 };
 
-use secp256k1_sys::{
+use super::secp256k1_sys::{
     secp256k1_context_no_precomp, secp256k1_ec_pubkey_parse, secp256k1_ec_pubkey_serialize,
     secp256k1_keypair_create, secp256k1_xonly_pubkey_from_pubkey, secp256k1_xonly_pubkey_parse,
     secp256k1_xonly_pubkey_serialize, KeyPair, PublicKey, XOnlyPublicKey, SECP256K1_SER_COMPRESSED,
