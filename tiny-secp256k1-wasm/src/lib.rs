@@ -88,7 +88,7 @@ fn build_context() {
             seed[offset..offset + 4].copy_from_slice(&bytes);
         }
     }
-    tiny_secp256k1::set_context(seed);
+    tiny_secp256k1::set_context(&seed);
 }
 
 #[no_mangle]

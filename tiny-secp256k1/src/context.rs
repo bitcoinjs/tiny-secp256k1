@@ -1,107 +1,71 @@
 #[cfg(feature = "rand")]
 use rand::{self, RngCore};
 
-use core::mem::ManuallyDrop;
-use secp256k1::{secp256k1_sys ,AllPreallocated, Secp256k1};
-use secp256k1_sys::{
-    secp256k1_context_preallocated_create, secp256k1_context_preallocated_size,
-    secp256k1_context_randomize, types::c_void, Context, SECP256K1_START_SIGN,
-    SECP256K1_START_VERIFY,
+use secp256k1::{
+    ffi::{types::AlignedType, Context},
+    AllPreallocated, Secp256k1,
 };
 
 #[allow(clippy::large_stack_arrays)]
-mod buffers {
-    use secp256k1::{AllPreallocated, Secp256k1, secp256k1_sys};
-    use secp256k1_sys::Context;
+mod globals {
+    use secp256k1::{AllPreallocated, Secp256k1};
 
     #[cfg(target_pointer_width = "32")]
-    pub(crate) static CONTEXT_BUFFER: [u8; 1_114_320] = [0; 1_114_320];
+    pub(crate) mod ptr_width_params {
+        pub(crate) const ALIGN_SIZE: usize = 69_645;
+        pub(crate) static mut CONTEXT_BUFFER: [u8; ALIGN_SIZE * 16] = [0_u8; ALIGN_SIZE * 16];
+    }
     #[cfg(target_pointer_width = "64")]
-    pub(crate) static CONTEXT_BUFFER: [u8; 1_114_336] = [0; 1_114_336];
-
-    pub(crate) static mut CONTEXT: *const Context = core::ptr::null();
-    pub(crate) static mut CONTEXT_SET: bool = false;
+    pub(crate) mod ptr_width_params {
+        pub(crate) const ALIGN_SIZE: usize = 69_646;
+        pub(crate) static mut CONTEXT_BUFFER: [u8; ALIGN_SIZE * 16] = [0_u8; ALIGN_SIZE * 16];
+    }
 
     pub(crate) static mut SECP256K1: Option<Secp256k1<AllPreallocated>> = None;
 }
-use buffers::{CONTEXT, CONTEXT_BUFFER, CONTEXT_SET, SECP256K1};
+use globals::{
+    ptr_width_params::{ALIGN_SIZE, CONTEXT_BUFFER},
+    SECP256K1,
+};
 
 #[allow(clippy::missing_panics_doc)]
-#[cfg(feature = "no_std")]
-pub fn set_context(seed: [u8; 32]) -> *const Context {
+pub fn set_context(seed: &[u8; 32]) -> &'static Secp256k1<AllPreallocated<'static>> {
     unsafe {
-        let size =
-            secp256k1_context_preallocated_size(SECP256K1_START_SIGN | SECP256K1_START_VERIFY);
-        assert_eq!(size, CONTEXT_BUFFER.len());
-        let ctx = secp256k1_context_preallocated_create(
-            CONTEXT_BUFFER.as_ptr() as *mut c_void,
-            SECP256K1_START_SIGN | SECP256K1_START_VERIFY,
-        );
-        let retcode = secp256k1_context_randomize(ctx, seed.as_ptr());
-        assert_eq!(retcode, 1);
-        CONTEXT = ctx;
-        SECP256K1 = Some(ManuallyDrop::into_inner(Secp256k1::from_raw_all(
-            CONTEXT as *mut Context,
-        )));
-        CONTEXT_SET = true;
-        CONTEXT
-    }
-}
-
-#[cfg(not(feature = "no_std"))]
-#[allow(clippy::missing_panics_doc)]
-pub fn set_context(seed: [u8; 32]) -> *const Context {
-    unsafe {
-        let flags = SECP256K1_START_SIGN | SECP256K1_START_VERIFY;
-        let size = secp256k1_context_preallocated_size(flags);
-        assert_eq!(size, CONTEXT_BUFFER.len());
-        let layout = std::alloc::Layout::from_size_align(size, 16).unwrap();
-        let ptr = std::alloc::alloc(layout);
-        let ctx = secp256k1_context_preallocated_create(ptr as *mut c_void, flags);
-        let retcode = secp256k1_context_randomize(ctx, seed.as_ptr());
-        assert_eq!(retcode, 1);
-        CONTEXT = ctx;
-        SECP256K1 = Some(ManuallyDrop::into_inner(Secp256k1::from_raw_all(
-            CONTEXT as *mut Context,
-        )));
-        CONTEXT_SET = true;
-        CONTEXT
+        if SECP256K1.is_none() {
+            #[allow(clippy::cast_ptr_alignment)]
+            let aligned = CONTEXT_BUFFER
+                .as_mut_ptr()
+                .cast::<[AlignedType; ALIGN_SIZE]>()
+                .as_mut()
+                .unwrap();
+            SECP256K1 = Some(
+                Secp256k1::preallocated_new(aligned)
+                    .expect("CONTEXT_BUFFER length incorrect for this target"),
+            );
+        }
+        SECP256K1.as_mut().unwrap().seeded_randomize(seed);
+        SECP256K1.as_ref().unwrap()
     }
 }
 
 pub(crate) fn get_context() -> *const Context {
-    unsafe {
-        if CONTEXT_SET {
-            CONTEXT
-        } else {
-            #[cfg(feature = "rand")]
-            {
-                let mut seed = [0_u8; 32];
-                rand::thread_rng().fill_bytes(&mut seed);
-                set_context(seed)
-            }
-            #[cfg(not(feature = "rand"))]
-            set_context(simple_rand::get_rand())
-        }
-    }
+    *get_hcontext().ctx() as *const Context
 }
 
 pub(crate) fn get_hcontext() -> &'static Secp256k1<AllPreallocated<'static>> {
     unsafe {
-        if CONTEXT_SET {
+        if SECP256K1.is_some() {
             SECP256K1.as_ref().unwrap()
         } else {
             #[cfg(feature = "rand")]
             {
                 let mut seed = [0_u8; 32];
                 rand::thread_rng().fill_bytes(&mut seed);
-                set_context(seed);
-                SECP256K1.as_ref().unwrap()
+                set_context(&seed)
             }
             #[cfg(not(feature = "rand"))]
             {
-                set_context(simple_rand::get_rand());
-                SECP256K1.as_ref().unwrap()
+                set_context(&simple_rand::get_rand())
             }
         }
     }
@@ -117,10 +81,10 @@ mod simple_rand {
             // Initial state is first 128 bits of
             // secp256k1 generator point x value
             Xorshift128(
-                0x79BE667E ^ seed,
-                0xF9DCBBAC ^ seed.wrapping_shl(13),
-                0x55A06295 ^ seed.wrapping_shr(7),
-                0xCE870B07 ^ seed.wrapping_shl(5),
+                0x79BE_667E ^ seed,
+                0xF9DC_BBAC ^ seed.wrapping_shl(13),
+                0x55A0_6295 ^ seed.wrapping_shr(7),
+                0xCE87_0B07 ^ seed.wrapping_shl(5),
             )
         }
         fn next_32bytes(&mut self) -> [u8; 32] {
@@ -146,12 +110,17 @@ mod simple_rand {
     }
 
     static mut USED: bool = false;
-    pub fn get_rand() -> [u8; 32] {
+    pub(crate) fn get_rand() -> [u8; 32] {
+        // This function returns the same value
+        // everytime it's called on the same run.
+        // However, each run should produce a different
+        // value, so it is suitable (better than not randomizing)
+        // for the one time initialization of context.
         if unsafe { USED } {
             panic!("Only use get_rand once!");
         }
         // xorshift128 seeded with ptr of a new stack variable
-        let ptr = (&[0u8; 4]).as_ptr() as u32;
+        let ptr = (&[0_u8; 4]).as_ptr() as u32;
         let ret = Xorshift128::new(ptr).next_32bytes();
         unsafe {
             USED = true;
