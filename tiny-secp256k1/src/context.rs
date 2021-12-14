@@ -1,45 +1,39 @@
 #[cfg(feature = "rand")]
 use rand::{self, RngCore};
 
-use secp256k1::{
-    ffi::{types::AlignedType, Context},
-    AllPreallocated, Secp256k1,
-};
-
 #[allow(clippy::large_stack_arrays)]
 mod globals {
-    use secp256k1::{AllPreallocated, Secp256k1};
+    pub use core::mem::transmute;
+    pub use secp256k1::{
+        ffi::{types::AlignedType, Context},
+        AllPreallocated, Secp256k1,
+    };
 
     #[cfg(target_pointer_width = "32")]
-    pub(crate) mod ptr_width_params {
-        pub(crate) const ALIGN_SIZE: usize = 69_645;
-        pub(crate) static mut CONTEXT_BUFFER: [u8; ALIGN_SIZE * 16] = [0_u8; ALIGN_SIZE * 16];
+    pub mod ptr_width_params {
+        use super::{transmute, AlignedType};
+        pub const ALIGN_SIZE: usize = 69_645;
+        pub static mut CONTEXT_BUFFER: [AlignedType; ALIGN_SIZE] =
+            unsafe { transmute([0_u8; ALIGN_SIZE * 16]) };
     }
     #[cfg(target_pointer_width = "64")]
-    pub(crate) mod ptr_width_params {
-        pub(crate) const ALIGN_SIZE: usize = 69_646;
-        pub(crate) static mut CONTEXT_BUFFER: [u8; ALIGN_SIZE * 16] = [0_u8; ALIGN_SIZE * 16];
+    pub mod ptr_width_params {
+        use super::{transmute, AlignedType};
+        pub const ALIGN_SIZE: usize = 69_646;
+        pub static mut CONTEXT_BUFFER: [AlignedType; ALIGN_SIZE] =
+            unsafe { transmute([0_u8; ALIGN_SIZE * 16]) };
     }
 
-    pub(crate) static mut SECP256K1: Option<Secp256k1<AllPreallocated>> = None;
+    pub static mut SECP256K1: Option<Secp256k1<AllPreallocated>> = None;
 }
-use globals::{
-    ptr_width_params::{ALIGN_SIZE, CONTEXT_BUFFER},
-    SECP256K1,
-};
+use globals::{ptr_width_params::CONTEXT_BUFFER, AllPreallocated, Context, Secp256k1, SECP256K1};
 
 #[allow(clippy::missing_panics_doc)]
 pub fn set_context(seed: &[u8; 32]) -> &'static Secp256k1<AllPreallocated<'static>> {
     unsafe {
         if SECP256K1.is_none() {
-            #[allow(clippy::cast_ptr_alignment)]
-            let aligned = CONTEXT_BUFFER
-                .as_mut_ptr()
-                .cast::<[AlignedType; ALIGN_SIZE]>()
-                .as_mut()
-                .unwrap();
             SECP256K1 = Some(
-                Secp256k1::preallocated_new(aligned)
+                Secp256k1::preallocated_new(&mut CONTEXT_BUFFER)
                     .expect("CONTEXT_BUFFER length incorrect for this target"),
             );
         }
