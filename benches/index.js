@@ -117,6 +117,12 @@ const benchmarks = [
     ),
   },
   {
+    name: "recover",
+    bench: createBenchmarkFn(fecdsa, (secp256k1, f) =>
+      secp256k1.recover(f.m, f.signature, f.recoveryId)
+    ),
+  },
+  {
     name: "signSchnorr",
     bench: createBenchmarkFn(fschnorrSign, (secp256k1, f) =>
       secp256k1.signSchnorr(f.m, f.d)
