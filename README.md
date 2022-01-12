@@ -290,6 +290,20 @@ If `strict` is `true`, valid signatures with any of (r, s) values greater than `
 - `Expected Signature` if `signature` has any (r, s) values not in range `[0...order - 1]`
 - `Expected Scalar` if `h` is not 256-bit
 
+### recover (h, signature, recoveryId[, compressed = false])
+
+```haskell
+verify :: Buffer -> Buffer -> Number [-> Bool] -> Maybe Buffer
+```
+
+Returns the ECDSA public key from a signature if it can be recovered, `null` otherwise.
+
+
+##### Throws:
+
+- TODO
+
+
 ### verifySchnorr (h, Q, signature)
 
 ```haskell
