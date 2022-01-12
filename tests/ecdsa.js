@@ -170,4 +170,28 @@ export default function (secp256k1) {
 
     t.end();
   });
+
+  test("recover", (t) => {
+    for (const f of fecdsa.valid) {
+      const d = fromHex(f.d);
+      const Q = secp256k1.pointFromScalar(d, true);
+      const Qu = secp256k1.pointFromScalar(d, false);
+      const m = fromHex(f.m);
+      const signature = fromHex(f.signature);
+
+      t.same(
+        Q,
+        secp256k1.recover(m, signature, f.recoveryId, true),
+        `recover(${f.m}, ..., true) == ${toHex(Q)}`
+      );
+
+      t.same(
+        Qu,
+        secp256k1.recover(m, signature, f.recoveryId, false),
+        `recover(${f.m}, ..., false) == ${toHex(Q)}`
+      );
+    }
+
+    t.end();
+  });
 }
