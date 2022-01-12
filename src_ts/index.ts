@@ -370,8 +370,8 @@ export function verify(
 export function recover(
   h: Uint8Array,
   signature: Uint8Array,
-  recovery: number,
-  compressed?: boolean
+  recoveryId: 0 | 1 | 2 | 3,
+  compressed = false
 ): Uint8Array | null {
   validate.validateHash(h);
   validate.validateSignature(signature);
@@ -380,7 +380,7 @@ export function recover(
     HASH_INPUT.set(h);
     SIGNATURE_INPUT.set(signature);
 
-    return wasm.recover(outputlen, recovery) === 1
+    return wasm.recover(outputlen, recoveryId) === 1
       ? PUBLIC_KEY_INPUT.slice(0, outputlen)
       : null;
   } finally {

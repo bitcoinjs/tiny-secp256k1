@@ -50,7 +50,7 @@ interface Secp256k1WASM {
   signSchnorr: (e: number) => void;
   verify: (Q: number, strict: number) => number;
   verifySchnorr: () => number;
-  recover: (outputlen: number, recid: number) => number;
+  recover: (outputlen: number, recoveryId: 0 | 1 | 2 | 3) => number;
 }
 
 export default instance.exports as unknown as Secp256k1WASM;
