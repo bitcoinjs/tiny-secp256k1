@@ -27,6 +27,11 @@ use secp256k1_sys::{
     SECP256K1_START_VERIFY,
 };
 
+use secp256k1_sys::recovery::{
+    secp256k1_ecdsa_recover, secp256k1_ecdsa_recoverable_signature_parse_compact,
+    RecoverableSignature,
+};
+
 #[link(wasm_import_module = "./validate_error.js")]
 extern "C" {
     #[link_name = "throwError"]
@@ -504,6 +509,31 @@ pub extern "C" fn verify(inputlen: usize, strict: i32) -> i32 {
         }
 
         if secp256k1_ecdsa_verify(get_context(), &signature, HASH_INPUT.as_ptr(), &pk) == 1 {
+            1
+        } else {
+            0
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn recover(outputlen: usize, recid: i32) -> i32 {
+    unsafe {
+        let mut signature = RecoverableSignature::new();
+        if secp256k1_ecdsa_recoverable_signature_parse_compact(
+            secp256k1_context_no_precomp,
+            &mut signature,
+            SIGNATURE_INPUT.as_ptr(),
+            recid,
+        ) == 0
+        {
+            throw_error(ERROR_BAD_SIGNATURE);
+            return 0;
+        }
+
+        let mut pk = PublicKey::new();
+        if secp256k1_ecdsa_recover(get_context(), &mut pk, &signature, HASH_INPUT.as_ptr()) == 1 {
+            pubkey_serialize(&pk, PUBLIC_KEY_INPUT.as_mut_ptr(), outputlen);
             1
         } else {
             0
