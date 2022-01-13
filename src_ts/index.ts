@@ -367,10 +367,11 @@ export function verify(
   }
 }
 
+export type RecoveryIdType = 0 | 1 | 2 | 3;
 export function recover(
   h: Uint8Array,
   signature: Uint8Array,
-  recoveryId: 0 | 1 | 2 | 3,
+  recoveryId: RecoveryIdType,
   compressed = false
 ): Uint8Array | null {
   validate.validateHash(h);
