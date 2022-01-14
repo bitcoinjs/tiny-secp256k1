@@ -24,6 +24,12 @@ const BN32_N = new Uint8Array([
   254, 186, 174, 220, 230, 175, 72, 160, 59, 191, 210, 94, 140, 208, 54, 65, 65,
 ]);
 
+// Difference between field and order
+const BN32_P_MINUS_N = new Uint8Array([
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 69, 81, 35, 25, 80, 183, 95,
+  196, 64, 45, 161, 114, 47, 201, 186, 238,
+]);
+
 function isUint8Array(value: Uint8Array): boolean {
   return value instanceof Uint8Array;
 }
@@ -100,6 +106,14 @@ function isSignature(signature: Uint8Array): boolean {
   );
 }
 
+function isSigrLessThanPMinusN(signature: Uint8Array): boolean {
+  return (
+    isUint8Array(signature) &&
+    signature.length === 64 &&
+    cmpBN32(signature.subarray(0, 32), BN32_P_MINUS_N) < 0
+  );
+}
+
 export function validateParity(p: 1 | 0): void {
   if (p !== 0 && p !== 1) throwError(ERROR_BAD_PARITY);
 }
@@ -130,4 +144,17 @@ export function validateExtraData(e?: Uint8Array): void {
 
 export function validateSignature(signature: Uint8Array): void {
   if (!isSignature(signature)) throwError(ERROR_BAD_SIGNATURE);
+}
+
+export function validateSignatureCustom(validatorFn: () => boolean): void {
+  if (!validatorFn()) throwError(ERROR_BAD_SIGNATURE);
+}
+
+export function validateSignatureNonzeroRS(signature: Uint8Array): void {
+  if (isZero(signature.subarray(0, 32))) throwError(ERROR_BAD_SIGNATURE);
+  if (isZero(signature.subarray(32, 64))) throwError(ERROR_BAD_SIGNATURE);
+}
+
+export function validateSigrPMinusN(signature: Uint8Array): void {
+  if (!isSigrLessThanPMinusN(signature)) throwError(ERROR_BAD_SIGNATURE);
 }

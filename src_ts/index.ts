@@ -376,6 +376,14 @@ export function recover(
 ): Uint8Array | null {
   validate.validateHash(h);
   validate.validateSignature(signature);
+  validate.validateSignatureNonzeroRS(signature);
+  if (recoveryId & 2) {
+    validate.validateSigrPMinusN(signature);
+  }
+  validate.validateSignatureCustom((): boolean =>
+    isXOnlyPoint(signature.subarray(0, 32))
+  );
+
   const outputlen = assumeCompression(compressed);
   try {
     HASH_INPUT.set(h);

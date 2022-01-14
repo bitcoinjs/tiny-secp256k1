@@ -192,6 +192,19 @@ export default function (secp256k1) {
       );
     }
 
+    for (const f of fecdsa.invalid.recover) {
+      const m = fromHex(f.m);
+      const signature = fromHex(f.signature);
+
+      t.throws(
+        () => {
+          secp256k1.recover(m, signature, f.recoveryId || 0);
+        },
+        new RegExp(f.exception),
+        `${f.description} throws ${f.exception}`
+      );
+    }
+
     t.end();
   });
 }
