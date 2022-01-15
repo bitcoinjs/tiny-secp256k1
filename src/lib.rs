@@ -107,7 +107,7 @@ fn initialize_context_seed() {
     unsafe {
         for offset in (0..8).map(|v| v * 4) {
             let value = generate_int32();
-            let bytes: [u8; 4] = core::mem::transmute(value);
+            let bytes: [u8; 4] = value.to_ne_bytes();
             CONTEXT_SEED[offset..offset + 4].copy_from_slice(&bytes);
         }
     }
