@@ -7,6 +7,7 @@ import {
   ERROR_BAD_EXTRA_DATA,
   ERROR_BAD_SIGNATURE,
   ERROR_BAD_PARITY,
+  ERROR_BAD_RECOVERY_ID,
 } from "./validate_error.js";
 
 export const PRIVATE_KEY_SIZE = 32;
@@ -156,5 +157,5 @@ export function validateSignatureNonzeroRS(signature: Uint8Array): void {
 }
 
 export function validateSigrPMinusN(signature: Uint8Array): void {
-  if (!isSigrLessThanPMinusN(signature)) throwError(ERROR_BAD_SIGNATURE);
+  if (!isSigrLessThanPMinusN(signature)) throwError(ERROR_BAD_RECOVERY_ID);
 }

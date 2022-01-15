@@ -12361,7 +12361,7 @@
       },
       {
         "description": "Invalid r value for r (should be less than p - order)",
-        "exception": "Expected Signature",
+        "exception": "Bad Recovery Id",
         "m": "0000000000000000000000000000000000000000000000000000000000000003",
         "recoveryId": 2,
         "signature": "33a69cd2065432a30f3d1ce4eb0d59b8ab58c74f27c41a7fdb5696ad4e6108c96f807982866f785d3f6418d24163ddae117b7db4d5fdf0071de069fa54342262"
