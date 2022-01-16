@@ -29,6 +29,7 @@ use secp256k1_sys::{
 
 use secp256k1_sys::recovery::{
     secp256k1_ecdsa_recover, secp256k1_ecdsa_recoverable_signature_parse_compact,
+    secp256k1_ecdsa_recoverable_signature_serialize_compact, secp256k1_ecdsa_sign_recoverable,
     RecoverableSignature,
 };
 
@@ -449,6 +450,45 @@ pub extern "C" fn sign(extra_data: i32) {
             ),
             1
         );
+    }
+}
+
+#[allow(clippy::missing_panics_doc)]
+#[no_mangle]
+#[export_name = "signRecoverable"]
+pub extern "C" fn sign_recoverable(extra_data: i32) -> i32 {
+    unsafe {
+        let mut sig = RecoverableSignature::new();
+        let noncedata = (if extra_data == 0 {
+            core::ptr::null()
+        } else {
+            EXTRA_DATA_INPUT.as_ptr()
+        })
+        .cast::<c_void>();
+
+        assert_eq!(
+            secp256k1_ecdsa_sign_recoverable(
+                get_context(),
+                &mut sig,
+                HASH_INPUT.as_ptr(),
+                PRIVATE_INPUT.as_ptr(),
+                secp256k1_nonce_function_rfc6979,
+                noncedata
+            ),
+            1
+        );
+
+        let mut recid: i32 = 0;
+        assert_eq!(
+            secp256k1_ecdsa_recoverable_signature_serialize_compact(
+                secp256k1_context_no_precomp,
+                SIGNATURE_INPUT.as_mut_ptr(),
+                &mut recid,
+                &sig,
+            ),
+            1
+        );
+        return recid;
     }
 }
 

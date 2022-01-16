@@ -324,6 +324,41 @@ export function sign(h: Uint8Array, d: Uint8Array, e?: Uint8Array): Uint8Array {
   }
 }
 
+export interface RecoverableSignature {
+  signature: Uint8Array;
+  recoveryId: RecoveryIdType;
+}
+export function signRecoverable(
+  h: Uint8Array,
+  d: Uint8Array,
+  e?: Uint8Array
+): RecoverableSignature {
+  validate.validateHash(h);
+  validate.validatePrivate(d);
+  validate.validateExtraData(e);
+  try {
+    HASH_INPUT.set(h);
+    PRIVATE_KEY_INPUT.set(d);
+    if (e !== undefined) EXTRA_DATA_INPUT.set(e);
+    const recoveryId: RecoveryIdType = wasm.signRecoverable(
+      e === undefined ? 0 : 1
+    );
+    const signature: Uint8Array = SIGNATURE_INPUT.slice(
+      0,
+      validate.SIGNATURE_SIZE
+    );
+    return {
+      signature,
+      recoveryId,
+    };
+  } finally {
+    HASH_INPUT.fill(0);
+    PRIVATE_KEY_INPUT.fill(0);
+    if (e !== undefined) EXTRA_DATA_INPUT.fill(0);
+    SIGNATURE_INPUT.fill(0);
+  }
+}
+
 export function signSchnorr(
   h: Uint8Array,
   d: Uint8Array,

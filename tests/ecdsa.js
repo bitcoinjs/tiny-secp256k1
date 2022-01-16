@@ -108,6 +108,122 @@ export default function (secp256k1) {
     t.end();
   });
 
+  test("signRecoverable", (t) => {
+    for (const f of fecdsa.valid) {
+      const d = fromHex(f.d);
+      const m = fromHex(f.m);
+      const expected = fromHex(f.signature);
+
+      const res = secp256k1.signRecoverable(m, d);
+      t.same(
+        res.signature,
+        expected,
+        `signRecoverable(${f.m}, ...) == ${f.signature}`
+      );
+
+      t.same(
+        res.recoveryId,
+        f.recoveryId,
+        `signRecoverable(${f.m}, ${f.recoveryId}, ...) == ${f.signature}`
+      );
+    }
+
+    for (const f of fecdsa.extraEntropy) {
+      const d = fromHex(f.d);
+      const m = fromHex(f.m);
+      const expectedSig = fromHex(f.signature);
+      const expectedExtraEntropy0 = fromHex(f.extraEntropy0);
+      const expectedExtraEntropy1 = fromHex(f.extraEntropy1);
+      const expectedExtraEntropyRand = fromHex(f.extraEntropyRand);
+      const expectedExtraEntropyN = fromHex(f.extraEntropyN);
+      const expectedExtraEntropyMax = fromHex(f.extraEntropyMax);
+
+      const extraEntropyUndefined = secp256k1.signRecoverable(m, d);
+      const extraEntropy0 = secp256k1.signRecoverable(m, d, buf1);
+      const extraEntropy1 = secp256k1.signRecoverable(m, d, buf2);
+      const extraEntropyRand = secp256k1.signRecoverable(m, d, buf3);
+      const extraEntropyN = secp256k1.signRecoverable(m, d, buf4);
+      const extraEntropyMax = secp256k1.signRecoverable(m, d, buf5);
+
+      t.same(
+        extraEntropyUndefined.signature,
+        expectedSig,
+        `signRecoverable(${f.m}, ..., undefined) == ${f.signature}`
+      );
+      t.same(
+        extraEntropy0.signature,
+        expectedExtraEntropy0,
+        `signRecoverable(${f.m}, ..., 0) == ${f.signature}`
+      );
+      t.same(
+        extraEntropy1.signature,
+        expectedExtraEntropy1,
+        `signRecoverable(${f.m}, ..., 1) == ${f.signature}`
+      );
+      t.same(
+        extraEntropyRand.signature,
+        expectedExtraEntropyRand,
+        `signRecoverable(${f.m}, ..., rand) == ${f.signature}`
+      );
+      t.same(
+        extraEntropyN.signature,
+        expectedExtraEntropyN,
+        `signRecoverable(${f.m}, ..., n) == ${f.signature}`
+      );
+      t.same(
+        extraEntropyMax.signature,
+        expectedExtraEntropyMax,
+        `signRecoverable(${f.m}, ..., max256) == ${f.signature}`
+      );
+
+      t.same(
+        extraEntropyUndefined.recoveryId,
+        f.recoveryId,
+        `signRecoverable(${f.m}, ${f.recoveryId} ..., undefined) == ${f.signature}`
+      );
+      t.same(
+        extraEntropy0.recoveryId,
+        f.recoveryId0,
+        `signRecoverable(${f.m}, ${f.recoveryId0} ..., 0) == ${f.signature}`
+      );
+      t.same(
+        extraEntropy1.recoveryId,
+        f.recoveryId1,
+        `signRecoverable(${f.m}, ${f.recoveryId1} ..., 1) == ${f.signature}`
+      );
+      t.same(
+        extraEntropyRand.recoveryId,
+        f.recoveryIdRand,
+        `signRecoverable(${f.m}, ${f.recoveryIdRand} ..., rand) == ${f.signature}`
+      );
+      t.same(
+        extraEntropyN.recoveryId,
+        f.recoveryIdN,
+        `signRecoverable(${f.m}, ${f.recoveryIdN} ..., n) == ${f.signature}`
+      );
+      t.same(
+        extraEntropyMax.recoveryId,
+        f.recoveryIdMax,
+        `signRecoverable(${f.m}, ${extraEntropyMax.recoveryId} ..., max256) == ${f.signature}`
+      );
+    }
+
+    for (const f of fecdsa.invalid.sign) {
+      const d = fromHex(f.d);
+      const m = fromHex(f.m);
+
+      t.throws(
+        () => {
+          secp256k1.signRecoverable(m, d);
+        },
+        new RegExp(f.exception),
+        `${f.description} throws ${f.exception}`
+      );
+    }
+
+    t.end();
+  });
+
   test("verify", (t) => {
     for (const f of fecdsa.valid) {
       const d = fromHex(f.d);

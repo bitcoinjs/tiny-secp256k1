@@ -49,6 +49,7 @@ interface Secp256k1WASM {
   privateAdd: () => number;
   privateSub: () => number;
   sign: (e: number) => void;
+  signRecoverable: (e: number) => 0 | 1 | 2 | 3;
   signSchnorr: (e: number) => void;
   verify: (Q: number, strict: number) => number;
   verifySchnorr: () => number;
