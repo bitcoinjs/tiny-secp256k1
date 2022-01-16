@@ -479,16 +479,13 @@ pub extern "C" fn sign_recoverable(extra_data: i32) -> i32 {
         );
 
         let mut recid: i32 = 0;
-        assert_eq!(
-            secp256k1_ecdsa_recoverable_signature_serialize_compact(
-                secp256k1_context_no_precomp,
-                SIGNATURE_INPUT.as_mut_ptr(),
-                &mut recid,
-                &sig,
-            ),
-            1
+        secp256k1_ecdsa_recoverable_signature_serialize_compact(
+            secp256k1_context_no_precomp,
+            SIGNATURE_INPUT.as_mut_ptr(),
+            &mut recid,
+            &sig,
         );
-        return recid;
+        recid
     }
 }
 
