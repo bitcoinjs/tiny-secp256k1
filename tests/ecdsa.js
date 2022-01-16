@@ -321,6 +321,85 @@ export default function (secp256k1) {
       );
     }
 
+    for (const f of fecdsa.extraEntropy) {
+      const d = fromHex(f.d);
+      const Q = secp256k1.pointFromScalar(d, true);
+      const Qu = secp256k1.pointFromScalar(d, false);
+      const m = fromHex(f.m);
+      const expectedSig = fromHex(f.signature);
+      const expectedExtraEntropy0 = fromHex(f.extraEntropy0);
+      const expectedExtraEntropy1 = fromHex(f.extraEntropy1);
+      const expectedExtraEntropyRand = fromHex(f.extraEntropyRand);
+      const expectedExtraEntropyN = fromHex(f.extraEntropyN);
+      const expectedExtraEntropyMax = fromHex(f.extraEntropyMax);
+
+      t.same(
+        Q,
+        secp256k1.recover(m, expectedSig, f.recoveryId, true),
+        `recover(${f.m}, ${f.recoveryId} ..., true) == ${toHex(Q)}`
+      );
+      t.same(
+        Qu,
+        secp256k1.recover(m, expectedSig, f.recoveryId, false),
+        `recover(${f.m}, ${f.recoveryId} ..., false) == ${toHex(Q)}`
+      );
+
+      t.same(
+        Q,
+        secp256k1.recover(m, expectedExtraEntropy0, f.recoveryId0, true),
+        `recover(${f.m}, ${f.recoveryId0} ..., true) == ${toHex(Q)}`
+      );
+      t.same(
+        Qu,
+        secp256k1.recover(m, expectedExtraEntropy0, f.recoveryId0, false),
+        `recover(${f.m}, ${f.recoveryId0} ..., false) == ${toHex(Q)}`
+      );
+
+      t.same(
+        Q,
+        secp256k1.recover(m, expectedExtraEntropy1, f.recoveryId1, true),
+        `recover(${f.m}, ${f.recoveryId1} ..., true) == ${toHex(Q)}`
+      );
+      t.same(
+        Qu,
+        secp256k1.recover(m, expectedExtraEntropy1, f.recoveryId1, false),
+        `recover(${f.m}, ${f.recoveryId1} ..., false) == ${toHex(Q)}`
+      );
+
+      t.same(
+        Q,
+        secp256k1.recover(m, expectedExtraEntropyRand, f.recoveryIdRand, true),
+        `recover(${f.m}, ${f.recoveryIdRand} ..., true) == ${toHex(Q)}`
+      );
+      t.same(
+        Qu,
+        secp256k1.recover(m, expectedExtraEntropyRand, f.recoveryIdRand, false),
+        `recover(${f.m}, ${f.recoveryIdRand} ..., false) == ${toHex(Q)}`
+      );
+
+      t.same(
+        Q,
+        secp256k1.recover(m, expectedExtraEntropyN, f.recoveryIdN, true),
+        `recover(${f.m}, ${f.recoveryIdN} ..., true) == ${toHex(Q)}`
+      );
+      t.same(
+        Qu,
+        secp256k1.recover(m, expectedExtraEntropyN, f.recoveryIdN, false),
+        `recover(${f.m}, ${f.recoveryIdN} ..., false) == ${toHex(Q)}`
+      );
+
+      t.same(
+        Q,
+        secp256k1.recover(m, expectedExtraEntropyMax, f.recoveryIdMax, true),
+        `recover(${f.m}, ${f.recoveryIdMax} ..., true) == ${toHex(Q)}`
+      );
+      t.same(
+        Qu,
+        secp256k1.recover(m, expectedExtraEntropyMax, f.recoveryIdMax, false),
+        `recover(${f.m}, ${f.recoveryIdMax} ..., false) == ${toHex(Q)}`
+      );
+    }
+
     t.end();
   });
 }
