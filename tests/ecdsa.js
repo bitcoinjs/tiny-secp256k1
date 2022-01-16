@@ -118,13 +118,13 @@ export default function (secp256k1) {
       t.same(
         res.signature,
         expected,
-        `signRecoverable(${f.m}, ...) == ${f.signature}`
+        `signRecoverable(${f.m}, ...) == { signature: "${f.signature}", ...}`
       );
 
       t.same(
         res.recoveryId,
         f.recoveryId,
-        `signRecoverable(${f.m}, ${f.recoveryId}, ...) == ${f.signature}`
+        `signRecoverable(${f.m}, ...) == { recoveryId: "${f.recoveryId}" ....}`
       );
     }
 
@@ -148,63 +148,63 @@ export default function (secp256k1) {
       t.same(
         extraEntropyUndefined.signature,
         expectedSig,
-        `signRecoverable(${f.m}, ..., undefined) == ${f.signature}`
+        `signRecoverable(${f.m}, ..., undefined) == { signature: "${f.signature}", ...}`
       );
       t.same(
         extraEntropy0.signature,
         expectedExtraEntropy0,
-        `signRecoverable(${f.m}, ..., 0) == ${f.signature}`
+        `signRecoverable(${f.m}, ..., 0) =={ signature: "${f.extraEntropy0}", ...}`
       );
       t.same(
         extraEntropy1.signature,
         expectedExtraEntropy1,
-        `signRecoverable(${f.m}, ..., 1) == ${f.signature}`
+        `signRecoverable(${f.m}, ..., 1) == { signature: "${f.extraEntropy1}", ...}`
       );
       t.same(
         extraEntropyRand.signature,
         expectedExtraEntropyRand,
-        `signRecoverable(${f.m}, ..., rand) == ${f.signature}`
+        `signRecoverable(${f.m}, ..., rand) == { signature: "${f.extraEntropyRand}", ...}`
       );
       t.same(
         extraEntropyN.signature,
         expectedExtraEntropyN,
-        `signRecoverable(${f.m}, ..., n) == ${f.signature}`
+        `signRecoverable(${f.m}, ..., n) == { signature: "${f.extraEntropyN}", ...}`
       );
       t.same(
         extraEntropyMax.signature,
         expectedExtraEntropyMax,
-        `signRecoverable(${f.m}, ..., max256) == ${f.signature}`
+        `signRecoverable(${f.m}, ..., max256) == { signature: "${f.extraEntropyMax}", ...}`
       );
 
       t.same(
         extraEntropyUndefined.recoveryId,
         f.recoveryId,
-        `signRecoverable(${f.m}, ${f.recoveryId} ..., undefined) == ${f.signature}`
+        `signRecoverable(${f.m}, ..., undefined) == { recoveryId: "${f.recoveryId}", ...}`
       );
       t.same(
         extraEntropy0.recoveryId,
         f.recoveryId0,
-        `signRecoverable(${f.m}, ${f.recoveryId0} ..., 0) == ${f.signature}`
+        `signRecoverable(${f.m}, ..., 0) == { recoveryId: "${f.recoveryId0}", ...}`
       );
       t.same(
         extraEntropy1.recoveryId,
         f.recoveryId1,
-        `signRecoverable(${f.m}, ${f.recoveryId1} ..., 1) == ${f.signature}`
+        `signRecoverable(${f.m}, ..., 1) == { recoveryId: "${f.recoveryId1}", ...}`
       );
       t.same(
         extraEntropyRand.recoveryId,
         f.recoveryIdRand,
-        `signRecoverable(${f.m}, ${f.recoveryIdRand} ..., rand) == ${f.signature}`
+        `signRecoverable(${f.m}, ..., rand) == { recoveryId: "${f.recoveryIdRand}", ...}`
       );
       t.same(
         extraEntropyN.recoveryId,
         f.recoveryIdN,
-        `signRecoverable(${f.m}, ${f.recoveryIdN} ..., n) == ${f.signature}`
+        `signRecoverable(${f.m}, ..., n) == { recoveryId: "${f.recoveryIdN}", ...}`
       );
       t.same(
         extraEntropyMax.recoveryId,
         f.recoveryIdMax,
-        `signRecoverable(${f.m}, ${extraEntropyMax.recoveryId} ..., max256) == ${f.signature}`
+        `signRecoverable(${f.m}, ..., max256) == { recoveryId: "${f.recoveryIdMax}", ...}`
       );
     }
 
