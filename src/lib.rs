@@ -423,11 +423,11 @@ pub extern "C" fn private_sub() -> i32 {
 pub extern "C" fn sign(extra_data: i32) {
     unsafe {
         let mut sig = Signature::new();
-        let noncedata = (if extra_data == 0 {
+        let noncedata = if extra_data == 0 {
             core::ptr::null()
         } else {
             EXTRA_DATA_INPUT.as_ptr()
-        })
+        }
         .cast::<c_void>();
 
         assert_eq!(
@@ -459,11 +459,11 @@ pub extern "C" fn sign(extra_data: i32) {
 pub extern "C" fn sign_recoverable(extra_data: i32) -> i32 {
     unsafe {
         let mut sig = RecoverableSignature::new();
-        let noncedata = (if extra_data == 0 {
+        let noncedata = if extra_data == 0 {
             core::ptr::null()
         } else {
             EXTRA_DATA_INPUT.as_ptr()
-        })
+        }
         .cast::<c_void>();
 
         assert_eq!(
@@ -495,11 +495,11 @@ pub extern "C" fn sign_recoverable(extra_data: i32) -> i32 {
 pub extern "C" fn sign_schnorr(extra_data: i32) {
     unsafe {
         let mut keypair = KeyPair::new();
-        let noncedata = (if extra_data == 0 {
+        let noncedata = if extra_data == 0 {
             core::ptr::null()
         } else {
             EXTRA_DATA_INPUT.as_ptr()
-        })
+        }
         .cast::<c_void>();
 
         assert_eq!(
