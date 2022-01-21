@@ -420,6 +420,20 @@ pub extern "C" fn private_sub() -> i32 {
 
 #[allow(clippy::missing_panics_doc)]
 #[no_mangle]
+#[export_name = "privateNegate"]
+pub extern "C" fn private_key_negate() -> i32 {
+    unsafe {
+        if secp256k1_ec_seckey_negate(secp256k1_context_no_precomp, PRIVATE_INPUT.as_mut_ptr()) == 1
+        {
+            1
+        } else {
+            0
+        }
+    }
+}
+
+#[allow(clippy::missing_panics_doc)]
+#[no_mangle]
 pub extern "C" fn sign(extra_data: i32) {
     unsafe {
         let mut sig = Signature::new();

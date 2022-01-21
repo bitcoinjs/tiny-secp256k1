@@ -48,6 +48,7 @@ interface Secp256k1WASM {
   pointMultiply: (p: number, outputlen: number) => number;
   privateAdd: () => number;
   privateSub: () => number;
+  privateNegate: () => number;
   sign: (e: number) => void;
   signRecoverable: (e: number) => 0 | 1 | 2 | 3;
   signSchnorr: (e: number) => void;

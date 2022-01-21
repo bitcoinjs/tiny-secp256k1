@@ -244,6 +244,19 @@ export function privateSub(
   }
 }
 
+export function privateNegate(d: Uint8Array): Uint8Array | null {
+  validate.validatePrivate(d);
+
+  try {
+    PRIVATE_KEY_INPUT.set(d);
+    return wasm.privateNegate() === 1
+      ? PRIVATE_KEY_INPUT.slice(0, validate.PRIVATE_KEY_SIZE)
+      : null;
+  } finally {
+    PRIVATE_KEY_INPUT.fill(0);
+  }
+}
+
 export interface XOnlyPointAddTweakResult {
   parity: 1 | 0;
   xOnlyPubkey: Uint8Array;
