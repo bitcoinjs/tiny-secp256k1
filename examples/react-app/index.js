@@ -1431,7 +1431,7 @@ const ApiPrivateNegate = withStyles(useStyles)(
       return (
         <>
           <Typography variant="h6">
-            privateSub(d: Uint8Array, tweak: Uint8Array) =&gt; Uint8Array | null
+            privateNegate(d: Uint8Array, tweak: Uint8Array) =&gt; Uint8Array
           </Typography>
           <TextField
             label="Private Key as HEX string"
