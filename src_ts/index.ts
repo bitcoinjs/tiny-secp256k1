@@ -244,14 +244,13 @@ export function privateSub(
   }
 }
 
-export function privateNegate(d: Uint8Array): Uint8Array | null {
+export function privateNegate(d: Uint8Array): Uint8Array {
   validate.validatePrivate(d);
 
   try {
     PRIVATE_KEY_INPUT.set(d);
-    return wasm.privateNegate() === 1
-      ? PRIVATE_KEY_INPUT.slice(0, validate.PRIVATE_KEY_SIZE)
-      : null;
+    wasm.privateNegate();
+    return PRIVATE_KEY_INPUT.slice(0, validate.PRIVATE_KEY_SIZE);
   } finally {
     PRIVATE_KEY_INPUT.fill(0);
   }

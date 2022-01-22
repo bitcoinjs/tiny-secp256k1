@@ -212,6 +212,18 @@ Returns `null` if result is equal to `0`.
 - `Expected Private` if `!isPrivate(d)`
 - `Expected Tweak` if `tweak` is not in `[0...order - 1]`
 
+### privateNegate (d)
+
+```haskell
+privateNegate :: Buffer -> Buffer
+```
+
+Returns the negation of d on the order n (`n - d`)
+
+##### Throws:
+
+- `Expected Private` if `!isPrivate(d)`
+
 ### xOnlyPointAddTweak (p, tweak)
 
 ```haskell

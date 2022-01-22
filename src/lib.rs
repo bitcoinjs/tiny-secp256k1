@@ -421,14 +421,12 @@ pub extern "C" fn private_sub() -> i32 {
 #[allow(clippy::missing_panics_doc)]
 #[no_mangle]
 #[export_name = "privateNegate"]
-pub extern "C" fn private_key_negate() -> i32 {
+pub extern "C" fn private_negate() {
     unsafe {
-        if secp256k1_ec_seckey_negate(secp256k1_context_no_precomp, PRIVATE_INPUT.as_mut_ptr()) == 1
-        {
+        assert_eq!(
+            secp256k1_ec_seckey_negate(secp256k1_context_no_precomp, PRIVATE_INPUT.as_mut_ptr()),
             1
-        } else {
-            0
-        }
+        );
     }
 }
 
