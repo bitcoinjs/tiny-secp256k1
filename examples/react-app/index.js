@@ -277,7 +277,22 @@ const App = withStyles(useStyles)(
                 />
               </Box>
               <Box className={this.props.classes.methodBox}>
+                <ApiPrivateNegate
+                  classes={this.props.classes}
+                  seckey={this.state.data?.seckey}
+                  tweak={this.state.data?.tweak}
+                />
+              </Box>
+              <Box className={this.props.classes.methodBox}>
                 <ApiSign
+                  classes={this.props.classes}
+                  hash={this.state.data?.hash}
+                  seckey={this.state.data?.seckey}
+                  entropy={this.state.data?.entropy}
+                />
+              </Box>
+              <Box className={this.props.classes.methodBox}>
+                <ApiSignRecoverable
                   classes={this.props.classes}
                   hash={this.state.data?.hash}
                   seckey={this.state.data?.seckey}
@@ -1384,6 +1399,71 @@ const ApiPrivateSub = withStyles(useStyles)(
   }
 );
 
+const ApiPrivateNegate = withStyles(useStyles)(
+  class extends Component {
+    constructor(props) {
+      super(props);
+      this.state = {
+        seckey: "",
+        seckey_valid: undefined,
+        result: undefined,
+      };
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+      if (prevProps.seckey !== this.props.seckey) {
+        this.setState({
+          seckey: this.props.seckey,
+        });
+      }
+
+      if (prevState.seckey !== this.state.seckey) {
+        const { seckey } = this.state;
+        const seckey_valid =
+          seckey === "" ? undefined : secp256k1.isPrivate(seckey);
+        const result =
+          seckey === "" ? undefined : secp256k1.privateNegate(seckey);
+        this.setState({ seckey_valid, result });
+      }
+    }
+
+    render() {
+      return (
+        <>
+          <Typography variant="h6">
+            privateSub(d: Uint8Array, tweak: Uint8Array) =&gt; Uint8Array | null
+          </Typography>
+          <TextField
+            label="Private Key as HEX string"
+            onChange={createInputChange(this, "seckey")}
+            value={this.state.seckey}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.seckey_valid,
+              this.props.classes
+            )}
+          />
+
+          <TextField
+            label="Output, Negated Private Key as HEX string"
+            value={
+              this.state.result === undefined
+                ? ""
+                : this.state.result || "Invalid result"
+            }
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(this.state.result, this.props.classes)}
+          />
+        </>
+      );
+    }
+  }
+);
+
 const ApiSign = withStyles(useStyles)(
   class extends Component {
     constructor(props) {
@@ -1484,6 +1564,134 @@ const ApiSign = withStyles(useStyles)(
             margin="normal"
             variant="outlined"
             InputProps={getInputProps(this.state.result, this.props.classes)}
+          />
+        </>
+      );
+    }
+  }
+);
+
+const ApiSignRecoverable = withStyles(useStyles)(
+  class extends Component {
+    constructor(props) {
+      super(props);
+      this.state = {
+        hash: "",
+        hash_valid: undefined,
+        seckey: "",
+        seckey_valid: undefined,
+        entropy: "",
+        entropy_valid: undefined,
+        result: undefined,
+        resultRecId: undefined,
+      };
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+      if (
+        prevProps.hash !== this.props.hash ||
+        prevProps.seckey !== this.props.seckey ||
+        prevProps.entropy !== this.props.entropy
+      ) {
+        this.setState({
+          hash: this.props.hash,
+          seckey: this.props.seckey,
+          entropy: this.props.entropy,
+        });
+      }
+
+      if (
+        prevState.hash !== this.state.hash ||
+        prevState.seckey !== this.state.seckey ||
+        prevState.entropy !== this.state.entropy
+      ) {
+        const { hash, seckey, entropy } = this.state;
+        const hash_valid = hash === "" ? undefined : validate.isHash(hash);
+        const seckey_valid =
+          seckey === "" ? undefined : secp256k1.isPrivate(seckey);
+        const entropy_valid =
+          entropy === "" ? undefined : validate.isExtraData(entropy);
+        const sig =
+          hash === "" && seckey === "" && entropy === ""
+            ? undefined
+            : secp256k1.signRecoverable(hash, seckey, entropy);
+        const result = Buffer.from(sig?.signature).toString("hex");
+        const resultRecId = sig?.recoveryId;
+        this.setState({
+          hash_valid,
+          seckey_valid,
+          entropy_valid,
+          result,
+          resultRecId,
+        });
+      }
+    }
+
+    render() {
+      return (
+        <>
+          <Typography variant="h6">
+            signRecoverable(h: Uint8Array, d: Uint8Array, e: Uint8Array) =&gt;
+            (Uint8Array, recoveryId: 0 | 1 | 2 | 3)
+          </Typography>
+          <TextField
+            label="Hash as HEX string"
+            onChange={createInputChange(this, "hash")}
+            value={this.state.hash}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.hash_valid,
+              this.props.classes
+            )}
+          />
+          <TextField
+            label="Private Key as HEX string"
+            onChange={createInputChange(this, "seckey")}
+            value={this.state.seckey}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.seckey_valid,
+              this.props.classes
+            )}
+          />
+          <TextField
+            label="Extra Data as HEX string"
+            onChange={createInputChange(this, "entropy")}
+            value={this.state.entropy}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.entropy_valid,
+              this.props.classes
+            )}
+          />
+          <TextField
+            label="Output, Signature as HEX string"
+            value={
+              this.state.result === undefined
+                ? ""
+                : this.state.result || "Invalid result"
+            }
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(this.state.result, this.props.classes)}
+          />
+          <TextField
+            label="Output, Recovery Id as number"
+            value={
+              this.state.resultRecId === undefined
+                ? ""
+                : this.state.resultRecId || "Invalid result"
+            }
+            fullWidth
+            margin="normal"
+            variant="outlined"
           />
         </>
       );
