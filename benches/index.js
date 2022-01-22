@@ -105,6 +105,13 @@ const benchmarks = [
     ),
   },
   {
+    name: "privateNegate",
+    // use data from privateSub
+    bench: createBenchmarkFn(fprivates.privateSub, (secp256k1, f) =>
+      secp256k1.privateNegate(f.d)
+    ),
+  },
+  {
     name: "sign",
     bench: createBenchmarkFn(fecdsa, (secp256k1, f) =>
       secp256k1.sign(f.m, f.d)
