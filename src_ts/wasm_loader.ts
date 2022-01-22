@@ -20,6 +20,8 @@ interface WebAssemblyGlobal {
   value: number;
 }
 
+type RecoveryIdType = 0 | 1 | 2 | 3;
+
 interface Secp256k1WASM {
   memory: WebAssemblyMemory;
 
@@ -46,10 +48,13 @@ interface Secp256k1WASM {
   pointMultiply: (p: number, outputlen: number) => number;
   privateAdd: () => number;
   privateSub: () => number;
+  privateNegate: () => void;
   sign: (e: number) => void;
+  signRecoverable: (e: number) => 0 | 1 | 2 | 3;
   signSchnorr: (e: number) => void;
   verify: (Q: number, strict: number) => number;
   verifySchnorr: () => number;
+  recover: (outputlen: number, recoveryId: RecoveryIdType) => number;
 }
 
 export default instance.exports as unknown as Secp256k1WASM;

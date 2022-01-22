@@ -212,6 +212,18 @@ Returns `null` if result is equal to `0`.
 - `Expected Private` if `!isPrivate(d)`
 - `Expected Tweak` if `tweak` is not in `[0...order - 1]`
 
+### privateNegate (d)
+
+```haskell
+privateNegate :: Buffer -> Buffer
+```
+
+Returns the negation of d on the order n (`n - d`)
+
+##### Throws:
+
+- `Expected Private` if `!isPrivate(d)`
+
 ### xOnlyPointAddTweak (p, tweak)
 
 ```haskell
@@ -258,6 +270,22 @@ Adds `e` as Added Entropy to the deterministic k generation.
 - `Expected Scalar` if `h` is not 256-bit
 - `Expected Extra Data (32 bytes)` if `e` is not 256-bit
 
+### signRecoverable (h, d[, e])
+
+```haskell
+signRecoverable :: Buffer -> Buffer [-> Buffer] -> { recoveryId: 0 | 1 | 2 | 3; signature: Buffer; }
+```
+
+Returns normalized signatures and recovery Id, each of (r, s) values are guaranteed to less than `order / 2`.
+Uses RFC6979.
+Adds `e` as Added Entropy to the deterministic k generation.
+
+##### Throws:
+
+- `Expected Private` if `!isPrivate(d)`
+- `Expected Scalar` if `h` is not 256-bit
+- `Expected Extra Data (32 bytes)` if `e` is not 256-bit
+
 ### signSchnorr (h, d[, e])
 
 ```haskell
@@ -289,6 +317,22 @@ If `strict` is `true`, valid signatures with any of (r, s) values greater than `
 - `Expected Point` if `!isPoint(Q)`
 - `Expected Signature` if `signature` has any (r, s) values not in range `[0...order - 1]`
 - `Expected Scalar` if `h` is not 256-bit
+
+### recover (h, signature, recoveryId[, compressed = false])
+
+```haskell
+verify :: Buffer -> Buffer -> Number [-> Bool] -> Maybe Buffer
+```
+
+Returns the ECDSA public key from a signature if it can be recovered, `null` otherwise.
+
+
+##### Throws:
+
+- `Expected Signature` if `signature` has any (r, s) values not in range `(0...order - 1]`
+- `Bad Recovery Id` if `recid & 2 !== 0`  and `signature` has any r value not in range `(0...P - N - 1]`
+- `Expected Hash` if `h` is not 256-bit
+
 
 ### verifySchnorr (h, Q, signature)
 

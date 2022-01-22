@@ -293,6 +293,15 @@ const App = withStyles(useStyles)(
                 />
               </Box>
               <Box className={this.props.classes.methodBox}>
+                <ApiRecover
+                  classes={this.props.classes}
+                  hash={this.state.data?.hash}
+                  signature={this.state.data?.signature}
+                  recoveryId={this.state.data?.recoveryId}
+                  compressed={this.state.data?.compressed}
+                />
+              </Box>
+              <Box className={this.props.classes.methodBox}>
                 <ApiSignSchnorr
                   classes={this.props.classes}
                   hash={this.state.data?.hash}
@@ -1587,6 +1596,133 @@ const ApiVerify = withStyles(useStyles)(
               {this.state.result ? <CheckIcon /> : <CloseIcon color="error" />}
             </Box>
           )}
+        </>
+      );
+    }
+  }
+);
+
+const ApiRecover = withStyles(useStyles)(
+  class extends Component {
+    constructor(props) {
+      super(props);
+      this.state = {
+        hash: "",
+        hash_valid: undefined,
+        signature: "",
+        signature_valid: undefined,
+        recoveryId: 0,
+        recoveryId_valid: undefined,
+        compressed: false,
+        result: undefined,
+      };
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+      if (
+        prevProps.hash !== this.props.hash ||
+        prevProps.signature !== this.props.signature ||
+        prevProps.recoveryId !== this.props.recoveryId ||
+        prevProps.compressed !== this.props.compressed
+      ) {
+        this.setState({
+          hash: this.props.hash,
+          signature: this.props.signature,
+          recoveryId: this.props.recoveryId,
+          compressed: this.props.compressed,
+        });
+      }
+
+      if (
+        prevState.hash !== this.state.hash ||
+        prevState.signature !== this.state.signature ||
+        prevState.recoveryId !== this.state.recoveryId ||
+        prevState.compressed !== this.state.compressed
+      ) {
+        const { hash, signature, recoveryId, compressed } = this.state;
+        const hash_valid = hash === "" ? undefined : validate.isHash(hash);
+        const recoveryId_valid =
+          recoveryId === "" ? undefined : 0 <= +recoveryId <= 3;
+        const signature_valid =
+          signature === "" ? undefined : validate.isSignature(signature);
+        const result =
+          hash === "" && recoveryId === "" && signature === ""
+            ? undefined
+            : secp256k1.recover(hash, signature, recoveryId, compressed);
+        this.setState({
+          hash_valid,
+          signature_valid,
+          recoveryId_valid,
+          result,
+        });
+      }
+    }
+
+    render() {
+      return (
+        <>
+          <Typography variant="h6">
+            recover(h: Uint8Array, signature: Uint8Array, recoveryId: number,
+            compressed?: boolean) =&gt; Uint8Array | null
+          </Typography>
+          <TextField
+            label="Hash as HEX string"
+            onChange={createInputChange(this, "hash")}
+            value={this.state.hash}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.hash_valid,
+              this.props.classes
+            )}
+          />
+          <TextField
+            label="Signature as HEX string"
+            onChange={createInputChange(this, "signature")}
+            value={this.state.signature}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.signature_valid,
+              this.props.classes
+            )}
+          />
+          <TextField
+            label="Recovery Id (0, 1, 2 or 3)"
+            type="number"
+            onChange={createInputChange(this, "recoveryId")}
+            value={this.state.recoveryId}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.recoveryId_valid,
+              this.props.classes
+            )}
+          />
+          <FormControlLabel
+            control={
+              <CompressedCheckbox
+                onChange={createCheckedChange(this, "compressed")}
+                checked={this.state.compressed}
+              />
+            }
+            label="Compressed"
+          />
+          <TextField
+            label="Output, Public Key as HEX string"
+            value={
+              this.state.result === undefined
+                ? ""
+                : this.state.result || "Invalid result"
+            }
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(this.state.result, this.props.classes)}
+          />
         </>
       );
     }

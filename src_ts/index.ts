@@ -244,6 +244,18 @@ export function privateSub(
   }
 }
 
+export function privateNegate(d: Uint8Array): Uint8Array {
+  validate.validatePrivate(d);
+
+  try {
+    PRIVATE_KEY_INPUT.set(d);
+    wasm.privateNegate();
+    return PRIVATE_KEY_INPUT.slice(0, validate.PRIVATE_KEY_SIZE);
+  } finally {
+    PRIVATE_KEY_INPUT.fill(0);
+  }
+}
+
 export interface XOnlyPointAddTweakResult {
   parity: 1 | 0;
   xOnlyPubkey: Uint8Array;
@@ -324,6 +336,41 @@ export function sign(h: Uint8Array, d: Uint8Array, e?: Uint8Array): Uint8Array {
   }
 }
 
+export interface RecoverableSignature {
+  signature: Uint8Array;
+  recoveryId: RecoveryIdType;
+}
+export function signRecoverable(
+  h: Uint8Array,
+  d: Uint8Array,
+  e?: Uint8Array
+): RecoverableSignature {
+  validate.validateHash(h);
+  validate.validatePrivate(d);
+  validate.validateExtraData(e);
+  try {
+    HASH_INPUT.set(h);
+    PRIVATE_KEY_INPUT.set(d);
+    if (e !== undefined) EXTRA_DATA_INPUT.set(e);
+    const recoveryId: RecoveryIdType = wasm.signRecoverable(
+      e === undefined ? 0 : 1
+    );
+    const signature: Uint8Array = SIGNATURE_INPUT.slice(
+      0,
+      validate.SIGNATURE_SIZE
+    );
+    return {
+      signature,
+      recoveryId,
+    };
+  } finally {
+    HASH_INPUT.fill(0);
+    PRIVATE_KEY_INPUT.fill(0);
+    if (e !== undefined) EXTRA_DATA_INPUT.fill(0);
+    SIGNATURE_INPUT.fill(0);
+  }
+}
+
 export function signSchnorr(
   h: Uint8Array,
   d: Uint8Array,
@@ -364,6 +411,38 @@ export function verify(
     HASH_INPUT.fill(0);
     PUBLIC_KEY_INPUT.fill(0);
     SIGNATURE_INPUT.fill(0);
+  }
+}
+
+export type RecoveryIdType = 0 | 1 | 2 | 3;
+export function recover(
+  h: Uint8Array,
+  signature: Uint8Array,
+  recoveryId: RecoveryIdType,
+  compressed = false
+): Uint8Array | null {
+  validate.validateHash(h);
+  validate.validateSignature(signature);
+  validate.validateSignatureNonzeroRS(signature);
+  if (recoveryId & 2) {
+    validate.validateSigrPMinusN(signature);
+  }
+  validate.validateSignatureCustom((): boolean =>
+    isXOnlyPoint(signature.subarray(0, 32))
+  );
+
+  const outputlen = assumeCompression(compressed);
+  try {
+    HASH_INPUT.set(h);
+    SIGNATURE_INPUT.set(signature);
+
+    return wasm.recover(outputlen, recoveryId) === 1
+      ? PUBLIC_KEY_INPUT.slice(0, outputlen)
+      : null;
+  } finally {
+    HASH_INPUT.fill(0);
+    SIGNATURE_INPUT.fill(0);
+    PUBLIC_KEY_INPUT.fill(0);
   }
 }
 

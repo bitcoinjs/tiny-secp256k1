@@ -27,6 +27,12 @@ use secp256k1_sys::{
     SECP256K1_START_VERIFY,
 };
 
+use secp256k1_sys::recovery::{
+    secp256k1_ecdsa_recover, secp256k1_ecdsa_recoverable_signature_parse_compact,
+    secp256k1_ecdsa_recoverable_signature_serialize_compact, secp256k1_ecdsa_sign_recoverable,
+    RecoverableSignature,
+};
+
 #[link(wasm_import_module = "./validate_error.js")]
 extern "C" {
     #[link_name = "throwError"]
@@ -102,7 +108,7 @@ fn initialize_context_seed() {
     unsafe {
         for offset in (0..8).map(|v| v * 4) {
             let value = generate_int32();
-            let bytes: [u8; 4] = core::mem::transmute(value);
+            let bytes: [u8; 4] = value.to_ne_bytes();
             CONTEXT_SEED[offset..offset + 4].copy_from_slice(&bytes);
         }
     }
@@ -414,14 +420,26 @@ pub extern "C" fn private_sub() -> i32 {
 
 #[allow(clippy::missing_panics_doc)]
 #[no_mangle]
+#[export_name = "privateNegate"]
+pub extern "C" fn private_negate() {
+    unsafe {
+        assert_eq!(
+            secp256k1_ec_seckey_negate(secp256k1_context_no_precomp, PRIVATE_INPUT.as_mut_ptr()),
+            1
+        );
+    }
+}
+
+#[allow(clippy::missing_panics_doc)]
+#[no_mangle]
 pub extern "C" fn sign(extra_data: i32) {
     unsafe {
         let mut sig = Signature::new();
-        let noncedata = (if extra_data == 0 {
+        let noncedata = if extra_data == 0 {
             core::ptr::null()
         } else {
             EXTRA_DATA_INPUT.as_ptr()
-        })
+        }
         .cast::<c_void>();
 
         assert_eq!(
@@ -449,15 +467,51 @@ pub extern "C" fn sign(extra_data: i32) {
 
 #[allow(clippy::missing_panics_doc)]
 #[no_mangle]
+#[export_name = "signRecoverable"]
+pub extern "C" fn sign_recoverable(extra_data: i32) -> i32 {
+    unsafe {
+        let mut sig = RecoverableSignature::new();
+        let noncedata = if extra_data == 0 {
+            core::ptr::null()
+        } else {
+            EXTRA_DATA_INPUT.as_ptr()
+        }
+        .cast::<c_void>();
+
+        assert_eq!(
+            secp256k1_ecdsa_sign_recoverable(
+                get_context(),
+                &mut sig,
+                HASH_INPUT.as_ptr(),
+                PRIVATE_INPUT.as_ptr(),
+                secp256k1_nonce_function_rfc6979,
+                noncedata
+            ),
+            1
+        );
+
+        let mut recid: i32 = 0;
+        secp256k1_ecdsa_recoverable_signature_serialize_compact(
+            secp256k1_context_no_precomp,
+            SIGNATURE_INPUT.as_mut_ptr(),
+            &mut recid,
+            &sig,
+        );
+        recid
+    }
+}
+
+#[allow(clippy::missing_panics_doc)]
+#[no_mangle]
 #[export_name = "signSchnorr"]
 pub extern "C" fn sign_schnorr(extra_data: i32) {
     unsafe {
         let mut keypair = KeyPair::new();
-        let noncedata = (if extra_data == 0 {
+        let noncedata = if extra_data == 0 {
             core::ptr::null()
         } else {
             EXTRA_DATA_INPUT.as_ptr()
-        })
+        }
         .cast::<c_void>();
 
         assert_eq!(
@@ -504,6 +558,31 @@ pub extern "C" fn verify(inputlen: usize, strict: i32) -> i32 {
         }
 
         if secp256k1_ecdsa_verify(get_context(), &signature, HASH_INPUT.as_ptr(), &pk) == 1 {
+            1
+        } else {
+            0
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn recover(outputlen: usize, recid: i32) -> i32 {
+    unsafe {
+        let mut signature = RecoverableSignature::new();
+        if secp256k1_ecdsa_recoverable_signature_parse_compact(
+            secp256k1_context_no_precomp,
+            &mut signature,
+            SIGNATURE_INPUT.as_ptr(),
+            recid,
+        ) == 0
+        {
+            throw_error(ERROR_BAD_SIGNATURE);
+            return 0;
+        }
+
+        let mut pk = PublicKey::new();
+        if secp256k1_ecdsa_recover(get_context(), &mut pk, &signature, HASH_INPUT.as_ptr()) == 1 {
+            pubkey_serialize(&pk, PUBLIC_KEY_INPUT.as_mut_ptr(), outputlen);
             1
         } else {
             0
