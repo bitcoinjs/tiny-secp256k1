@@ -12,6 +12,7 @@
   },
   "license": "MIT",
   "type": "module",
+  "main": "./lib/cjs/index.cjs",
   "exports": {
     ".": {
       "node": {
