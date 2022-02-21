@@ -33,7 +33,7 @@
     "lib"
   ],
   "dependencies": {
-    "uint8array-tools": "0.0.6"
+    "uint8array-tools": "0.0.7"
   },
   "devDependencies": {
     "@types/node": "^14.14.35",
