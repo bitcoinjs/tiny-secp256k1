@@ -1,7 +1,6 @@
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 #![allow(clippy::must_use_candidate)]
-#![allow(clippy::missing_errors_doc)]
 #![allow(clippy::module_name_repetitions)]
 #![cfg_attr(feature = "no_std", no_std)]
 
@@ -78,9 +77,8 @@ pub fn is_private(v: &PrivkeySlice) -> bool {
     v > &ZERO32 && v < &ORDER
 }
 
-// We know (ptrs.len() as i32) will not trunc or wrap since it is always 2.
-#[allow(clippy::cast_possible_truncation)]
-#[allow(clippy::cast_possible_wrap)]
+/// # Errors
+/// `Error::BadPoint` returned if `pubkey1` or `pubkey2` is invalid.
 pub fn point_add(
     pubkey1: &PubkeyRef,
     pubkey2: &PubkeyRef,
@@ -102,6 +100,9 @@ pub fn point_add(
     ))
 }
 
+/// # Errors
+/// `Error::BadPoint` returned if `pubkey` is invalid.
+/// `Error::BadTweak` returned if `tweak` is invalid.
 pub fn point_add_scalar(
     pubkey: &PubkeyRef,
     tweak: &TweakSlice,
@@ -124,6 +125,9 @@ pub fn point_add_scalar(
         ))
 }
 
+/// # Errors
+/// `Error::BadPoint` returned if `pubkey` is invalid.
+/// `Error::BadTweak` returned if `tweak` is invalid.
 pub fn x_only_point_add_tweak(
     pubkey: &XOnlyPubkeySlice,
     tweak: &TweakSlice,
@@ -138,6 +142,10 @@ pub fn x_only_point_add_tweak(
     }
 }
 
+/// # Errors
+/// `Error::BadPoint` returned if `pubkey` or `result` is invalid.
+/// `Error::BadTweak` returned if `tweak` is invalid.
+/// `Error::BadParity` returned if `result` has `parity` and it is invalid.
 pub fn x_only_point_add_tweak_check(
     pubkey: &XOnlyPubkeySlice,
     result: &XOnlyPubkeyWithMaybeParity,
@@ -156,6 +164,8 @@ pub fn x_only_point_add_tweak_check(
     }
 }
 
+/// # Errors
+/// `Error::BadPoint` returned if `pubkey` is invalid.
 pub fn point_compress(pubkey: &PubkeyRef, compressed: Option<bool>) -> InvalidInputResult<Pubkey> {
     let outputlen = assume_compression(compressed, Some(pubkey.len()));
     let key = PublicKey::from_slice(pubkey.as_slice()).map_err(|_| Error::BadPoint)?;
@@ -166,6 +176,8 @@ pub fn point_compress(pubkey: &PubkeyRef, compressed: Option<bool>) -> InvalidIn
     })
 }
 
+/// # Errors
+/// `Error::BadPrivate` returned if `private` is invalid.
 pub fn point_from_scalar(
     private: &PrivkeySlice,
     compressed: Option<bool>,
@@ -180,7 +192,8 @@ pub fn point_from_scalar(
     }))
 }
 
-#[allow(clippy::missing_panics_doc)]
+/// # Errors
+/// `Error::BadPrivate` returned if `private` is invalid.
 pub fn x_only_point_from_scalar(
     private: &PrivkeySlice,
 ) -> InvalidInputResult<XOnlyPubkeyWithParity> {
@@ -193,6 +206,8 @@ pub fn x_only_point_from_scalar(
     ))
 }
 
+/// # Errors
+/// `Error::BadPoint` returned if `pubkey` is invalid.
 pub fn x_only_point_from_point(pubkey: &PubkeyRef) -> InvalidInputResult<XOnlyPubkeyWithParity> {
     let pb = PublicKey::from_slice(pubkey.as_slice()).map_err(|_| Error::BadPoint)?;
     let ser = pb.serialize();
@@ -202,6 +217,9 @@ pub fn x_only_point_from_point(pubkey: &PubkeyRef) -> InvalidInputResult<XOnlyPu
     ))
 }
 
+/// # Errors
+/// `Error::BadPoint` returned if `pubkey` is invalid.
+/// `Error::BadTweak` returned if `tweak` is invalid.
 pub fn point_multiply(
     pubkey: &PubkeyRef,
     tweak: &TweakSlice,
@@ -221,6 +239,9 @@ pub fn point_multiply(
     }
 }
 
+/// # Errors
+/// `Error::BadPrivate` returned if `private` is invalid.
+/// `Error::BadTweak` returned if `tweak` is invalid.
 pub fn private_add(
     private: &PrivkeySlice,
     tweak: &TweakSlice,
@@ -234,21 +255,23 @@ pub fn private_add(
     }
 }
 
-#[allow(clippy::missing_panics_doc)]
+/// # Errors
+/// `Error::BadPrivate` returned if `private` is invalid.
+/// `Error::BadTweak` returned if `tweak` is invalid.
 pub fn private_sub(
     private: &PrivkeySlice,
     tweak: &TweakSlice,
 ) -> InvalidInputResult<Option<PrivkeySlice>> {
     validate_tweak(tweak)?;
-    // If tweak is 0, x - 0 = x. Also, secp256k1_ec_seckey_negate will error
-    // if we try to negate 0.
+    // If tweak is 0, x - 0 = x. Also, SecretKey::from_slice will error
+    // if we try to use 0.
     if tweak == &ZERO32 {
         return Ok(Some(*private));
     }
     let mut sec = SecretKey::from_slice(private.as_slice()).map_err(|_| Error::BadPrivate)?;
 
-    // We now know tweak is a valid SecretKey
-    let mut tweak = SecretKey::from_slice(tweak.as_slice()).expect("Tweak must be valid SecretKey");
+    // We now know tweak is a valid SecretKey (validate_tweak checks < N, guard clause above checks 0)
+    let mut tweak = SecretKey::from_slice(tweak.as_slice()).map_err(|_| Error::BadPrivate)?;
     tweak.negate_assign();
 
     if sec.add_assign(tweak.serialize_secret().as_slice()).is_ok() {
@@ -258,12 +281,17 @@ pub fn private_sub(
     }
 }
 
+/// # Errors
+/// `Error::BadPrivate` returned if `private` is invalid.
 pub fn private_negate(private: &PrivkeySlice) -> InvalidInputResult<PrivkeySlice> {
     let mut sec = SecretKey::from_slice(private.as_slice()).map_err(|_| Error::BadPrivate)?;
     sec.negate_assign();
     Ok(sec.serialize_secret())
 }
 
+/// # Errors
+/// `Error::BadHash` returned if `hash` is invalid.
+/// `Error::BadPrivate` returned if `private` is invalid.
 pub fn sign(
     hash: &HashSlice,
     private: &PrivkeySlice,
@@ -276,6 +304,9 @@ pub fn sign(
     Ok(sig.serialize_compact())
 }
 
+/// # Errors
+/// `Error::BadHash` returned if `hash` is invalid.
+/// `Error::BadPrivate` returned if `private` is invalid.
 pub fn sign_recoverable(
     hash: &HashSlice,
     private: &PrivkeySlice,
@@ -288,6 +319,10 @@ pub fn sign_recoverable(
     Ok(sig.serialize_compact())
 }
 
+/// # Errors
+/// `Error::BadHash` returned if `hash` is invalid.
+/// `Error::BadSignature` returned if `sig` is invalid.
+/// `Error::BadRecoveryId` returned if `recovery_id` is invalid.
 pub fn recover(
     hash: &HashSlice,
     sig: &SignatureSlice,
@@ -314,7 +349,9 @@ pub fn recover(
     })
 }
 
-#[allow(clippy::missing_panics_doc)]
+/// # Errors
+/// `Error::BadHash` returned if hash is invalid.
+/// `Error::BadPrivate` returned if private is invalid.
 pub fn sign_schnorr(
     hash: &HashSlice,
     private: &PrivkeySlice,
@@ -328,6 +365,10 @@ pub fn sign_schnorr(
     Ok(*sig.as_ref())
 }
 
+/// # Errors
+/// `Error::BadHash` returned if hash is invalid.
+/// `Error::BadPoint` returned if pubkey is invalid.
+/// `Error::BadSignature` returned if sig is invalid.
 pub fn verify(
     hash: &HashSlice,
     pubkey: &PubkeyRef,
@@ -347,6 +388,10 @@ pub fn verify(
     Ok(secp.verify_ecdsa(&msg, &sg, &pb).is_ok())
 }
 
+/// # Errors
+/// `Error::BadHash` returned if hash is invalid.
+/// `Error::BadPoint` returned if pubkey is invalid.
+/// `Error::BadSignature` returned if signature is invalid.
 pub fn verify_schnorr(
     hash: &HashSlice,
     pubkey: &XOnlyPubkeySlice,
