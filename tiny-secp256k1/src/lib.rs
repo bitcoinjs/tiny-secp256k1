@@ -42,36 +42,33 @@ mod types;
 mod utils;
 use core::convert::TryInto;
 
+use context::get_hcontext;
 #[doc(inline)]
 pub use context::set_context;
-use context::{get_context, get_hcontext};
 pub use error::Error;
 pub use pubkey::{Pubkey, PubkeyRef};
-use secp256k1::secp256k1_sys;
+use secp256k1::{
+    ecdsa::{RecoverableSignature, Signature},
+    schnorr, Parity,
+};
 
 mod validate;
 use validate::validate_tweak;
 
-use secp256k1::{schnorrsig, Message, PublicKey, SecretKey};
-use secp256k1_sys::{
-    secp256k1_context_no_precomp, secp256k1_ec_seckey_negate, secp256k1_ec_seckey_tweak_add,
-    secp256k1_ecdsa_sign, secp256k1_ecdsa_signature_normalize,
-    secp256k1_ecdsa_signature_parse_compact, secp256k1_ecdsa_signature_serialize_compact,
-    secp256k1_ecdsa_verify, secp256k1_nonce_function_rfc6979, secp256k1_schnorrsig_verify,
-    types::c_void, Signature,
-};
+pub use secp256k1::ecdsa::RecoveryId;
+use secp256k1::{KeyPair, Message, PublicKey, SecretKey, XOnlyPublicKey};
 
-use consts::{ORDER, PRIVATE_KEY_SIZE, SIGNATURE_SIZE, TWEAK_SIZE, X_ONLY_PUBLIC_KEY_SIZE, ZERO32};
+use consts::{ORDER, P_MINUS_N, X_ONLY_PUBLIC_KEY_SIZE, ZERO32};
 use types::{
     ExtraDataSlice, HashSlice, InvalidInputResult, PrivkeySlice, SignatureSlice, TweakSlice,
     XOnlyPubkeySlice, XOnlyPubkeyWithMaybeParity, XOnlyPubkeyWithParity,
 };
-use utils::{assume_compression, pubkey_parse, x_only_pubkey_parse};
+use utils::assume_compression;
 
 pub fn is_point(pubkey: &PubkeyRef) -> bool {
     let len = pubkey.len();
     if len == X_ONLY_PUBLIC_KEY_SIZE {
-        schnorrsig::PublicKey::from_slice(pubkey.as_slice()).map_or_else(|_error| false, |_pk| true)
+        XOnlyPublicKey::from_slice(pubkey.as_slice()).map_or_else(|_error| false, |_pk| true)
     } else {
         PublicKey::from_slice(pubkey.as_slice()).map_or_else(|_error| false, |_pk| true)
     }
@@ -113,27 +110,29 @@ pub fn point_add_scalar(
     let outputlen = assume_compression(compressed, Some(pubkey.len()));
     let mut key = PublicKey::from_slice(pubkey.as_slice()).map_err(|_| Error::BadPoint)?;
     validate_tweak(tweak)?;
-    Ok(key.add_exp_assign(get_hcontext(), &tweak[..]).map_or_else(
-        |_| None,
-        |_| {
-            Some(if outputlen == 33 {
-                Pubkey::Compressed(key.serialize())
-            } else {
-                Pubkey::Uncompressed(key.serialize_uncompressed())
-            })
-        },
-    ))
+    Ok(key
+        .add_exp_assign(get_hcontext(), tweak.as_slice())
+        .map_or_else(
+            |_| None,
+            |_| {
+                Some(if outputlen == 33 {
+                    Pubkey::Compressed(key.serialize())
+                } else {
+                    Pubkey::Uncompressed(key.serialize_uncompressed())
+                })
+            },
+        ))
 }
 
 pub fn x_only_point_add_tweak(
     pubkey: &XOnlyPubkeySlice,
     tweak: &TweakSlice,
 ) -> InvalidInputResult<Option<XOnlyPubkeyWithParity>> {
-    let mut key = schnorrsig::PublicKey::from_slice(pubkey).map_err(|_| Error::BadPoint)?;
+    let mut key = XOnlyPublicKey::from_slice(pubkey).map_err(|_| Error::BadPoint)?;
     validate_tweak(tweak)?;
     let parity = key.tweak_add_assign(get_hcontext(), tweak);
     if let Ok(parity) = parity {
-        Ok(Some((key.serialize(), if parity { 1_i32 } else { 0_i32 })))
+        Ok(Some((key.serialize(), parity.to_i32())))
     } else {
         Ok(None)
     }
@@ -148,9 +147,10 @@ pub fn x_only_point_add_tweak_check(
     // secp256k1_xonly_pubkey_tweak_add_check and doing it over and checking equality.
     // Later on, performance gains might be added for having parity, so we implement it.
     if let Some(parity) = result.1 {
-        let pubkey = schnorrsig::PublicKey::from_slice(pubkey).map_err(|_| Error::BadPoint)?;
-        let result = schnorrsig::PublicKey::from_slice(&result.0).map_err(|_| Error::BadPoint)?;
-        Ok(pubkey.tweak_add_check(get_hcontext(), &result, parity != 0, *tweak))
+        let pubkey = XOnlyPublicKey::from_slice(pubkey).map_err(|_| Error::BadPoint)?;
+        let result = XOnlyPublicKey::from_slice(&result.0).map_err(|_| Error::BadPoint)?;
+        let parity = Parity::from_i32(parity).map_err(|_| Error::BadParity)?;
+        Ok(pubkey.tweak_add_check(get_hcontext(), &result, parity, *tweak))
     } else {
         x_only_point_add_tweak(pubkey, tweak)?.map_or(Ok(false), |v| Ok(v.0 == result.0))
     }
@@ -189,7 +189,7 @@ pub fn x_only_point_from_scalar(
     let ser = pb.serialize();
     Ok((
         ser[1..33].try_into().expect("32 bytes"),
-        (ser[0] & 1) as i32,
+        i32::from(ser[0] & 1),
     ))
 }
 
@@ -198,7 +198,7 @@ pub fn x_only_point_from_point(pubkey: &PubkeyRef) -> InvalidInputResult<XOnlyPu
     let ser = pb.serialize();
     Ok((
         ser[1..33].try_into().expect("32 bytes"),
-        (ser[0] & 1) as i32,
+        i32::from(ser[0] & 1),
     ))
 }
 
@@ -210,7 +210,7 @@ pub fn point_multiply(
     let outputlen = assume_compression(compressed, Some(pubkey.len()));
     let mut pb = PublicKey::from_slice(pubkey.as_slice()).map_err(|_| Error::BadPoint)?;
     validate_tweak(tweak)?;
-    if let Ok(_) = pb.mul_assign(get_hcontext(), tweak) {
+    if pb.mul_assign(get_hcontext(), tweak).is_ok() {
         Ok(Some(if outputlen == 33 {
             Pubkey::Compressed(pb.serialize())
         } else {
@@ -226,20 +226,11 @@ pub fn private_add(
     tweak: &TweakSlice,
 ) -> InvalidInputResult<Option<PrivkeySlice>> {
     validate_tweak(tweak)?;
-    let mut output: PrivkeySlice = [0_u8; PRIVATE_KEY_SIZE];
-    output.copy_from_slice(private);
-
-    unsafe {
-        if secp256k1_ec_seckey_tweak_add(
-            secp256k1_context_no_precomp,
-            output.as_mut_ptr(),
-            tweak.as_ptr(),
-        ) == 1
-        {
-            Ok(Some(output))
-        } else {
-            Ok(None)
-        }
+    let mut sec = SecretKey::from_slice(private.as_slice()).map_err(|_| Error::BadPrivate)?;
+    if sec.add_assign(tweak.as_slice()).is_ok() {
+        Ok(Some(sec.serialize_secret()))
+    } else {
+        Ok(None)
     }
 }
 
@@ -249,71 +240,78 @@ pub fn private_sub(
     tweak: &TweakSlice,
 ) -> InvalidInputResult<Option<PrivkeySlice>> {
     validate_tweak(tweak)?;
-    let mut output: PrivkeySlice = [0_u8; PRIVATE_KEY_SIZE];
-    output.copy_from_slice(private);
-
     // If tweak is 0, x - 0 = x. Also, secp256k1_ec_seckey_negate will error
     // if we try to negate 0.
     if tweak == &ZERO32 {
-        return Ok(Some(output));
+        return Ok(Some(*private));
     }
+    let mut sec = SecretKey::from_slice(private.as_slice()).map_err(|_| Error::BadPrivate)?;
 
-    let mut tweak_c: TweakSlice = [0_u8; TWEAK_SIZE];
-    tweak_c.copy_from_slice(tweak);
+    // We now know tweak is a valid SecretKey
+    let mut tweak = SecretKey::from_slice(tweak.as_slice()).expect("Tweak must be valid SecretKey");
+    tweak.negate_assign();
 
-    unsafe {
-        assert_eq!(
-            secp256k1_ec_seckey_negate(secp256k1_context_no_precomp, tweak_c.as_mut_ptr()),
-            1
-        );
-        if secp256k1_ec_seckey_tweak_add(
-            secp256k1_context_no_precomp,
-            output.as_mut_ptr(),
-            tweak_c.as_ptr(),
-        ) == 1
-        {
-            Ok(Some(output))
-        } else {
-            Ok(None)
-        }
+    if sec.add_assign(tweak.serialize_secret().as_slice()).is_ok() {
+        Ok(Some(sec.serialize_secret()))
+    } else {
+        Ok(None)
     }
 }
 
-#[allow(clippy::missing_panics_doc)]
+pub fn private_negate(private: &PrivkeySlice) -> InvalidInputResult<PrivkeySlice> {
+    let mut sec = SecretKey::from_slice(private.as_slice()).map_err(|_| Error::BadPrivate)?;
+    sec.negate_assign();
+    Ok(sec.serialize_secret())
+}
+
 pub fn sign(
     hash: &HashSlice,
     private: &PrivkeySlice,
     extra_data: Option<&ExtraDataSlice>,
 ) -> InvalidInputResult<SignatureSlice> {
-    unsafe {
-        let mut sig = Signature::new();
-        let noncedata = extra_data
-            .map_or(core::ptr::null(), |v| v.as_ptr())
-            .cast::<c_void>();
+    let sec = SecretKey::from_slice(private.as_slice()).map_err(|_| Error::BadPrivate)?;
+    let msg = Message::from_slice(hash.as_slice()).map_err(|_| Error::BadHash)?;
+    let secp = get_hcontext();
+    let sig = secp.sign_ecdsa(&msg, &sec);
+    Ok(sig.serialize_compact())
+}
 
-        assert_eq!(
-            secp256k1_ecdsa_sign(
-                get_context(),
-                &mut sig,
-                hash.as_ptr(),
-                private.as_ptr(),
-                secp256k1_nonce_function_rfc6979,
-                noncedata
-            ),
-            1
-        );
+pub fn sign_recoverable(
+    hash: &HashSlice,
+    private: &PrivkeySlice,
+    extra_data: Option<&ExtraDataSlice>,
+) -> InvalidInputResult<(RecoveryId, SignatureSlice)> {
+    let sec = SecretKey::from_slice(private.as_slice()).map_err(|_| Error::BadPrivate)?;
+    let msg = Message::from_slice(hash.as_slice()).map_err(|_| Error::BadHash)?;
+    let secp = get_hcontext();
+    let sig = secp.sign_ecdsa_recoverable(&msg, &sec);
+    Ok(sig.serialize_compact())
+}
 
-        let mut output: SignatureSlice = [0_u8; SIGNATURE_SIZE];
-        assert_eq!(
-            secp256k1_ecdsa_signature_serialize_compact(
-                secp256k1_context_no_precomp,
-                output.as_mut_ptr(),
-                &sig,
-            ),
-            1
-        );
-        Ok(output)
+pub fn recover(
+    hash: &HashSlice,
+    sig: &SignatureSlice,
+    recovery_id: RecoveryId,
+    compressed: Option<bool>,
+) -> InvalidInputResult<Pubkey> {
+    let outputlen = assume_compression(compressed, None);
+    // Check that the r value is less than P - N when 2nd bit is set
+    if recovery_id.to_i32() & 2 == 2 && &sig[..32] >= &P_MINUS_N {
+        return Err(Error::BadRecoveryId);
     }
+    let msg = Message::from_slice(hash.as_slice()).map_err(|_| Error::BadHash)?;
+    let sig = RecoverableSignature::from_compact(sig.as_slice(), recovery_id)
+        .map_err(|_| Error::BadSignature)?;
+
+    let secp = get_hcontext();
+    let pubkey = secp
+        .recover_ecdsa(&msg, &sig)
+        .map_err(|_| Error::BadSignature)?;
+    Ok(if outputlen == 33 {
+        Pubkey::Compressed(pubkey.serialize())
+    } else {
+        Pubkey::Uncompressed(pubkey.serialize_uncompressed())
+    })
 }
 
 #[allow(clippy::missing_panics_doc)]
@@ -323,11 +321,10 @@ pub fn sign_schnorr(
     extra_data: Option<&ExtraDataSlice>,
 ) -> InvalidInputResult<SignatureSlice> {
     let secp = get_hcontext();
-    let kp =
-        schnorrsig::KeyPair::from_seckey_slice(secp, private).map_err(|_| Error::BadPrivate)?;
+    let kp = KeyPair::from_seckey_slice(secp, private).map_err(|_| Error::BadPrivate)?;
     let msg = Message::from_slice(hash).map_err(|_| Error::BadHash)?;
     let nonce = extra_data.map_or(&ZERO32, |v| v);
-    let sig = secp.schnorrsig_sign_with_aux_rand(&msg, &kp, nonce);
+    let sig = secp.sign_schnorr_with_aux_rand(&msg, &kp, nonce);
     Ok(*sig.as_ref())
 }
 
@@ -337,33 +334,17 @@ pub fn verify(
     sig: &SignatureSlice,
     strict: Option<bool>,
 ) -> InvalidInputResult<bool> {
-    unsafe {
-        let pk = pubkey_parse(pubkey)?;
+    let pb = PublicKey::from_slice(pubkey.as_slice()).map_err(|_| Error::BadPoint)?;
+    let msg = Message::from_slice(hash.as_slice()).map_err(|_| Error::BadHash)?;
+    let mut sg = Signature::from_compact(sig.as_slice()).map_err(|_| Error::BadSignature)?;
 
-        let mut signature = Signature::new();
-        if secp256k1_ecdsa_signature_parse_compact(
-            secp256k1_context_no_precomp,
-            &mut signature,
-            sig.as_ptr(),
-        ) == 0
-        {
-            return Err(Error::BadSignature);
-        }
+    let secp = get_hcontext();
 
-        if !strict.unwrap_or(false) {
-            secp256k1_ecdsa_signature_normalize(
-                secp256k1_context_no_precomp,
-                &mut signature,
-                &signature,
-            );
-        }
-
-        if secp256k1_ecdsa_verify(get_context(), &signature, hash.as_ptr(), &pk) == 1 {
-            Ok(true)
-        } else {
-            Ok(false)
-        }
+    if !strict.unwrap_or(false) {
+        sg.normalize_s();
     }
+
+    Ok(secp.verify_ecdsa(&msg, &sg, &pb).is_ok())
 }
 
 pub fn verify_schnorr(
@@ -371,12 +352,12 @@ pub fn verify_schnorr(
     pubkey: &XOnlyPubkeySlice,
     signature: &SignatureSlice,
 ) -> InvalidInputResult<bool> {
-    unsafe {
-        let pk = x_only_pubkey_parse(pubkey.as_ptr())?;
-        if secp256k1_schnorrsig_verify(get_context(), signature.as_ptr(), hash.as_ptr(), &pk) == 1 {
-            Ok(true)
-        } else {
-            Ok(false)
-        }
-    }
+    let pb = XOnlyPublicKey::from_slice(pubkey.as_slice()).map_err(|_| Error::BadPoint)?;
+    let msg = Message::from_slice(hash.as_slice()).map_err(|_| Error::BadHash)?;
+    let sg =
+        schnorr::Signature::from_slice(signature.as_slice()).map_err(|_| Error::BadSignature)?;
+
+    let secp = get_hcontext();
+
+    Ok(secp.verify_schnorr(&sg, &msg, &pb).is_ok())
 }

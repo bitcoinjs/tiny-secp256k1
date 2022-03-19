@@ -11,6 +11,7 @@ pub enum Error {
     BadSignature,
     BadExtraData,
     BadParity,
+    BadRecoveryId,
 }
 
 #[cfg(not(feature = "minimal_validation"))]
@@ -24,6 +25,7 @@ impl fmt::Display for Error {
             Self::BadSignature => f.write_str("Expected Signature"),
             Self::BadExtraData => f.write_str("Expected Extra Data (32 bytes)"),
             Self::BadParity => f.write_str("Expected Parity (1 | 0)"),
+            Self::BadRecoveryId => f.write_str("Bad Recovery Id"),
         }
     }
 }

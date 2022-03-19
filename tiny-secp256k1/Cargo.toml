@@ -19,5 +19,5 @@ no_std = []
 minimal_validation = []
 
 [dependencies]
-secp256k1 = { version = "0.20.3", default-features = false }
+secp256k1 = { version = "0.21.3", default-features = false, features = ["recovery"] }
 rand = { version = "0.8.4", optional = true }

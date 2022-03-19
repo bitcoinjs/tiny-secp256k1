@@ -26,7 +26,7 @@ mod globals {
 
     pub static mut SECP256K1: Option<Secp256k1<AllPreallocated>> = None;
 }
-use globals::{ptr_width_params::CONTEXT_BUFFER, AllPreallocated, Context, Secp256k1, SECP256K1};
+use globals::{ptr_width_params::CONTEXT_BUFFER, AllPreallocated, Secp256k1, SECP256K1};
 
 #[allow(clippy::missing_panics_doc)]
 pub fn set_context(seed: &[u8; 32]) -> &'static Secp256k1<AllPreallocated<'static>> {
@@ -40,10 +40,6 @@ pub fn set_context(seed: &[u8; 32]) -> &'static Secp256k1<AllPreallocated<'stati
         SECP256K1.as_mut().unwrap().seeded_randomize(seed);
         SECP256K1.as_ref().unwrap()
     }
-}
-
-pub(crate) fn get_context() -> *const Context {
-    *get_hcontext().ctx() as *const Context
 }
 
 pub(crate) fn get_hcontext() -> &'static Secp256k1<AllPreallocated<'static>> {
