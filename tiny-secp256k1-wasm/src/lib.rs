@@ -283,6 +283,15 @@ pub extern "C" fn private_sub() -> i32 {
 }
 
 #[no_mangle]
+#[export_name = "privateNegate"]
+pub extern "C" fn private_negate() {
+    unsafe {
+        let private = jstry!(tiny_secp256k1::private_negate(PRIVATE_INPUT.get_ref()));
+        PRIVATE_INPUT.get_mut().copy_from_slice(&private);
+    }
+}
+
+#[no_mangle]
 pub extern "C" fn sign(extra_data: i32) {
     unsafe {
         SIGNATURE_INPUT
@@ -296,6 +305,27 @@ pub extern "C" fn sign(extra_data: i32) {
                     Some(EXTRA_DATA_INPUT.get_ref())
                 },
             )));
+    }
+}
+
+#[no_mangle]
+#[export_name = "signRecoverable"]
+pub extern "C" fn sign_recoverable(extra_data: i32) -> i32 {
+    unsafe {
+        let sig = jstry!(
+            tiny_secp256k1::sign_recoverable(
+                HASH_INPUT.get_ref(),
+                PRIVATE_INPUT.get_ref(),
+                if extra_data == 0 {
+                    None
+                } else {
+                    Some(EXTRA_DATA_INPUT.get_ref())
+                },
+            ),
+            0
+        );
+        SIGNATURE_INPUT.get_mut().copy_from_slice(&sig.1);
+        sig.0.to_i32()
     }
 }
 
@@ -337,6 +367,25 @@ pub extern "C" fn verify(inputlen: usize, strict: i32) -> i32 {
         } else {
             0
         }
+    }
+}
+
+#[allow(clippy::missing_panics_doc)]
+#[no_mangle]
+pub extern "C" fn recover(outputlen: usize, recid: i32) -> i32 {
+    unsafe {
+        let pubkey = jstry!(
+            tiny_secp256k1::recover(
+                HASH_INPUT.get_ref(),
+                SIGNATURE_INPUT.get_ref(),
+                tiny_secp256k1::RecoveryId::from_i32(recid).unwrap(),
+                pubkey_size_to_opt_bool!(outputlen),
+            ),
+            0
+        );
+        let size = pubkey.len();
+        PUBLIC_KEY_INPUT.get_mut()[..size].copy_from_slice(&pubkey.as_slice()[..size]);
+        1
     }
 }
 
