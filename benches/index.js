@@ -111,15 +111,34 @@ const benchmarks = [
     ),
   },
   {
+    name: "privateNegate",
+    // use data from privateSub
+    bench: createBenchmarkFn(fprivates.privateSub, (secp256k1, f) =>
+      secp256k1.privateNegate(f.d)
+    ),
+  },
+  {
     name: "sign",
     bench: createBenchmarkFn(fecdsa, (secp256k1, f) =>
       secp256k1.sign(f.m, f.d)
     ),
   },
   {
+    name: "signRecoverable",
+    bench: createBenchmarkFn(fecdsa, (secp256k1, f) =>
+      secp256k1.signRecoverable(f.m, f.d)
+    ),
+  },
+  {
     name: "verify",
     bench: createBenchmarkFn(fecdsa, (secp256k1, f) =>
       secp256k1.verify(f.m, f.Q, f.signature)
+    ),
+  },
+  {
+    name: "recover",
+    bench: createBenchmarkFn(fecdsa, (secp256k1, f) =>
+      secp256k1.recover(f.m, f.signature, f.recoveryId)
     ),
   },
   {

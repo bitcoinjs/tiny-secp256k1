@@ -277,7 +277,22 @@ const App = withStyles(useStyles)(
                 />
               </Box>
               <Box className={this.props.classes.methodBox}>
+                <ApiPrivateNegate
+                  classes={this.props.classes}
+                  seckey={this.state.data?.seckey}
+                  tweak={this.state.data?.tweak}
+                />
+              </Box>
+              <Box className={this.props.classes.methodBox}>
                 <ApiSign
+                  classes={this.props.classes}
+                  hash={this.state.data?.hash}
+                  seckey={this.state.data?.seckey}
+                  entropy={this.state.data?.entropy}
+                />
+              </Box>
+              <Box className={this.props.classes.methodBox}>
+                <ApiSignRecoverable
                   classes={this.props.classes}
                   hash={this.state.data?.hash}
                   seckey={this.state.data?.seckey}
@@ -290,6 +305,15 @@ const App = withStyles(useStyles)(
                   hash={this.state.data?.hash}
                   pubkey={this.state.data?.pubkey}
                   signature={this.state.data?.signature}
+                />
+              </Box>
+              <Box className={this.props.classes.methodBox}>
+                <ApiRecover
+                  classes={this.props.classes}
+                  hash={this.state.data?.hash}
+                  signature={this.state.data?.signature}
+                  recoveryId={this.state.data?.recoveryId}
+                  compressed={this.state.data?.compressed}
                 />
               </Box>
               <Box className={this.props.classes.methodBox}>
@@ -1375,6 +1399,71 @@ const ApiPrivateSub = withStyles(useStyles)(
   }
 );
 
+const ApiPrivateNegate = withStyles(useStyles)(
+  class extends Component {
+    constructor(props) {
+      super(props);
+      this.state = {
+        seckey: "",
+        seckey_valid: undefined,
+        result: undefined,
+      };
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+      if (prevProps.seckey !== this.props.seckey) {
+        this.setState({
+          seckey: this.props.seckey,
+        });
+      }
+
+      if (prevState.seckey !== this.state.seckey) {
+        const { seckey } = this.state;
+        const seckey_valid =
+          seckey === "" ? undefined : secp256k1.isPrivate(seckey);
+        const result =
+          seckey === "" ? undefined : secp256k1.privateNegate(seckey);
+        this.setState({ seckey_valid, result });
+      }
+    }
+
+    render() {
+      return (
+        <>
+          <Typography variant="h6">
+            privateNegate(d: Uint8Array, tweak: Uint8Array) =&gt; Uint8Array
+          </Typography>
+          <TextField
+            label="Private Key as HEX string"
+            onChange={createInputChange(this, "seckey")}
+            value={this.state.seckey}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.seckey_valid,
+              this.props.classes
+            )}
+          />
+
+          <TextField
+            label="Output, Negated Private Key as HEX string"
+            value={
+              this.state.result === undefined
+                ? ""
+                : this.state.result || "Invalid result"
+            }
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(this.state.result, this.props.classes)}
+          />
+        </>
+      );
+    }
+  }
+);
+
 const ApiSign = withStyles(useStyles)(
   class extends Component {
     constructor(props) {
@@ -1475,6 +1564,134 @@ const ApiSign = withStyles(useStyles)(
             margin="normal"
             variant="outlined"
             InputProps={getInputProps(this.state.result, this.props.classes)}
+          />
+        </>
+      );
+    }
+  }
+);
+
+const ApiSignRecoverable = withStyles(useStyles)(
+  class extends Component {
+    constructor(props) {
+      super(props);
+      this.state = {
+        hash: "",
+        hash_valid: undefined,
+        seckey: "",
+        seckey_valid: undefined,
+        entropy: "",
+        entropy_valid: undefined,
+        result: undefined,
+        resultRecId: undefined,
+      };
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+      if (
+        prevProps.hash !== this.props.hash ||
+        prevProps.seckey !== this.props.seckey ||
+        prevProps.entropy !== this.props.entropy
+      ) {
+        this.setState({
+          hash: this.props.hash,
+          seckey: this.props.seckey,
+          entropy: this.props.entropy,
+        });
+      }
+
+      if (
+        prevState.hash !== this.state.hash ||
+        prevState.seckey !== this.state.seckey ||
+        prevState.entropy !== this.state.entropy
+      ) {
+        const { hash, seckey, entropy } = this.state;
+        const hash_valid = hash === "" ? undefined : validate.isHash(hash);
+        const seckey_valid =
+          seckey === "" ? undefined : secp256k1.isPrivate(seckey);
+        const entropy_valid =
+          entropy === "" ? undefined : validate.isExtraData(entropy);
+        const sig =
+          hash === "" && seckey === "" && entropy === ""
+            ? undefined
+            : secp256k1.signRecoverable(hash, seckey, entropy);
+        const result = Buffer.from(sig?.signature).toString("hex");
+        const resultRecId = sig?.recoveryId;
+        this.setState({
+          hash_valid,
+          seckey_valid,
+          entropy_valid,
+          result,
+          resultRecId,
+        });
+      }
+    }
+
+    render() {
+      return (
+        <>
+          <Typography variant="h6">
+            signRecoverable(h: Uint8Array, d: Uint8Array, e: Uint8Array) =&gt;
+            (Uint8Array, recoveryId: 0 | 1 | 2 | 3)
+          </Typography>
+          <TextField
+            label="Hash as HEX string"
+            onChange={createInputChange(this, "hash")}
+            value={this.state.hash}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.hash_valid,
+              this.props.classes
+            )}
+          />
+          <TextField
+            label="Private Key as HEX string"
+            onChange={createInputChange(this, "seckey")}
+            value={this.state.seckey}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.seckey_valid,
+              this.props.classes
+            )}
+          />
+          <TextField
+            label="Extra Data as HEX string"
+            onChange={createInputChange(this, "entropy")}
+            value={this.state.entropy}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.entropy_valid,
+              this.props.classes
+            )}
+          />
+          <TextField
+            label="Output, Signature as HEX string"
+            value={
+              this.state.result === undefined
+                ? ""
+                : this.state.result || "Invalid result"
+            }
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(this.state.result, this.props.classes)}
+          />
+          <TextField
+            label="Output, Recovery Id as number"
+            value={
+              this.state.resultRecId === undefined
+                ? ""
+                : this.state.resultRecId || "Invalid result"
+            }
+            fullWidth
+            margin="normal"
+            variant="outlined"
           />
         </>
       );
@@ -1587,6 +1804,133 @@ const ApiVerify = withStyles(useStyles)(
               {this.state.result ? <CheckIcon /> : <CloseIcon color="error" />}
             </Box>
           )}
+        </>
+      );
+    }
+  }
+);
+
+const ApiRecover = withStyles(useStyles)(
+  class extends Component {
+    constructor(props) {
+      super(props);
+      this.state = {
+        hash: "",
+        hash_valid: undefined,
+        signature: "",
+        signature_valid: undefined,
+        recoveryId: 0,
+        recoveryId_valid: undefined,
+        compressed: false,
+        result: undefined,
+      };
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+      if (
+        prevProps.hash !== this.props.hash ||
+        prevProps.signature !== this.props.signature ||
+        prevProps.recoveryId !== this.props.recoveryId ||
+        prevProps.compressed !== this.props.compressed
+      ) {
+        this.setState({
+          hash: this.props.hash,
+          signature: this.props.signature,
+          recoveryId: this.props.recoveryId,
+          compressed: this.props.compressed,
+        });
+      }
+
+      if (
+        prevState.hash !== this.state.hash ||
+        prevState.signature !== this.state.signature ||
+        prevState.recoveryId !== this.state.recoveryId ||
+        prevState.compressed !== this.state.compressed
+      ) {
+        const { hash, signature, recoveryId, compressed } = this.state;
+        const hash_valid = hash === "" ? undefined : validate.isHash(hash);
+        const recoveryId_valid =
+          recoveryId === "" ? undefined : 0 <= +recoveryId <= 3;
+        const signature_valid =
+          signature === "" ? undefined : validate.isSignature(signature);
+        const result =
+          hash === "" && recoveryId === "" && signature === ""
+            ? undefined
+            : secp256k1.recover(hash, signature, recoveryId, compressed);
+        this.setState({
+          hash_valid,
+          signature_valid,
+          recoveryId_valid,
+          result,
+        });
+      }
+    }
+
+    render() {
+      return (
+        <>
+          <Typography variant="h6">
+            recover(h: Uint8Array, signature: Uint8Array, recoveryId: number,
+            compressed?: boolean) =&gt; Uint8Array | null
+          </Typography>
+          <TextField
+            label="Hash as HEX string"
+            onChange={createInputChange(this, "hash")}
+            value={this.state.hash}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.hash_valid,
+              this.props.classes
+            )}
+          />
+          <TextField
+            label="Signature as HEX string"
+            onChange={createInputChange(this, "signature")}
+            value={this.state.signature}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.signature_valid,
+              this.props.classes
+            )}
+          />
+          <TextField
+            label="Recovery Id (0, 1, 2 or 3)"
+            type="number"
+            onChange={createInputChange(this, "recoveryId")}
+            value={this.state.recoveryId}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.recoveryId_valid,
+              this.props.classes
+            )}
+          />
+          <FormControlLabel
+            control={
+              <CompressedCheckbox
+                onChange={createCheckedChange(this, "compressed")}
+                checked={this.state.compressed}
+              />
+            }
+            label="Compressed"
+          />
+          <TextField
+            label="Output, Public Key as HEX string"
+            value={
+              this.state.result === undefined
+                ? ""
+                : this.state.result || "Invalid result"
+            }
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(this.state.result, this.props.classes)}
+          />
         </>
       );
     }

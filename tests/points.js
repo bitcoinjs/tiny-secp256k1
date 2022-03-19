@@ -213,4 +213,30 @@ export default function (secp256k1) {
 
     t.end();
   });
+
+  test("pointNegate", (t) => {
+    for (const f of fpoints.valid.pointNegate) {
+      const d = fromHex(f.d);
+      const expected = fromHex(f.expected);
+      let description = `-${f.d} = ${f.expected}`;
+      if (f.description) description += ` (${f.description})`;
+      t.same(secp256k1.privateNegate(d), expected, description);
+
+      t.equal(secp256k1.privateAdd(d, expected), null, description);
+    }
+
+    // using the same data as point from scalar
+    for (const f of fpoints.invalid.pointFromScalar) {
+      const d = fromHex(f.d);
+      t.throws(
+        () => {
+          secp256k1.privateNegate(d);
+        },
+        new RegExp(f.exception),
+        `${f.description} throws ${f.exception}`
+      );
+    }
+
+    t.end();
+  });
 }
