@@ -1,4 +1,11 @@
-use super::consts::{PUBLIC_KEY_COMPRESSED_SIZE, PUBLIC_KEY_UNCOMPRESSED_SIZE};
+use crate::{
+    consts::{PUBLIC_KEY_COMPRESSED_SIZE, PUBLIC_KEY_UNCOMPRESSED_SIZE},
+    types::{ExtraDataSlice, SignatureSlice, SIGNATURE_SIZE},
+};
+use secp256k1::{
+    ecdsa::{RecoverableSignature, RecoveryId, Signature},
+    ffi, AllPreallocated, Message, Secp256k1, SecretKey,
+};
 
 pub(crate) fn assume_compression(compressed: Option<bool>, p: Option<usize>) -> usize {
     // To allow for XOnly PubkeyRef length to indicate compressed,
@@ -15,82 +22,81 @@ pub(crate) fn assume_compression(compressed: Option<bool>, p: Option<usize>) -> 
     )
 }
 
-// pub(crate) unsafe fn x_only_pubkey_from_pubkey(
-//     pubkey: &PubkeyRef,
-// ) -> InvalidInputResult<(XOnlyPublicKey, i32)> {
-//     let mut xonly_pk = XOnlyPublicKey::new();
-//     let mut parity: i32 = 0;
-//     let pubkey = pubkey_parse(pubkey)?;
-//     x_only_pubkey_from_pubkey_struct(&mut xonly_pk, &mut parity, &pubkey);
-//     Ok((xonly_pk, parity))
-// }
+// TODO: Get ecdsa sign and sign_recoverable to accept extra entropy for rfc6979
+pub(crate) fn sign_ecdsa(
+    secp: &'static Secp256k1<AllPreallocated<'static>>,
+    msg: Message,
+    sec: SecretKey,
+    extra_data: Option<&ExtraDataSlice>,
+) -> Signature {
+    unsafe {
+        let mut sig = ffi::Signature::new();
+        let noncedata = extra_data
+            .map_or(core::ptr::null(), |v| v.as_ptr())
+            .cast::<ffi::types::c_void>();
 
-// pub(crate) unsafe fn x_only_pubkey_from_pubkey_struct(
-//     xonly_pk: &mut XOnlyPublicKey,
-//     parity: &mut i32,
-//     pubkey: &PublicKey,
-// ) {
-//     assert_eq!(
-//         secp256k1_xonly_pubkey_from_pubkey(get_context(), xonly_pk, parity, pubkey),
-//         1
-//     );
-// }
+        assert_eq!(
+            ffi::secp256k1_ecdsa_sign(
+                *secp.ctx() as *const ffi::Context,
+                &mut sig,
+                msg.as_ptr(),
+                sec.as_ptr(),
+                ffi::secp256k1_nonce_function_rfc6979,
+                noncedata
+            ),
+            1
+        );
 
-// pub(crate) unsafe fn pubkey_parse(pubkey: &PubkeyRef) -> InvalidInputResult<PublicKey> {
-//     let mut pk = PublicKey::new();
-//     let mut container: [u8; 33];
+        let mut output: SignatureSlice = [0_u8; SIGNATURE_SIZE];
+        assert_eq!(
+            ffi::secp256k1_ecdsa_signature_serialize_compact(
+                ffi::secp256k1_context_no_precomp,
+                output.as_mut_ptr(),
+                &sig,
+            ),
+            1
+        );
+        Signature::from_compact(&output).unwrap()
+    }
+}
 
-//     // Only use container if XOnly
-//     let (input, inputlen) = match pubkey {
-//         PubkeyRef::XOnly(v) => {
-//             container = [0_u8; 33];
-//             container[0] = 2;
-//             container[1..33].copy_from_slice(&v[0..32]);
-//             (container.as_ptr(), 33)
-//         }
-//         v => (v.as_ptr(), v.len()),
-//     };
-//     if secp256k1_ec_pubkey_parse(secp256k1_context_no_precomp, &mut pk, input, inputlen) == 1 {
-//         Ok(pk)
-//     } else {
-//         Err(Error::BadPoint)
-//     }
-// }
+// TODO: Get ecdsa sign and sign_recoverable to accept extra entropy for rfc6979
+pub(crate) fn sign_ecdsa_recoverable(
+    secp: &'static Secp256k1<AllPreallocated<'static>>,
+    msg: Message,
+    sec: SecretKey,
+    extra_data: Option<&ExtraDataSlice>,
+) -> RecoverableSignature {
+    unsafe {
+        let mut sig = ffi::recovery::RecoverableSignature::new();
+        let noncedata = extra_data
+            .map_or(core::ptr::null(), |v| v.as_ptr())
+            .cast::<ffi::types::c_void>();
 
-// pub(crate) unsafe fn x_only_pubkey_parse(input: *const u8) -> InvalidInputResult<XOnlyPublicKey> {
-//     let mut pk = XOnlyPublicKey::new();
-//     if secp256k1_xonly_pubkey_parse(secp256k1_context_no_precomp, &mut pk, input) == 1 {
-//         Ok(pk)
-//     } else {
-//         Err(Error::BadPoint)
-//     }
-// }
+        assert_eq!(
+            ffi::recovery::secp256k1_ecdsa_sign_recoverable(
+                *secp.ctx() as *const ffi::Context,
+                &mut sig,
+                msg.as_ptr(),
+                sec.as_ptr(),
+                ffi::secp256k1_nonce_function_rfc6979,
+                noncedata
+            ),
+            1
+        );
 
-// pub(crate) unsafe fn pubkey_serialize(pk: &PublicKey, output: *mut u8, mut outputlen: usize) {
-//     let flags = if outputlen == PUBLIC_KEY_COMPRESSED_SIZE {
-//         SECP256K1_SER_COMPRESSED
-//     } else {
-//         SECP256K1_SER_UNCOMPRESSED
-//     };
-//     assert_eq!(
-//         secp256k1_ec_pubkey_serialize(
-//             secp256k1_context_no_precomp,
-//             output,
-//             &mut outputlen,
-//             pk.as_ptr().cast::<PublicKey>(),
-//             flags,
-//         ),
-//         1
-//     );
-// }
+        let mut output: SignatureSlice = [0_u8; SIGNATURE_SIZE];
+        let mut recid: i32 = 0;
 
-// pub(crate) unsafe fn x_only_pubkey_serialize(pk: &XOnlyPublicKey, output: *mut u8) {
-//     assert_eq!(
-//         secp256k1_xonly_pubkey_serialize(
-//             secp256k1_context_no_precomp,
-//             output,
-//             pk.as_ptr().cast::<XOnlyPublicKey>(),
-//         ),
-//         1
-//     );
-// }
+        assert_eq!(
+            ffi::recovery::secp256k1_ecdsa_recoverable_signature_serialize_compact(
+                ffi::secp256k1_context_no_precomp,
+                output.as_mut_ptr(),
+                &mut recid,
+                &sig,
+            ),
+            1
+        );
+        RecoverableSignature::from_compact(&output, RecoveryId::from_i32(recid).unwrap()).unwrap()
+    }
+}

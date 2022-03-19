@@ -62,7 +62,7 @@ use types::{
     ExtraDataSlice, HashSlice, InvalidInputResult, PrivkeySlice, SignatureSlice, TweakSlice,
     XOnlyPubkeySlice, XOnlyPubkeyWithMaybeParity, XOnlyPubkeyWithParity,
 };
-use utils::assume_compression;
+use utils::{assume_compression, sign_ecdsa, sign_ecdsa_recoverable};
 
 pub fn is_point(pubkey: &PubkeyRef) -> bool {
     let len = pubkey.len();
@@ -300,7 +300,7 @@ pub fn sign(
     let sec = SecretKey::from_slice(private.as_slice()).map_err(|_| Error::BadPrivate)?;
     let msg = Message::from_slice(hash.as_slice()).map_err(|_| Error::BadHash)?;
     let secp = get_hcontext();
-    let sig = secp.sign_ecdsa(&msg, &sec);
+    let sig = sign_ecdsa(secp, msg, sec, extra_data);
     Ok(sig.serialize_compact())
 }
 
@@ -315,7 +315,7 @@ pub fn sign_recoverable(
     let sec = SecretKey::from_slice(private.as_slice()).map_err(|_| Error::BadPrivate)?;
     let msg = Message::from_slice(hash.as_slice()).map_err(|_| Error::BadHash)?;
     let secp = get_hcontext();
-    let sig = secp.sign_ecdsa_recoverable(&msg, &sec);
+    let sig = sign_ecdsa_recoverable(secp, msg, sec, extra_data);
     Ok(sig.serialize_compact())
 }
 
