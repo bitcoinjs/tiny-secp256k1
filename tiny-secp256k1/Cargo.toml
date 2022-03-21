@@ -19,5 +19,6 @@ no_std = []
 minimal_validation = []
 
 [dependencies]
-secp256k1 = { version = "0.21.3", default-features = false, features = ["recovery"] }
+# This commit is on top of 0.22.1 (removing duplicate symbols so WASM can compile at all)
+secp256k1 = { git = "https://github.com/junderw/rust-secp256k1", rev = "e88fc67a61b79565626b25fc08d6816e23f84cf6", default-features = false, features = ["recovery"] }
 rand = { version = "0.8.4", optional = true }

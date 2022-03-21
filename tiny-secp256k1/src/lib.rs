@@ -249,7 +249,7 @@ pub fn private_add(
     validate_tweak(tweak)?;
     let mut sec = SecretKey::from_slice(private.as_slice()).map_err(|_| Error::BadPrivate)?;
     if sec.add_assign(tweak.as_slice()).is_ok() {
-        Ok(Some(sec.serialize_secret()))
+        Ok(Some(sec.secret_bytes()))
     } else {
         Ok(None)
     }
@@ -274,8 +274,8 @@ pub fn private_sub(
     let mut tweak = SecretKey::from_slice(tweak.as_slice()).map_err(|_| Error::BadPrivate)?;
     tweak.negate_assign();
 
-    if sec.add_assign(tweak.serialize_secret().as_slice()).is_ok() {
-        Ok(Some(sec.serialize_secret()))
+    if sec.add_assign(tweak.secret_bytes().as_slice()).is_ok() {
+        Ok(Some(sec.secret_bytes()))
     } else {
         Ok(None)
     }
@@ -286,7 +286,7 @@ pub fn private_sub(
 pub fn private_negate(private: &PrivkeySlice) -> InvalidInputResult<PrivkeySlice> {
     let mut sec = SecretKey::from_slice(private.as_slice()).map_err(|_| Error::BadPrivate)?;
     sec.negate_assign();
-    Ok(sec.serialize_secret())
+    Ok(sec.secret_bytes())
 }
 
 /// # Errors
