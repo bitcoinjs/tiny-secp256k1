@@ -31,6 +31,9 @@
 //! let pkey = point_from_scalar(&privkey, None).unwrap().unwrap();
 //! println!("{:?}", pkey);
 //! // Ok(Some(Compressed([3, 126, 249, 27, 122, 231, 178, 211, ...])))
+//! let key = [1_u8; 32];
+//! let pubkey = point_from_scalar(&key, None).unwrap().unwrap();
+//! assert_eq!(pubkey.as_slice(), [3, 27, 132, 197, 86, 123, 18, 100, 64, 153, 93, 62, 213, 170, 186, 5, 101, 215, 30, 24, 52, 96, 72, 25, 255, 156, 23, 245, 233, 213, 221, 7, 143]);
 //! ```
 
 mod consts;

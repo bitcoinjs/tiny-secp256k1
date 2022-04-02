@@ -3,7 +3,6 @@ use rand::{self, RngCore};
 
 #[allow(clippy::large_stack_arrays)]
 mod globals {
-    pub use core::mem::transmute;
     pub use secp256k1::{
         ffi::{types::AlignedType, Context},
         AllPreallocated, Secp256k1,
@@ -11,17 +10,15 @@ mod globals {
 
     #[cfg(target_pointer_width = "32")]
     pub mod ptr_width_params {
-        use super::{transmute, AlignedType};
-        pub const ALIGN_SIZE: usize = 69_645;
-        pub static mut CONTEXT_BUFFER: [AlignedType; ALIGN_SIZE] =
-            unsafe { transmute([0_u8; ALIGN_SIZE * 16]) };
+        use super::AlignedType;
+        pub const ALIGN_SIZE: usize = 12;
+        pub static mut CONTEXT_BUFFER: [AlignedType; ALIGN_SIZE] = [AlignedType::ZERO; ALIGN_SIZE];
     }
     #[cfg(target_pointer_width = "64")]
     pub mod ptr_width_params {
-        use super::{transmute, AlignedType};
-        pub const ALIGN_SIZE: usize = 69_646;
-        pub static mut CONTEXT_BUFFER: [AlignedType; ALIGN_SIZE] =
-            unsafe { transmute([0_u8; ALIGN_SIZE * 16]) };
+        use super::AlignedType;
+        pub const ALIGN_SIZE: usize = 13;
+        pub static mut CONTEXT_BUFFER: [AlignedType; ALIGN_SIZE] = [AlignedType::ZERO; ALIGN_SIZE];
     }
 
     pub static mut SECP256K1: Option<Secp256k1<AllPreallocated>> = None;
@@ -32,6 +29,7 @@ use globals::{ptr_width_params::CONTEXT_BUFFER, AllPreallocated, Secp256k1, SECP
 pub fn set_context(seed: &[u8; 32]) -> &'static Secp256k1<AllPreallocated<'static>> {
     unsafe {
         if SECP256K1.is_none() {
+            assert_eq!(Secp256k1::preallocate_size(), CONTEXT_BUFFER.len());
             SECP256K1 = Some(
                 Secp256k1::preallocated_new(&mut CONTEXT_BUFFER)
                     .expect("CONTEXT_BUFFER length incorrect for this target"),
