@@ -31,6 +31,9 @@
 //! let pkey = point_from_scalar(&privkey, None).unwrap().unwrap();
 //! println!("{:?}", pkey);
 //! // Ok(Some(Compressed([3, 126, 249, 27, 122, 231, 178, 211, ...])))
+//! let key = [1_u8; 32];
+//! let pubkey = point_from_scalar(&key, None).unwrap().unwrap();
+//! assert_eq!(pubkey.as_slice(), [3, 27, 132, 197, 86, 123, 18, 100, 64, 153, 93, 62, 213, 170, 186, 5, 101, 215, 30, 24, 52, 96, 72, 25, 255, 156, 23, 245, 233, 213, 221, 7, 143]);
 //! ```
 
 mod consts;
@@ -249,7 +252,7 @@ pub fn private_add(
     validate_tweak(tweak)?;
     let mut sec = SecretKey::from_slice(private.as_slice()).map_err(|_| Error::BadPrivate)?;
     if sec.add_assign(tweak.as_slice()).is_ok() {
-        Ok(Some(sec.serialize_secret()))
+        Ok(Some(sec.secret_bytes()))
     } else {
         Ok(None)
     }
@@ -274,8 +277,8 @@ pub fn private_sub(
     let mut tweak = SecretKey::from_slice(tweak.as_slice()).map_err(|_| Error::BadPrivate)?;
     tweak.negate_assign();
 
-    if sec.add_assign(tweak.serialize_secret().as_slice()).is_ok() {
-        Ok(Some(sec.serialize_secret()))
+    if sec.add_assign(tweak.secret_bytes().as_slice()).is_ok() {
+        Ok(Some(sec.secret_bytes()))
     } else {
         Ok(None)
     }
@@ -286,7 +289,7 @@ pub fn private_sub(
 pub fn private_negate(private: &PrivkeySlice) -> InvalidInputResult<PrivkeySlice> {
     let mut sec = SecretKey::from_slice(private.as_slice()).map_err(|_| Error::BadPrivate)?;
     sec.negate_assign();
-    Ok(sec.serialize_secret())
+    Ok(sec.secret_bytes())
 }
 
 /// # Errors

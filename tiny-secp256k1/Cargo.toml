@@ -19,5 +19,10 @@ no_std = []
 minimal_validation = []
 
 [dependencies]
-secp256k1 = { version = "0.21.3", default-features = false, features = ["recovery"] }
 rand = { version = "0.8.4", optional = true }
+
+[dependencies.secp256k1]
+git = "https://github.com/rust-bitcoin/rust-secp256k1"
+rev = "e4fb57559062d584e26c750c01d51ce4fc7282bb"
+default-features = false
+features = ["recovery", "lowmemory"]
