@@ -1,4 +1,3 @@
-import { Buffer } from "buffer";
 import ReactDOM from "react-dom";
 import React, { Component } from "react";
 import {
@@ -13,16 +12,17 @@ import {
   withStyles,
 } from "@material-ui/core";
 import { Close as CloseIcon, Check as CheckIcon } from "@material-ui/icons";
+import { fromHex, toHex } from "uint8array-tools";
 
 import * as _secp256k1 from "../../lib/index.js";
 import { generate } from "../random-in-node/index.js";
 
-const EMPTY_BUFFER = Buffer.allocUnsafe(0);
+const EMPTY_BUFFER = new Uint8Array(0);
 function toUint8Array(value) {
   if (typeof value !== "string") return value;
   if (value.match(/^\d{1,20}$/)) return parseInt(value);
-  const data = Buffer.from(value, "hex");
-  return data.toString("hex") === value ? data : EMPTY_BUFFER;
+  const data = fromHex(value);
+  return toHex(data) === value ? data : EMPTY_BUFFER;
 }
 
 const validate = {
@@ -56,7 +56,7 @@ const secp256k1 = {
     try {
       let result = _secp256k1[method](...args.map((v) => toUint8Array(v)));
       if (result instanceof Uint8Array) {
-        result = Buffer.from(result).toString("hex");
+        result = toHex(result);
       }
       return result;
     } catch (_err) {
@@ -160,7 +160,7 @@ const App = withStyles(useStyles)(
       const data = generate();
       for (const key of Object.keys(data)) {
         if (data[key] instanceof Uint8Array) {
-          data[key] = Buffer.from(data[key]).toString("hex");
+          data[key] = toHex(data[key]);
         } else if (typeof data[key] === "number") {
           data[key] = data[key].toString(10);
         }
@@ -924,7 +924,7 @@ const ApiXOnlyPointAddTweak = withStyles(useStyles)(
             ? undefined
             : secp256k1.xOnlyPointAddTweak(x_only_pubkey, x_only_pubkey2);
         this.setState({
-          result: Buffer.from(output.xOnlyPubkey).toString("hex"),
+          result: toHex(output.xOnlyPubkey),
         });
       }
     }
@@ -978,10 +978,10 @@ const ApiXOnlyPointAddTweakCheck = withStyles(useStyles)(
       this.state = {
         x_only_pubkey: "",
         x_only_pubkey_valid: undefined,
-        x_only_add_tweak: "",
-        x_only_add_tweak_valid: undefined,
         x_only_pubkey2: "",
         x_only_pubkey2_valid: undefined,
+        x_only_add_tweak: "",
+        x_only_add_tweak_valid: undefined,
         x_only_add_parity: "",
         x_only_add_parity_valid: undefined,
         result: undefined,
@@ -1019,34 +1019,34 @@ const ApiXOnlyPointAddTweakCheck = withStyles(useStyles)(
           x_only_pubkey === ""
             ? undefined
             : secp256k1.isXOnlyPoint(x_only_pubkey);
-        const x_only_add_tweak_valid =
-          x_only_add_tweak === ""
-            ? undefined
-            : secp256k1.isXOnlyPoint(x_only_add_tweak);
         const x_only_pubkey2_valid =
           x_only_pubkey2 === ""
             ? undefined
             : secp256k1.isXOnlyPoint(x_only_pubkey2);
+        const x_only_add_tweak_valid =
+          x_only_add_tweak === ""
+            ? undefined
+            : secp256k1.isXOnlyPoint(x_only_add_tweak);
         const x_only_add_parity_valid =
           x_only_add_parity === ""
             ? undefined
             : validate.isParity(parseInt(x_only_add_parity));
         const result =
           x_only_pubkey_valid === "" &&
-          x_only_add_tweak_valid === "" &&
           x_only_pubkey2_valid === "" &&
+          x_only_add_tweak_valid === "" &&
           x_only_add_parity_valid === ""
             ? undefined
             : secp256k1.xOnlyPointAddTweakCheck(
                 x_only_pubkey,
-                x_only_add_tweak,
                 x_only_pubkey2,
+                x_only_add_tweak,
                 x_only_add_parity
               );
         this.setState({
           x_only_pubkey_valid,
-          x_only_add_tweak_valid,
           x_only_pubkey2_valid,
+          x_only_add_tweak_valid,
           x_only_add_parity_valid,
           result,
         });
@@ -1057,7 +1057,7 @@ const ApiXOnlyPointAddTweakCheck = withStyles(useStyles)(
       return (
         <>
           <Typography variant="h6">
-            xOnlyPointAddTweakCheck(p1: Uint8Array, p2: Uint8Array, tweak:
+            xOnlyPointAddTweakCheck(p1: Uint8Array, tweak: Uint8Array, p2:
             Uint8Array, parity: 1 | 0) =&gt; boolean
           </Typography>
           <TextField
@@ -1073,18 +1073,6 @@ const ApiXOnlyPointAddTweakCheck = withStyles(useStyles)(
             )}
           />
           <TextField
-            label="Tweaked Key as HEX string"
-            onChange={createInputChange(this, "x_only_add_tweak")}
-            value={this.state.x_only_add_tweak}
-            fullWidth
-            margin="normal"
-            variant="outlined"
-            InputProps={getInputProps(
-              this.state.x_only_add_tweak_valid,
-              this.props.classes
-            )}
-          />
-          <TextField
             label="Tweak Key as HEX string"
             onChange={createInputChange(this, "x_only_pubkey2")}
             value={this.state.x_only_pubkey2}
@@ -1093,6 +1081,18 @@ const ApiXOnlyPointAddTweakCheck = withStyles(useStyles)(
             variant="outlined"
             InputProps={getInputProps(
               this.state.x_only_pubkey2_valid,
+              this.props.classes
+            )}
+          />
+          <TextField
+            label="Tweaked Key as HEX string"
+            onChange={createInputChange(this, "x_only_add_tweak")}
+            value={this.state.x_only_add_tweak}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            InputProps={getInputProps(
+              this.state.x_only_add_tweak_valid,
               this.props.classes
             )}
           />
@@ -1615,7 +1615,7 @@ const ApiSignRecoverable = withStyles(useStyles)(
           hash === "" && seckey === "" && entropy === ""
             ? undefined
             : secp256k1.signRecoverable(hash, seckey, entropy);
-        const result = Buffer.from(sig?.signature).toString("hex");
+        const result = toHex(sig?.signature);
         const resultRecId = sig?.recoveryId;
         this.setState({
           hash_valid,

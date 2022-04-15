@@ -1,6 +1,6 @@
-import { randomBytes } from "crypto";
 import { compare } from "uint8array-tools";
 import * as secp256k1 from "../../lib/index.js";
+import { randomBytes } from "./random.js";
 
 const eq = (name, a, b) => {
   const equal = compare(a, b) === 0;
@@ -130,11 +130,11 @@ function isValidData(data) {
 export function generate() {
   let retryCount = 30;
   for (;;) {
-    const seckey = new Uint8Array(randomBytes(32));
-    const seckey2 = new Uint8Array(randomBytes(32));
-    const hash = new Uint8Array(randomBytes(32));
-    const tweak = new Uint8Array(randomBytes(32));
-    const entropy = new Uint8Array(randomBytes(32));
+    const seckey = randomBytes(32);
+    const seckey2 = randomBytes(32);
+    const hash = randomBytes(32);
+    const tweak = randomBytes(32);
+    const entropy = randomBytes(32);
 
     const x_only_pubkey = secp256k1.xOnlyPointFromScalar(seckey);
     const x_only_pubkey2 = secp256k1.xOnlyPointFromScalar(seckey2);
