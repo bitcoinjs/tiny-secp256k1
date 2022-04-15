@@ -4,7 +4,13 @@
   "private": true,
   "type": "module",
   "main": "./index.js",
+  "browser": {
+    "./random.js": "./random_browser.js"
+  },
   "scripts": {
     "start": "node bin.js"
+  },
+  "dependencies": {
+    "uint8array-tools": "^0.0.7"
   }
 }

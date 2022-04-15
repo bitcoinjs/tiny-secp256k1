@@ -1,8 +1,8 @@
+import { toHex as _toHex } from "uint8array-tools";
 import * as secp256k1 from "../../lib/index.js";
 import { generate } from "./index.js";
 
-const toHex = (v) =>
-  v instanceof Uint8Array ? Buffer.from(v).toString("hex") : v;
+const toHex = (v) => (v instanceof Uint8Array ? _toHex(v) : v);
 
 const JSONstring = (data, spacing) =>
   JSON.stringify(data, (_, val) => toHex(val), spacing);
