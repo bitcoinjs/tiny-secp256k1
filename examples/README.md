@@ -1,4 +1,12 @@
+## Reminder
 
+Before you build the examples, you must build the tiny-secp256k1 project first.
+Go to project root folder, run the following commands:
+```
+make build-wasm
+npm ci
+make build-js
+```
 ## random-in-node
 
 Generate data and demonstrate arguments/result for different methods of `tiny-secp256k1`.
@@ -14,6 +22,7 @@ npm start
 
 ```
 npm install
+npm run build
 npm start
 ```
 
