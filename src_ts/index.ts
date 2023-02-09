@@ -465,3 +465,28 @@ export function verifySchnorr(
     SIGNATURE_INPUT.fill(0);
   }
 }
+
+export interface TinySecp256k1Interface {
+  isPoint(p: Uint8Array): boolean;
+  isPointCompressed(p: Uint8Array): boolean;
+  isXOnlyPoint(p: Uint8Array): boolean;
+  isPrivate(d: Uint8Array): boolean;
+  pointAdd(pA: Uint8Array, pB: Uint8Array, compressed?: boolean): Uint8Array | null;
+  pointAddScalar(p: Uint8Array, tweak: Uint8Array, compressed?: boolean): Uint8Array | null;
+  pointCompress(p: Uint8Array, compressed?: boolean): Uint8Array;
+  pointFromScalar(d: Uint8Array, compressed?: boolean): Uint8Array | null;
+  xOnlyPointFromScalar(d: Uint8Array): Uint8Array;
+  xOnlyPointFromPoint(p: Uint8Array): Uint8Array;
+  pointMultiply(p: Uint8Array, tweak: Uint8Array, compressed?: boolean): Uint8Array | null;
+  privateAdd(d: Uint8Array, tweak: Uint8Array): Uint8Array | null;
+  privateSub(d: Uint8Array, tweak: Uint8Array): Uint8Array | null;
+  privateNegate(d: Uint8Array): Uint8Array;
+  xOnlyPointAddTweak(p: Uint8Array, tweak: Uint8Array): XOnlyPointAddTweakResult | null;
+  xOnlyPointAddTweakCheck(point: Uint8Array, tweak: Uint8Array, resultToCheck: Uint8Array, tweakParity?: TweakParity): boolean;
+  sign(h: Uint8Array, d: Uint8Array, e?: Uint8Array): Uint8Array;
+  signRecoverable(h: Uint8Array, d: Uint8Array, e?: Uint8Array): RecoverableSignature;
+  signSchnorr(h: Uint8Array, d: Uint8Array, e?: Uint8Array): Uint8Array;
+  verify(h: Uint8Array, Q: Uint8Array, signature: Uint8Array, strict?: boolean): boolean;
+  recover(h: Uint8Array, signature: Uint8Array, recoveryId: RecoveryIdType, compressed?: boolean): Uint8Array | null;
+  verifySchnorr(h: Uint8Array, Q: Uint8Array, signature: Uint8Array): boolean;
+}
