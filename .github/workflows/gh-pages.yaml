@@ -29,17 +29,17 @@ jobs:
     - uses: actions/cache@v2
       id: binaryen-cache
       with:
-        path: binaryen-version_100
-        key: binaryen-version_100
+        path: binaryen-version_112
+        key: binaryen-version_112
 
     - name: Install wasm-opt (binaryen)
       if: steps.binaryen-cache.outputs.cache-hit != 'true'
       run: |
-        wget https://github.com/WebAssembly/binaryen/releases/download/version_100/binaryen-version_100-x86_64-linux.tar.gz
-        tar zxvf binaryen-version_100-x86_64-linux.tar.gz binaryen-version_100/bin/wasm-opt
+        wget https://github.com/WebAssembly/binaryen/releases/download/version_112/binaryen-version_112-x86_64-linux.tar.gz
+        tar zxvf binaryen-version_112-x86_64-linux.tar.gz
 
     - name: Build wasm
-      run: export PATH=$PATH:./binaryen-version_100/bin/ && make build-wasm
+      run: export PATH=$PATH:./binaryen-version_112/bin/ && make build-wasm
 
     - name: Build JS
       run: make build-js
