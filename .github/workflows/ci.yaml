@@ -19,9 +19,9 @@ jobs:
       with:
         fetch-depth: 1
 
-    - name: Install Rust stable with wasm32-unknown-unknown, clippy and rustfmt
+    - name: Install Rust toolchain with wasm32-unknown-unknown, clippy and rustfmt
       run: |
-        rustup toolchain install stable \
+        rustup toolchain install $(cat ./rust-toolchain) \
           --target wasm32-unknown-unknown \
           --component clippy \
           --component rustfmt
@@ -47,8 +47,8 @@ jobs:
       with:
         fetch-depth: 1
 
-    - name: Install Rust stable with wasm32-unknown-unknown
-      run: rustup toolchain install stable --target wasm32-unknown-unknown
+    - name: Install Rust toolchain with wasm32-unknown-unknown
+      run: rustup toolchain install $(cat ./rust-toolchain) --target wasm32-unknown-unknown
 
     - name: Install Node.js@${{ env.NODE_VERSION }}
       uses: actions/setup-node@v2
