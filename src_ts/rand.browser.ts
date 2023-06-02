@@ -1,6 +1,8 @@
+import * as crypto from "crypto";
+
 function get4RandomBytes(): Uint8Array {
   const bytes = new Uint8Array(4);
-  window.crypto.getRandomValues(bytes);
+  crypto.randomFillSync(bytes);
   return bytes;
 }
 
