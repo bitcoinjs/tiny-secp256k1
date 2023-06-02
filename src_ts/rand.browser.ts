@@ -1,6 +1,13 @@
 function get4RandomBytes(): Uint8Array {
   const bytes = new Uint8Array(4);
-  window.crypto.getRandomValues(bytes);
+
+  if (typeof crypto === "undefined") {
+    throw new Error(
+      "The crypto object is unavailable. This may occur if your environment does not support the Web Cryptography API."
+    );
+  }
+
+  crypto.getRandomValues(bytes);
   return bytes;
 }
 

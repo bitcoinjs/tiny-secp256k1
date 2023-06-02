@@ -18,8 +18,8 @@ jobs:
       with:
         fetch-depth: 1
 
-    - name: Install Rust stable with wasm32-unknown-unknown
-      run: rustup toolchain install stable --target wasm32-unknown-unknown
+    - name: Install Rust toolchain with wasm32-unknown-unknown
+      run: rustup toolchain install $(cat ./rust-toolchain) --target wasm32-unknown-unknown
 
     - name: Install Node.js dependencies
       run: |

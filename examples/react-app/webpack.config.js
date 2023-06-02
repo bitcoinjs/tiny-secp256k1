@@ -1,8 +1,5 @@
-import { createRequire } from "module";
 import { URL } from "url";
 import webpack from "webpack";
-
-const require = createRequire(import.meta.url);
 
 export default {
   mode: process.env.NODE_ENV || "development",
@@ -36,12 +33,4 @@ export default {
       process: "process/browser.js",
     }),
   ],
-  resolve: {
-    fallback: {
-      buffer: require.resolve("buffer"),
-      crypto: require.resolve("crypto-browserify"),
-      process: require.resolve("process/browser"),
-      stream: require.resolve("stream-browserify"),
-    },
-  },
 };
