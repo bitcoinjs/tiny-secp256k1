@@ -1,9 +1,9 @@
 import * as crypto from "crypto";
 import * as tiny_secp256k1 from "../lib/index.js";
-import _fecdsa from "../tests/fixtures/ecdsa.json";
-import _fpoints from "../tests/fixtures/points.json";
-import _fprivates from "../tests/fixtures/privates.json";
-import _fschnorr from "../tests/fixtures/schnorr.json";
+import _fecdsa from "../tests/fixtures/ecdsa.json" assert { type: "json" };
+import _fpoints from "../tests/fixtures/points.json" assert { type: "json" };
+import _fprivates from "../tests/fixtures/privates.json" assert { type: "json" };
+import _fschnorr from "../tests/fixtures/schnorr.json" assert { type: "json" };
 import { parseBip340Vector } from "../tests/schnorr.js";
 
 const randPubKey = () =>

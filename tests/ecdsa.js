@@ -1,6 +1,6 @@
 import test from "tape";
 import { fromHex, toHex } from "./util.js";
-import fecdsa from "./fixtures/ecdsa.json";
+import fecdsa from "./fixtures/ecdsa.json" assert { type: "json" };
 
 const buf1 = fromHex(
   "0000000000000000000000000000000000000000000000000000000000000000"
