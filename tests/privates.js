@@ -1,6 +1,6 @@
 import test from "tape";
 import { fromHex } from "./util.js";
-import fprivates from "./fixtures/privates.json";
+import fprivates from "./fixtures/privates.json" assert { type: "json" };
 
 export default function (secp256k1) {
   test("isPrivate", (t) => {

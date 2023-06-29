@@ -11,6 +11,8 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
     core::arch::wasm32::unreachable()
 }
 
+use core::ptr::NonNull;
+
 use secp256k1_sys::{
     secp256k1_context_no_precomp, secp256k1_context_preallocated_create,
     secp256k1_context_preallocated_size, secp256k1_context_randomize, secp256k1_ec_pubkey_combine,
@@ -19,8 +21,8 @@ use secp256k1_sys::{
     secp256k1_ec_seckey_tweak_add, secp256k1_ecdsa_sign, secp256k1_ecdsa_signature_normalize,
     secp256k1_ecdsa_signature_parse_compact, secp256k1_ecdsa_signature_serialize_compact,
     secp256k1_ecdsa_verify, secp256k1_keypair_create, secp256k1_keypair_xonly_pub,
-    secp256k1_nonce_function_bip340, secp256k1_nonce_function_rfc6979, secp256k1_schnorrsig_sign,
-    secp256k1_schnorrsig_verify, secp256k1_xonly_pubkey_from_pubkey, secp256k1_xonly_pubkey_parse,
+    secp256k1_nonce_function_rfc6979, secp256k1_schnorrsig_sign, secp256k1_schnorrsig_verify,
+    secp256k1_xonly_pubkey_from_pubkey, secp256k1_xonly_pubkey_parse,
     secp256k1_xonly_pubkey_serialize, secp256k1_xonly_pubkey_tweak_add,
     secp256k1_xonly_pubkey_tweak_add_check, types::c_void, Context, KeyPair, PublicKey, Signature,
     XOnlyPublicKey, SECP256K1_SER_COMPRESSED, SECP256K1_SER_UNCOMPRESSED, SECP256K1_START_SIGN,
@@ -48,7 +50,7 @@ extern "C" {
 type InvalidInputResult<T> = Result<T, usize>;
 
 #[allow(clippy::large_stack_arrays)]
-static CONTEXT_BUFFER: [u8; 1_114_320] = [0; 1_114_320];
+static CONTEXT_BUFFER: [u8; 192] = [0; 192];
 static mut CONTEXT_SEED: [u8; 32] = [0; 32];
 
 const PRIVATE_KEY_SIZE: usize = 32;
@@ -122,7 +124,7 @@ fn get_context() -> *const Context {
                 secp256k1_context_preallocated_size(SECP256K1_START_SIGN | SECP256K1_START_VERIFY);
             assert_eq!(size, CONTEXT_BUFFER.len());
             let ctx = secp256k1_context_preallocated_create(
-                CONTEXT_BUFFER.as_ptr() as *mut c_void,
+                NonNull::new(CONTEXT_BUFFER.as_ptr() as *mut c_void).expect("Not null"),
                 SECP256K1_START_SIGN | SECP256K1_START_VERIFY,
             );
             initialize_context_seed();
@@ -130,7 +132,7 @@ fn get_context() -> *const Context {
             CONTEXT_SEED[0] = 1;
             CONTEXT_SEED[1..].fill(0);
             assert_eq!(retcode, 1);
-            CONTEXT = ctx;
+            CONTEXT = ctx.as_ptr();
         }
         CONTEXT
     }
@@ -193,7 +195,7 @@ unsafe fn pubkey_serialize(pk: &PublicKey, output: *mut u8, mut outputlen: usize
             secp256k1_context_no_precomp,
             output,
             &mut outputlen,
-            pk.as_ptr().cast::<PublicKey>(),
+            pk,
             flags,
         ),
         1
@@ -202,11 +204,7 @@ unsafe fn pubkey_serialize(pk: &PublicKey, output: *mut u8, mut outputlen: usize
 
 unsafe fn x_only_pubkey_serialize(pk: &XOnlyPublicKey, output: *mut u8) {
     assert_eq!(
-        secp256k1_xonly_pubkey_serialize(
-            secp256k1_context_no_precomp,
-            output,
-            pk.as_ptr().cast::<XOnlyPublicKey>(),
-        ),
+        secp256k1_xonly_pubkey_serialize(secp256k1_context_no_precomp, output, pk),
         1
     );
 }
@@ -239,7 +237,7 @@ pub extern "C" fn point_add(inputlen: usize, inputlen2: usize, outputlen: usize)
         let pk1 = jstry!(pubkey_parse(PUBLIC_KEY_INPUT.as_ptr(), inputlen), 0);
         let pk2 = jstry!(pubkey_parse(PUBLIC_KEY_INPUT2.as_ptr(), inputlen2), 0);
         let mut pk = PublicKey::new();
-        let ptrs = [pk1.as_ptr(), pk2.as_ptr()];
+        let ptrs = [&pk1, &pk2];
         if secp256k1_ec_pubkey_combine(
             secp256k1_context_no_precomp,
             &mut pk,
@@ -260,12 +258,7 @@ pub extern "C" fn point_add(inputlen: usize, inputlen2: usize, outputlen: usize)
 pub extern "C" fn point_add_scalar(inputlen: usize, outputlen: usize) -> i32 {
     unsafe {
         let mut pk = jstry!(pubkey_parse(PUBLIC_KEY_INPUT.as_ptr(), inputlen), 0);
-        if secp256k1_ec_pubkey_tweak_add(
-            get_context(),
-            pk.as_mut_ptr().cast::<PublicKey>(),
-            TWEAK_INPUT.as_ptr(),
-        ) == 1
-        {
+        if secp256k1_ec_pubkey_tweak_add(get_context(), &mut pk, TWEAK_INPUT.as_ptr()) == 1 {
             pubkey_serialize(&pk, PUBLIC_KEY_INPUT.as_mut_ptr(), outputlen);
             1
         } else {
@@ -383,16 +376,13 @@ pub extern "C" fn point_multiply(inputlen: usize, outputlen: usize) -> i32 {
 #[export_name = "privateAdd"]
 pub extern "C" fn private_add() -> i32 {
     unsafe {
-        if secp256k1_ec_seckey_tweak_add(
-            secp256k1_context_no_precomp,
-            PRIVATE_INPUT.as_mut_ptr(),
-            TWEAK_INPUT.as_ptr(),
-        ) == 1
-        {
-            1
-        } else {
-            0
-        }
+        i32::from(
+            secp256k1_ec_seckey_tweak_add(
+                secp256k1_context_no_precomp,
+                PRIVATE_INPUT.as_mut_ptr(),
+                TWEAK_INPUT.as_ptr(),
+            ) == 1,
+        )
     }
 }
 
@@ -405,16 +395,13 @@ pub extern "C" fn private_sub() -> i32 {
             secp256k1_ec_seckey_negate(secp256k1_context_no_precomp, TWEAK_INPUT.as_mut_ptr()),
             1
         );
-        if secp256k1_ec_seckey_tweak_add(
-            secp256k1_context_no_precomp,
-            PRIVATE_INPUT.as_mut_ptr(),
-            TWEAK_INPUT.as_ptr(),
-        ) == 1
-        {
-            1
-        } else {
-            0
-        }
+        i32::from(
+            secp256k1_ec_seckey_tweak_add(
+                secp256k1_context_no_precomp,
+                PRIVATE_INPUT.as_mut_ptr(),
+                TWEAK_INPUT.as_ptr(),
+            ) == 1,
+        )
     }
 }
 
@@ -439,8 +426,7 @@ pub extern "C" fn sign(extra_data: i32) {
             core::ptr::null()
         } else {
             EXTRA_DATA_INPUT.as_ptr()
-        }
-        .cast::<c_void>();
+        };
 
         assert_eq!(
             secp256k1_ecdsa_sign(
@@ -449,7 +435,7 @@ pub extern "C" fn sign(extra_data: i32) {
                 HASH_INPUT.as_ptr(),
                 PRIVATE_INPUT.as_ptr(),
                 secp256k1_nonce_function_rfc6979,
-                noncedata
+                noncedata.cast()
             ),
             1
         );
@@ -475,8 +461,7 @@ pub extern "C" fn sign_recoverable(extra_data: i32) -> i32 {
             core::ptr::null()
         } else {
             EXTRA_DATA_INPUT.as_ptr()
-        }
-        .cast::<c_void>();
+        };
 
         assert_eq!(
             secp256k1_ecdsa_sign_recoverable(
@@ -485,7 +470,7 @@ pub extern "C" fn sign_recoverable(extra_data: i32) -> i32 {
                 HASH_INPUT.as_ptr(),
                 PRIVATE_INPUT.as_ptr(),
                 secp256k1_nonce_function_rfc6979,
-                noncedata
+                noncedata.cast()
             ),
             1
         );
@@ -525,8 +510,7 @@ pub extern "C" fn sign_schnorr(extra_data: i32) {
                 SIGNATURE_INPUT.as_mut_ptr(),
                 HASH_INPUT.as_ptr(),
                 &keypair,
-                secp256k1_nonce_function_bip340,
-                noncedata
+                noncedata.cast()
             ),
             1
         );
@@ -557,11 +541,7 @@ pub extern "C" fn verify(inputlen: usize, strict: i32) -> i32 {
             );
         }
 
-        if secp256k1_ecdsa_verify(get_context(), &signature, HASH_INPUT.as_ptr(), &pk) == 1 {
-            1
-        } else {
-            0
-        }
+        i32::from(secp256k1_ecdsa_verify(get_context(), &signature, HASH_INPUT.as_ptr(), &pk) == 1)
     }
 }
 
@@ -595,16 +575,14 @@ pub extern "C" fn recover(outputlen: usize, recid: i32) -> i32 {
 pub extern "C" fn verify_schnorr() -> i32 {
     unsafe {
         let pk = jstry!(x_only_pubkey_parse(X_ONLY_PUBLIC_KEY_INPUT.as_ptr()), 0);
-        if secp256k1_schnorrsig_verify(
-            get_context(),
-            SIGNATURE_INPUT.as_ptr(),
-            HASH_INPUT.as_ptr(),
-            &pk,
-        ) == 1
-        {
-            1
-        } else {
-            0
-        }
+        i32::from(
+            secp256k1_schnorrsig_verify(
+                get_context(),
+                SIGNATURE_INPUT.as_ptr(),
+                HASH_INPUT.as_ptr(),
+                32,
+                &pk,
+            ) == 1,
+        )
     }
 }

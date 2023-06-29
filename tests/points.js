@@ -1,6 +1,6 @@
 import test from "tape";
 import { fromHex } from "./util.js";
-import fpoints from "./fixtures/points.json";
+import fpoints from "./fixtures/points.json" assert { type: "json" };
 
 export default function (secp256k1) {
   test("isPoint", (t) => {

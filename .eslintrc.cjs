@@ -20,5 +20,15 @@ module.exports = {
         "@typescript-eslint/explicit-module-boundary-types": ["error"],
       },
     },
+    {
+      files: ["tests/*.js", "benches/fixtures.js"],
+      parser: "@babel/eslint-parser",
+      parserOptions: {
+        requireConfigFile: false,
+        babelOptions: {
+          plugins: ["@babel/plugin-syntax-import-assertions"],
+        },
+      },
+    },
   ],
 };
