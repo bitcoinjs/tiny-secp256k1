@@ -219,6 +219,24 @@ export function privateAdd(
   }
 }
 
+export function privateMultiply(
+  d: Uint8Array,
+  tweak: Uint8Array
+): Uint8Array | null {
+  validate.validatePrivate(d);
+  validate.validateTweak(tweak);
+  try {
+    PRIVATE_KEY_INPUT.set(d);
+    TWEAK_INPUT.set(tweak);
+    return wasm.privateMultiply() === 1
+      ? PRIVATE_KEY_INPUT.slice(0, validate.PRIVATE_KEY_SIZE)
+      : null;
+  } finally {
+    PRIVATE_KEY_INPUT.fill(0);
+    TWEAK_INPUT.fill(0);
+  }
+}
+
 export function privateSub(
   d: Uint8Array,
   tweak: Uint8Array

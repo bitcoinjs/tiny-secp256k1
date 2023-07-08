@@ -47,6 +47,7 @@ interface Secp256k1WASM {
   xOnlyPointAddTweakCheck: (parity: number) => number;
   pointMultiply: (p: number, outputlen: number) => number;
   privateAdd: () => number;
+  privateMultiply: () => number;
   privateSub: () => number;
   privateNegate: () => void;
   sign: (e: number) => void;

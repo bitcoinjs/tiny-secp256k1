@@ -12,7 +12,6 @@
   },
   "license": "MIT",
   "type": "module",
-  "main": "./lib/cjs/index.cjs",
   "exports": {
     ".": {
       "node": {
@@ -24,6 +23,7 @@
       "default": "./lib/index.js"
     }
   },
+  "main": "./lib/cjs/index.cjs",
   "browser": {
     "./lib/rand.js": "./lib/rand.browser.js",
     "./lib/wasm_loader.js": "./lib/wasm_loader.browser.js"

@@ -18,11 +18,11 @@ use secp256k1_sys::{
     secp256k1_context_preallocated_size, secp256k1_context_randomize, secp256k1_ec_pubkey_combine,
     secp256k1_ec_pubkey_create, secp256k1_ec_pubkey_parse, secp256k1_ec_pubkey_serialize,
     secp256k1_ec_pubkey_tweak_add, secp256k1_ec_pubkey_tweak_mul, secp256k1_ec_seckey_negate,
-    secp256k1_ec_seckey_tweak_add, secp256k1_ecdsa_sign, secp256k1_ecdsa_signature_normalize,
-    secp256k1_ecdsa_signature_parse_compact, secp256k1_ecdsa_signature_serialize_compact,
-    secp256k1_ecdsa_verify, secp256k1_keypair_create, secp256k1_keypair_xonly_pub,
-    secp256k1_nonce_function_rfc6979, secp256k1_schnorrsig_sign, secp256k1_schnorrsig_verify,
-    secp256k1_xonly_pubkey_from_pubkey, secp256k1_xonly_pubkey_parse,
+    secp256k1_ec_seckey_tweak_add, secp256k1_ec_seckey_tweak_mul, secp256k1_ecdsa_sign,
+    secp256k1_ecdsa_signature_normalize, secp256k1_ecdsa_signature_parse_compact,
+    secp256k1_ecdsa_signature_serialize_compact, secp256k1_ecdsa_verify, secp256k1_keypair_create,
+    secp256k1_keypair_xonly_pub, secp256k1_nonce_function_rfc6979, secp256k1_schnorrsig_sign,
+    secp256k1_schnorrsig_verify, secp256k1_xonly_pubkey_from_pubkey, secp256k1_xonly_pubkey_parse,
     secp256k1_xonly_pubkey_serialize, secp256k1_xonly_pubkey_tweak_add,
     secp256k1_xonly_pubkey_tweak_add_check, types::c_void, Context, KeyPair, PublicKey, Signature,
     XOnlyPublicKey, SECP256K1_SER_COMPRESSED, SECP256K1_SER_UNCOMPRESSED, SECP256K1_START_SIGN,
@@ -378,6 +378,20 @@ pub extern "C" fn private_add() -> i32 {
     unsafe {
         i32::from(
             secp256k1_ec_seckey_tweak_add(
+                secp256k1_context_no_precomp,
+                PRIVATE_INPUT.as_mut_ptr(),
+                TWEAK_INPUT.as_ptr(),
+            ) == 1,
+        )
+    }
+}
+
+#[no_mangle]
+#[export_name = "privateMultiply"]
+pub extern "C" fn private_multiply() -> i32 {
+    unsafe {
+        i32::from(
+            secp256k1_ec_seckey_tweak_mul(
                 secp256k1_context_no_precomp,
                 PRIVATE_INPUT.as_mut_ptr(),
                 TWEAK_INPUT.as_ptr(),

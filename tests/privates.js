@@ -46,6 +46,35 @@ export default function (secp256k1) {
     t.end();
   });
 
+  test("privateMultiply", (t) => {
+    for (const f of fprivates.valid.privateMultiply) {
+      const d = fromHex(f.d);
+      const tweak = fromHex(f.tweak);
+      const expected = f.expected ? fromHex(f.expected) : null;
+      let description = `${f.d} + ${f.tweak} = ${
+        f.expected ? f.expected : null
+      }`;
+      if (f.description) description += ` (${f.description})`;
+
+      t.same(secp256k1.privateMultiply(d, tweak), expected, description);
+    }
+
+    for (const f of fprivates.invalid.privateMultiply) {
+      const d = fromHex(f.d);
+      const tweak = fromHex(f.tweak);
+
+      t.throws(
+        () => {
+          secp256k1.privateMultiply(d, tweak);
+        },
+        new RegExp(f.exception),
+        `${f.description} throws ${f.exception}`
+      );
+    }
+
+    t.end();
+  });
+
   test("privateSub", (t) => {
     for (const f of fprivates.valid.privateSub) {
       const d = fromHex(f.d);
