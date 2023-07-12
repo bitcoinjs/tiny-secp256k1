@@ -4,7 +4,7 @@ use crate::{
 };
 use secp256k1::{
     ecdsa::{RecoverableSignature, RecoveryId, Signature},
-    ffi, AllPreallocated, Message, Secp256k1, SecretKey,
+    ffi::{self, CPtr}, AllPreallocated, Message, Secp256k1, SecretKey,
 };
 
 pub(crate) fn assume_compression(compressed: Option<bool>, p: Option<usize>) -> usize {
@@ -37,10 +37,10 @@ pub(crate) fn sign_ecdsa(
 
         assert_eq!(
             ffi::secp256k1_ecdsa_sign(
-                *secp.ctx() as *const ffi::Context,
+                secp.ctx().as_ptr(),
                 &mut sig,
-                msg.as_ptr(),
-                sec.as_ptr(),
+                msg.as_c_ptr(),
+                sec.as_c_ptr(),
                 ffi::secp256k1_nonce_function_rfc6979,
                 noncedata
             ),
@@ -75,10 +75,10 @@ pub(crate) fn sign_ecdsa_recoverable(
 
         assert_eq!(
             ffi::recovery::secp256k1_ecdsa_sign_recoverable(
-                *secp.ctx() as *const ffi::Context,
+                secp.ctx().as_ptr(),
                 &mut sig,
-                msg.as_ptr(),
-                sec.as_ptr(),
+                msg.as_c_ptr(),
+                sec.as_c_ptr(),
                 ffi::secp256k1_nonce_function_rfc6979,
                 noncedata
             ),
