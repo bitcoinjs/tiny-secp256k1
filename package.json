@@ -1,6 +1,6 @@
 {
   "name": "tiny-secp256k1",
-  "version": "2.2.2",
+  "version": "2.2.3",
   "description": "A tiny secp256k1 JS",
   "homepage": "https://github.com/bitcoinjs/tiny-secp256k1#readme",
   "bugs": {
@@ -36,6 +36,8 @@
     "uint8array-tools": "0.0.7"
   },
   "devDependencies": {
+    "@babel/eslint-parser": "^7.22.5",
+    "@babel/plugin-syntax-import-assertions": "^7.22.5",
     "@types/node": "^14.14.35",
     "@typescript-eslint/eslint-plugin": "^4.18.0",
     "@typescript-eslint/parser": "^4.18.0",

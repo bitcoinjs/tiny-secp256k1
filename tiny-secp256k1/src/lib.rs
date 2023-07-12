@@ -51,7 +51,7 @@ pub use error::Error;
 pub use pubkey::{Pubkey, PubkeyRef};
 use secp256k1::{
     ecdsa::{RecoverableSignature, Signature},
-    schnorr, Parity,
+    schnorr, Parity, Scalar,
 };
 
 mod validate;
@@ -112,10 +112,10 @@ pub fn point_add_scalar(
     compressed: Option<bool>,
 ) -> InvalidInputResult<Option<Pubkey>> {
     let outputlen = assume_compression(compressed, Some(pubkey.len()));
-    let mut key = PublicKey::from_slice(pubkey.as_slice()).map_err(|_| Error::BadPoint)?;
+    let key = PublicKey::from_slice(pubkey.as_slice()).map_err(|_| Error::BadPoint)?;
     validate_tweak(tweak)?;
     Ok(key
-        .add_exp_assign(get_hcontext(), tweak.as_slice())
+        .add_exp_tweak(get_hcontext(), &Scalar::from_be_bytes(*tweak).expect("Proper length checked"))
         .map_or_else(
             |_| None,
             |_| {
@@ -135,10 +135,10 @@ pub fn x_only_point_add_tweak(
     pubkey: &XOnlyPubkeySlice,
     tweak: &TweakSlice,
 ) -> InvalidInputResult<Option<XOnlyPubkeyWithParity>> {
-    let mut key = XOnlyPublicKey::from_slice(pubkey).map_err(|_| Error::BadPoint)?;
+    let key = XOnlyPublicKey::from_slice(pubkey).map_err(|_| Error::BadPoint)?;
     validate_tweak(tweak)?;
-    let parity = key.tweak_add_assign(get_hcontext(), tweak);
-    if let Ok(parity) = parity {
+    let parity = key.add_tweak(get_hcontext(), &Scalar::from_be_bytes(*tweak).expect("Proper length checked"));
+    if let Ok((key, parity)) = parity {
         Ok(Some((key.serialize(), parity.to_i32())))
     } else {
         Ok(None)
@@ -161,7 +161,7 @@ pub fn x_only_point_add_tweak_check(
         let pubkey = XOnlyPublicKey::from_slice(pubkey).map_err(|_| Error::BadPoint)?;
         let result = XOnlyPublicKey::from_slice(&result.0).map_err(|_| Error::BadPoint)?;
         let parity = Parity::from_i32(parity).map_err(|_| Error::BadParity)?;
-        Ok(pubkey.tweak_add_check(get_hcontext(), &result, parity, *tweak))
+        Ok(pubkey.tweak_add_check(get_hcontext(), &result, parity, Scalar::from_be_bytes(*tweak).expect("Proper length checked")))
     } else {
         x_only_point_add_tweak(pubkey, tweak)?.map_or(Ok(false), |v| Ok(v.0 == result.0))
     }
@@ -229,9 +229,9 @@ pub fn point_multiply(
     compressed: Option<bool>,
 ) -> InvalidInputResult<Option<Pubkey>> {
     let outputlen = assume_compression(compressed, Some(pubkey.len()));
-    let mut pb = PublicKey::from_slice(pubkey.as_slice()).map_err(|_| Error::BadPoint)?;
+    let pb = PublicKey::from_slice(pubkey.as_slice()).map_err(|_| Error::BadPoint)?;
     validate_tweak(tweak)?;
-    if pb.mul_assign(get_hcontext(), tweak).is_ok() {
+    if pb.mul_tweak(get_hcontext(), &Scalar::from_be_bytes(*tweak).expect("Proper length checked")).is_ok() {
         Ok(Some(if outputlen == 33 {
             Pubkey::Compressed(pb.serialize())
         } else {
@@ -250,8 +250,8 @@ pub fn private_add(
     tweak: &TweakSlice,
 ) -> InvalidInputResult<Option<PrivkeySlice>> {
     validate_tweak(tweak)?;
-    let mut sec = SecretKey::from_slice(private.as_slice()).map_err(|_| Error::BadPrivate)?;
-    if sec.add_assign(tweak.as_slice()).is_ok() {
+    let sec = SecretKey::from_slice(private.as_slice()).map_err(|_| Error::BadPrivate)?;
+    if sec.add_tweak(&Scalar::from_be_bytes(*tweak).expect("Proper length checked")).is_ok() {
         Ok(Some(sec.secret_bytes()))
     } else {
         Ok(None)
@@ -271,13 +271,13 @@ pub fn private_sub(
     if tweak == &ZERO32 {
         return Ok(Some(*private));
     }
-    let mut sec = SecretKey::from_slice(private.as_slice()).map_err(|_| Error::BadPrivate)?;
+    let sec = SecretKey::from_slice(private.as_slice()).map_err(|_| Error::BadPrivate)?;
 
     // We now know tweak is a valid SecretKey (validate_tweak checks < N, guard clause above checks 0)
     let mut tweak = SecretKey::from_slice(tweak.as_slice()).map_err(|_| Error::BadPrivate)?;
-    tweak.negate_assign();
+    tweak = tweak.negate();
 
-    if sec.add_assign(tweak.secret_bytes().as_slice()).is_ok() {
+    if sec.add_tweak(&Scalar::from_be_bytes(tweak.secret_bytes()).expect("Proper length checked")).is_ok() {
         Ok(Some(sec.secret_bytes()))
     } else {
         Ok(None)
@@ -288,7 +288,7 @@ pub fn private_sub(
 /// `Error::BadPrivate` returned if `private` is invalid.
 pub fn private_negate(private: &PrivkeySlice) -> InvalidInputResult<PrivkeySlice> {
     let mut sec = SecretKey::from_slice(private.as_slice()).map_err(|_| Error::BadPrivate)?;
-    sec.negate_assign();
+    sec = sec.negate();
     Ok(sec.secret_bytes())
 }
 

@@ -5,9 +5,8 @@ authors = [
     "Kirill Fomichev <fanatid@ya.ru>",
     "Jonathan Underwood <junderwood@bitcoinbank.co.jp>"
 ]
-edition = "2018"
+edition = "2021"
 description = "A Rust library for building tiny-secp256k1 WASM."
-rust-version = "1.50"
 license = "MIT"
 publish = false
 

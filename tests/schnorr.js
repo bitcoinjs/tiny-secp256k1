@@ -1,6 +1,6 @@
 import test from "tape";
 import { fromHex, toHex } from "./util.js";
-import fschnorr from "./fixtures/schnorr.json";
+import fschnorr from "./fixtures/schnorr.json" assert { type: "json" };
 
 export function parseBip340Vector(f) {
   return {
