@@ -12,6 +12,8 @@ import {
   fschnorrTweak,
 } from "./fixtures.js";
 
+const WASM_ONLY = !!process.env.WASM_ONLY;
+
 // import { loadAddon as _loadAddon } from "../lib/addon.js";
 // function loadAddon(location) {
 //   const path = new URL(location, import.meta.url).pathname;
@@ -27,26 +29,30 @@ const modules = [
     name: "tiny-secp256k1 (WASM)",
     secp256k1: tiny_secp256k1,
   },
-  {
-    name: "tiny-secp256k1@1.1.6 (C++ addon, NAN/V8)",
-    secp256k1: tiny_secp256k1_prev_native,
-  },
-  {
-    name: "tiny-secp256k1@1.1.6 (elliptic)",
-    secp256k1: tiny_secp256k1_prev_js,
-  },
-  {
-    name: "secp256k1@4.0.2 (C++ addon, N-API)",
-    secp256k1: cryptocoinjs_secp256k1.native,
-  },
-  {
-    name: "secp256k1@4.0.2 (elliptic)",
-    secp256k1: cryptocoinjs_secp256k1.js,
-  },
-  {
-    name: "noble-secp256k1@1.1.2 (BigInt)",
-    secp256k1: noble_secp256k1,
-  },
+  ...(WASM_ONLY
+    ? []
+    : [
+        {
+          name: "tiny-secp256k1@1.1.6 (C++ addon, NAN/V8)",
+          secp256k1: tiny_secp256k1_prev_native,
+        },
+        {
+          name: "tiny-secp256k1@1.1.6 (elliptic)",
+          secp256k1: tiny_secp256k1_prev_js,
+        },
+        {
+          name: "secp256k1@4.0.2 (C++ addon, N-API)",
+          secp256k1: cryptocoinjs_secp256k1.native,
+        },
+        {
+          name: "secp256k1@4.0.2 (elliptic)",
+          secp256k1: cryptocoinjs_secp256k1.js,
+        },
+        {
+          name: "noble-secp256k1@1.1.2 (BigInt)",
+          secp256k1: noble_secp256k1,
+        },
+      ]),
 ];
 
 const benchmarks = [

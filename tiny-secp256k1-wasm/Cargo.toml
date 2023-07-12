@@ -1,0 +1,17 @@
+[package]
+name = "tiny-secp256k1-wasm"
+version = "0.1.0"
+authors = [
+    "Kirill Fomichev <fanatid@ya.ru>",
+    "Jonathan Underwood <junderwood@bitcoinbank.co.jp>"
+]
+edition = "2021"
+description = "A Rust library for building tiny-secp256k1 WASM."
+license = "MIT"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+tiny-secp256k1 = { path = "../tiny-secp256k1", default-features = false, features = [ "no_std", "minimal_validation" ] }

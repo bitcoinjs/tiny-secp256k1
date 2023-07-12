@@ -57,4 +57,6 @@ interface Secp256k1WASM {
   recover: (outputlen: number, recoveryId: RecoveryIdType) => number;
 }
 
-export default instance.exports as unknown as Secp256k1WASM;
+const wasm = instance.exports as unknown as Secp256k1WASM;
+wasm.initializeContext();
+export default wasm;

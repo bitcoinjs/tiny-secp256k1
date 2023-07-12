@@ -71,7 +71,11 @@ jobs:
         tar zxvf binaryen-version_100-x86_64-linux.tar.gz binaryen-version_100/bin/wasm-opt
 
     - name: Build wasm
-      run: export PATH=$PATH:./binaryen-version_100/bin/ && make build-wasm
+      run: |
+        export PATH=$PATH:./binaryen-version_100/bin/
+        make build-wasm
+        shasum -a 256 lib/secp256k1.wasm
+        rustc --version --verbose
 
     - name: Build JS
       run: make build-js
@@ -123,18 +127,19 @@ jobs:
         path: lib
 
     - name: Create package
-      run: npm pack
+      run: npm pack && shasum -a 256 tiny-secp256k1-*.tgz
 
     - name: Upload package
       uses: actions/upload-artifact@v2
       with:
         name: package
-        path: tiny-secp256k1-*
+        path: tiny-secp256k1-*.tgz
 
   benchmark:
     name: Benchmark
     needs: [test]
     continue-on-error: true
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
     - name: Fetch code
