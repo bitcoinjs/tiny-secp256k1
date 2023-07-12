@@ -68,7 +68,8 @@ install-js-deps:
 .PHONY: lint
 lint:
 	cargo fmt -- --check
-	cargo clippy --target wasm32-unknown-unknown --no-default-features
+	cargo clippy -p tiny-secp256k1-wasm --target wasm32-unknown-unknown --no-default-features
+	cargo clippy -p tiny-secp256k1 --target x86_64-unknown-linux-gnu --no-default-features
 	npx eslint $(eslint_files)
 
 .PHONY: test
