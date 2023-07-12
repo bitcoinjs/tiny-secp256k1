@@ -115,7 +115,10 @@ pub fn point_add_scalar(
     let key = PublicKey::from_slice(pubkey.as_slice()).map_err(|_| Error::BadPoint)?;
     validate_tweak(tweak)?;
     Ok(key
-        .add_exp_tweak(get_hcontext(), &Scalar::from_be_bytes(*tweak).expect("Proper length checked"))
+        .add_exp_tweak(
+            get_hcontext(),
+            &Scalar::from_be_bytes(*tweak).expect("Proper length checked"),
+        )
         .map_or_else(
             |_| None,
             |key| {
@@ -137,7 +140,10 @@ pub fn x_only_point_add_tweak(
 ) -> InvalidInputResult<Option<XOnlyPubkeyWithParity>> {
     let key = XOnlyPublicKey::from_slice(pubkey).map_err(|_| Error::BadPoint)?;
     validate_tweak(tweak)?;
-    let parity = key.add_tweak(get_hcontext(), &Scalar::from_be_bytes(*tweak).expect("Proper length checked"));
+    let parity = key.add_tweak(
+        get_hcontext(),
+        &Scalar::from_be_bytes(*tweak).expect("Proper length checked"),
+    );
     if let Ok((key, parity)) = parity {
         Ok(Some((key.serialize(), parity.to_i32())))
     } else {
@@ -161,7 +167,12 @@ pub fn x_only_point_add_tweak_check(
         let pubkey = XOnlyPublicKey::from_slice(pubkey).map_err(|_| Error::BadPoint)?;
         let result = XOnlyPublicKey::from_slice(&result.0).map_err(|_| Error::BadPoint)?;
         let parity = Parity::from_i32(parity).map_err(|_| Error::BadParity)?;
-        Ok(pubkey.tweak_add_check(get_hcontext(), &result, parity, Scalar::from_be_bytes(*tweak).expect("Proper length checked")))
+        Ok(pubkey.tweak_add_check(
+            get_hcontext(),
+            &result,
+            parity,
+            Scalar::from_be_bytes(*tweak).expect("Proper length checked"),
+        ))
     } else {
         x_only_point_add_tweak(pubkey, tweak)?.map_or(Ok(false), |v| Ok(v.0 == result.0))
     }
@@ -231,7 +242,10 @@ pub fn point_multiply(
     let outputlen = assume_compression(compressed, Some(pubkey.len()));
     let pb = PublicKey::from_slice(pubkey.as_slice()).map_err(|_| Error::BadPoint)?;
     validate_tweak(tweak)?;
-    if let Ok(pb) = pb.mul_tweak(get_hcontext(), &Scalar::from_be_bytes(*tweak).expect("Proper length checked")) {
+    if let Ok(pb) = pb.mul_tweak(
+        get_hcontext(),
+        &Scalar::from_be_bytes(*tweak).expect("Proper length checked"),
+    ) {
         Ok(Some(if outputlen == 33 {
             Pubkey::Compressed(pb.serialize())
         } else {
@@ -277,7 +291,9 @@ pub fn private_sub(
     let mut tweak = SecretKey::from_slice(tweak.as_slice()).map_err(|_| Error::BadPrivate)?;
     tweak = tweak.negate();
 
-    if let Ok(sec) = sec.add_tweak(&Scalar::from_be_bytes(tweak.secret_bytes()).expect("Proper length checked")) {
+    if let Ok(sec) =
+        sec.add_tweak(&Scalar::from_be_bytes(tweak.secret_bytes()).expect("Proper length checked"))
+    {
         Ok(Some(sec.secret_bytes()))
     } else {
         Ok(None)

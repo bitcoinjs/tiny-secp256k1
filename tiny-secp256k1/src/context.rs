@@ -106,7 +106,7 @@ mod simple_rand {
         // for the one time initialization of context.
         assert!(!unsafe { USED }, "Only use get_rand once!");
         // xorshift128 seeded with ptr of a new stack variable
-        let ptr = (&[0_u8; 4]).as_ptr() as u32;
+        let ptr = [0_u8; 4].as_ptr() as u32;
         let ret = Xorshift128::new(ptr).next_32bytes();
         unsafe {
             USED = true;

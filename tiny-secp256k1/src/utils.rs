@@ -4,7 +4,8 @@ use crate::{
 };
 use secp256k1::{
     ecdsa::{RecoverableSignature, RecoveryId, Signature},
-    ffi::{self, CPtr}, AllPreallocated, Message, Secp256k1, SecretKey,
+    ffi::{self, CPtr},
+    AllPreallocated, Message, Secp256k1, SecretKey,
 };
 
 pub(crate) fn assume_compression(compressed: Option<bool>, p: Option<usize>) -> usize {

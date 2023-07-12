@@ -102,11 +102,7 @@ pub extern "C" fn initialize_context() {
 pub extern "C" fn is_point(inputlen: usize) -> usize {
     unsafe {
         let pubkey = GeneralKey(PUBLIC_KEY_INPUT.get_ref(), &inputlen);
-        if tiny_secp256k1::is_point(&pubkey.into()) {
-            1
-        } else {
-            0
-        }
+        usize::from(tiny_secp256k1::is_point(&pubkey.into()))
     }
 }
 
@@ -168,18 +164,14 @@ pub extern "C" fn x_only_point_add_tweak() -> i32 {
 pub extern "C" fn x_only_point_add_tweak_check(tweaked_parity: i32) -> i32 {
     unsafe {
         let tweaked_parity = parity_to_opt_int!(tweaked_parity);
-        if jstry!(
+        i32::from(jstry!(
             tiny_secp256k1::x_only_point_add_tweak_check(
                 X_ONLY_PUBLIC_KEY_INPUT.get_ref(),
                 &(*X_ONLY_PUBLIC_KEY_INPUT2.get_ref(), tweaked_parity),
                 TWEAK_INPUT.get_ref()
             ),
             0
-        ) {
-            1
-        } else {
-            0
-        }
+        ))
     }
 }
 
@@ -350,7 +342,7 @@ pub extern "C" fn sign_schnorr(extra_data: i32) {
 #[no_mangle]
 pub extern "C" fn verify(inputlen: usize, strict: i32) -> i32 {
     unsafe {
-        if jstry!(
+        i32::from(jstry!(
             tiny_secp256k1::verify(
                 HASH_INPUT.get_ref(),
                 &GeneralKey(PUBLIC_KEY_INPUT.get_ref(), &inputlen).into(),
@@ -362,11 +354,7 @@ pub extern "C" fn verify(inputlen: usize, strict: i32) -> i32 {
                 }
             ),
             0
-        ) {
-            1
-        } else {
-            0
-        }
+        ))
     }
 }
 
@@ -393,17 +381,13 @@ pub extern "C" fn recover(outputlen: usize, recid: i32) -> i32 {
 #[export_name = "verifySchnorr"]
 pub extern "C" fn verify_schnorr() -> i32 {
     unsafe {
-        if jstry!(
+        i32::from(jstry!(
             tiny_secp256k1::verify_schnorr(
                 HASH_INPUT.get_ref(),
                 X_ONLY_PUBLIC_KEY_INPUT.get_ref(),
                 SIGNATURE_INPUT.get_ref()
             ),
             0
-        ) {
-            1
-        } else {
-            0
-        }
+        ))
     }
 }
