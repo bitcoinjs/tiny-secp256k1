@@ -22,12 +22,12 @@ export function parseTweakAddVector(f) {
   };
 }
 
-export default function (secp256k1) {
+export default function (secp256k1, type) {
   const rand = () => Math.floor(Math.random() * 254) + 1; // [1..254];
   const randPubKey = () =>
     secp256k1.xOnlyPointFromScalar(new Uint8Array(32).fill(rand()));
 
-  test("sign schnorr", (t) => {
+  test(`sign schnorr (${type})`, (t) => {
     for (const fHex of fschnorr.bip340testvectors) {
       if (fHex.d) {
         const f = parseBip340Vector(fHex);
@@ -42,7 +42,7 @@ export default function (secp256k1) {
     t.end();
   });
 
-  test("verify schnorr", (t) => {
+  test(`verify schnorr (${type})`, (t) => {
     for (const fHex of fschnorr.bip340testvectors) {
       const f = parseBip340Vector(fHex);
       if (f.exception) {
@@ -62,7 +62,7 @@ export default function (secp256k1) {
     t.end();
   });
 
-  test("scalar to xOnlyPubkey", (t) => {
+  test(`scalar to xOnlyPubkey (${type})`, (t) => {
     for (const fHex of fschnorr.bip340testvectors) {
       if (fHex.d) {
         const f = parseBip340Vector(fHex);
@@ -77,7 +77,7 @@ export default function (secp256k1) {
     t.end();
   });
 
-  test("pubkey to xOnlyPubkey", (t) => {
+  test(`pubkey to xOnlyPubkey (${type})`, (t) => {
     for (const fHex of fschnorr.bip340testvectors) {
       if (fHex.d) {
         const f = parseBip340Vector(fHex);
@@ -99,7 +99,7 @@ export default function (secp256k1) {
     t.end();
   });
 
-  test("xonly pubkey tweak add schnorr", (t) => {
+  test(`xonly pubkey tweak add schnorr (${type})`, (t) => {
     for (const fHex of fschnorr.tweakaddvectors) {
       const f = parseTweakAddVector(fHex);
       const res = secp256k1.xOnlyPointAddTweak(f.pubkey, f.tweak);

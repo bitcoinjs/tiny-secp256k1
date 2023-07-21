@@ -2,8 +2,8 @@ import test from "tape";
 import { fromHex } from "./util.js";
 import fprivates from "./fixtures/privates.json" assert { type: "json" };
 
-export default function (secp256k1) {
-  test("isPrivate", (t) => {
+export default function (secp256k1, type) {
+  test(`isPrivate (${type})`, (t) => {
     for (const f of fprivates.valid.isPrivate) {
       const d = fromHex(f.d);
 
@@ -17,7 +17,7 @@ export default function (secp256k1) {
     t.end();
   });
 
-  test("privateAdd", (t) => {
+  test(`privateAdd (${type})`, (t) => {
     for (const f of fprivates.valid.privateAdd) {
       const d = fromHex(f.d);
       const tweak = fromHex(f.tweak);
@@ -46,7 +46,7 @@ export default function (secp256k1) {
     t.end();
   });
 
-  test("privateSub", (t) => {
+  test(`privateSub (${type})`, (t) => {
     for (const f of fprivates.valid.privateSub) {
       const d = fromHex(f.d);
       const tweak = fromHex(f.tweak);

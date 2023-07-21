@@ -29,8 +29,8 @@ function corrupt(x) {
   return x;
 }
 
-export default function (secp256k1) {
-  test("sign", (t) => {
+export default function (secp256k1, type) {
+  test(`sign (${type})`, (t) => {
     for (const f of fecdsa.valid) {
       const d = fromHex(f.d);
       const m = fromHex(f.m);
@@ -108,7 +108,7 @@ export default function (secp256k1) {
     t.end();
   });
 
-  test("signRecoverable", (t) => {
+  test(`signRecoverable (${type})`, (t) => {
     for (const f of fecdsa.valid) {
       const d = fromHex(f.d);
       const m = fromHex(f.m);
@@ -224,7 +224,7 @@ export default function (secp256k1) {
     t.end();
   });
 
-  test("verify", (t) => {
+  test(`verify (${type})`, (t) => {
     for (const f of fecdsa.valid) {
       const d = fromHex(f.d);
       const Q = secp256k1.pointFromScalar(d, true);
@@ -287,7 +287,7 @@ export default function (secp256k1) {
     t.end();
   });
 
-  test("recover", (t) => {
+  test(`recover (${type})`, (t) => {
     for (const f of fecdsa.valid) {
       const d = fromHex(f.d);
       const Q = secp256k1.pointFromScalar(d, true);

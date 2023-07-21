@@ -39,7 +39,7 @@ RUN curl -sSf https://apt.llvm.org/llvm.sh | bash -s -- 12 && \
   ln -s $(which clang-12) /usr/bin/clang
 
 # Install wasm-opt from binaryen
-RUN git clone --depth 1 --branch version_100 https://github.com/WebAssembly/binaryen.git /binaryen && \
+RUN git clone --depth 1 --branch version_114 https://github.com/WebAssembly/binaryen.git /binaryen && \
   cd /binaryen && \
   cmake . && \
   make -j$(nproc) && \

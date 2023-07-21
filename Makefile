@@ -22,6 +22,59 @@ build-wasm:
 	mkdir -p lib && cp -f target/wasm32-unknown-unknown/release/secp256k1_wasm.wasm lib/secp256k1.wasm
 	wasm-opt -O4 --strip-debug --strip-producers --output lib/secp256k1.wasm lib/secp256k1.wasm
 
+.PHONY: build-asmjs
+build-asmjs: asmjs-build asmjs-fixes
+
+.PHONY: build-asmjs-dev
+build-asmjs-dev: asmjs-build-dev asmjs-fixes
+
+.PHONY: asmjs-build
+asmjs-build:
+	mkdir -p tiny-secp256k1-asmjs/lib
+	cp -R lib/ tiny-secp256k1-asmjs/
+	wasm2js -O4 --disable-gc -n tiny-secp256k1-asmjs/lib/secp256k1.wasm --output tiny-secp256k1-asmjs/lib/secp256k1.asm.js
+
+.PHONY: asmjs-build-dev
+asmjs-build-dev:
+	mkdir -p tiny-secp256k1-asmjs/lib
+	cp -R lib/ tiny-secp256k1-asmjs/
+	wasm2js tiny-secp256k1-asmjs/lib/secp256k1.wasm --output tiny-secp256k1-asmjs/lib/secp256k1.asm.js
+
+.PHONY: asmjs-fixes
+asmjs-fixes:
+	### Remove the copied wasm file and replace all imports
+	rm tiny-secp256k1-asmjs/lib/secp256k1.wasm
+	for FILE in $$(grep -lR secp256k1.wasm ./tiny-secp256k1-asmjs/lib); do \
+		sed -i 's/\.wasm/.asm.js/g' "$$FILE"; \
+	done
+
+	### Copy over package.json, README, LICENSE
+	cp package.json tiny-secp256k1-asmjs/
+	cp LICENSE tiny-secp256k1-asmjs/
+	cp README.md tiny-secp256k1-asmjs/
+	sed -i 's/"tiny-secp256k1"/"@bitcoin-js\/tiny-secp256k1-asmjs"/g' tiny-secp256k1-asmjs/package.json
+	grep -v wasm_loader tiny-secp256k1-asmjs/package.json > tiny-secp256k1-asmjs/package.json.new
+	mv tiny-secp256k1-asmjs/package.json.new tiny-secp256k1-asmjs/package.json
+
+	### 4 places where we want to replace the name tiny-secp256k1 in the README
+	sed -i 's/\(# \|install \|add \|v\/\|package\/\)tiny-secp256k1/\1@bitcoin-js\/tiny-secp256k1-asmjs/g' tiny-secp256k1-asmjs/README.md
+
+	### Copy the asm JS to cjs folder (needs modification)
+	cp tiny-secp256k1-asmjs/lib/secp256k1.asm.js tiny-secp256k1-asmjs/lib/cjs/secp256k1.asm.js
+	sed -i -e 's/import \* as \(.*\) from .\.\/\(.*\)\.js.;/const \1 = require('"'"'.\/\2.cjs'"'"');/g' tiny-secp256k1-asmjs/lib/cjs/secp256k1.asm.js
+	sed -i -e 's/export var /module.exports./g' tiny-secp256k1-asmjs/lib/cjs/secp256k1.asm.js
+	mv tiny-secp256k1-asmjs/lib/cjs/secp256k1.asm.js tiny-secp256k1-asmjs/lib/cjs/secp256k1.asm.cjs
+
+	### Modify imports for cjs only
+	for FILE in $$(grep -lR secp256k1.asm.js ./tiny-secp256k1-asmjs/lib/cjs); do \
+		sed -i 's/\.asm.js/.asm.cjs/g' "$$FILE"; \
+	done
+
+	### The NodeJS loader is not needed with ASM JS
+	mv tiny-secp256k1-asmjs/lib/cjs/wasm_loader.browser.cjs tiny-secp256k1-asmjs/lib/cjs/wasm_loader.cjs
+	mv tiny-secp256k1-asmjs/lib/wasm_loader.browser.js tiny-secp256k1-asmjs/lib/wasm_loader.js
+	rm tiny-secp256k1-asmjs/lib/wasm_loader.browser.d.ts
+
 .PHONY: build-wasm-debug
 build-wasm-debug:
 	RUSTFLAGS="-C link-args=-zstack-size=655360" cargo build --target wasm32-unknown-unknown
@@ -48,6 +101,8 @@ clean-built:
 		examples/react-app/dist/*.txt \
 		examples/react-app/dist/*.wasm \
 		lib \
+		tiny-secp256k1-asmjs \
+		*.tgz \
 		tests/browser
 
 eslint_files = benches/*.{js,json} examples/**/*.{js,json} src_ts/*.ts tests/*.js *.json *.cjs
@@ -79,7 +134,7 @@ test-browser-build-raw:
 	npx webpack build -c tests/browser.webpack.js
 
 .PHONY: test-browser-build
-test-browser-build: build-js build-wasm-debug test-browser-build-raw
+test-browser-build: build-js build-wasm-debug build-asmjs test-browser-build-raw
 
 test_browser_raw = node tests/browser-run.js | npx tap-summary
 
@@ -105,7 +160,7 @@ test-node-raw-ci:
 	$(test_node_raw) --no-ansi --no-progress
 
 .PHONY: test-node
-test-node: build-js build-wasm-debug test-node-raw
+test-node: build-js build-wasm-debug build-asmjs test-node-raw
 
 .PHONY: test-node-coverage-raw
 test-node-coverage-raw:
