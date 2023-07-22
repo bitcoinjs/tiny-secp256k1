@@ -9,3 +9,4 @@
 /target
 /tests/browser
 /types
+/tiny-secp256k1-asmjs

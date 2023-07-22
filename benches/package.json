@@ -9,7 +9,7 @@
     "start": "node --experimental-json-modules index.js"
   },
   "dependencies": {
-    "noble-secp256k1": "=1.1.2",
+    "@bitcoinerlab/secp256k1": "=1.0.5",
     "secp256k1": "=4.0.2",
     "tiny-secp256k1": "=1.1.6"
   }

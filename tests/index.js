@@ -1,5 +1,6 @@
 import test from "tape";
 import * as secp256k1 from "../lib/index.js";
+import * as secp256k1Asm from "../tiny-secp256k1-asmjs/lib/index.js";
 
 import test_ecdsa from "./ecdsa.js";
 import test_points from "./points.js";
@@ -13,7 +14,15 @@ test.onFinish(() => {
   }
 });
 
-test_schnorr(secp256k1);
-test_ecdsa(secp256k1);
-test_points(secp256k1);
-test_privates(secp256k1);
+test_schnorr(secp256k1, "WASM");
+test_ecdsa(secp256k1, "WASM");
+test_points(secp256k1, "WASM");
+test_privates(secp256k1, "WASM");
+
+// eslint-disable-next-line no-constant-condition
+if ("DELETE ME TO RUN" === "") {
+  test_schnorr(secp256k1Asm, "ASM.JS");
+  test_ecdsa(secp256k1Asm, "ASM.JS");
+  test_points(secp256k1Asm, "ASM.JS");
+  test_privates(secp256k1Asm, "ASM.JS");
+}

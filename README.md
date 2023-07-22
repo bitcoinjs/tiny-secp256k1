@@ -24,6 +24,15 @@ Previous version of `tiny-secp256k1` implement [C++ addon](https://nodejs.org/ap
 
 Current version use Rust crate (which use C library) compiled to [WebAssembly](https://developer.mozilla.org/en-US/docs/WebAssembly). With Wasm same code executed in any environment. Wasm is faster than `elliptic` but slower than node bindings ([results in PR](https://github.com/bitcoinjs/tiny-secp256k1/pull/53#issuecomment-801844450) or you can run own benchmark in `benches` directory).
 
+Tools like webpack, environments like React Native, and a large part of the JavaScript/TypeScript ecosystem has support for WASM based libraries. However, it usually involves special config settings which might be difficult to figure out. We have examples in the examples folder that uses webpack to create a demo website.
+
+However, there are also **alternative implementations** of the interface of this library.
+
+## Alternatives
+
+1. [`@bitcoinjs-lib/tiny-secp256k1-asmjs`](https://www.npmjs.com/package/@bitcoin-js/tiny-secp256k1-asmjs) - This library uses wasm2js to convert this library into pure JS. It is about 10x ~ 20x slower than WASM and 3x ~ 10x slower than our old v1 JS implementation.
+2. [`@bitcoinerlab/secp256k1`](https://www.npmjs.com/package/@bitcoinerlab/secp256k1) - This library uses noble/secp256k1, and therefore it uses JS native `BigInt`. If you can support `BigInt` it is much faster than ASM.JS, however, this is not maintained by this library's maintainers, so there's no guarantee that they will keep up with any interface changes in the future. Please check before using. It is about 1.5x ~ 5x slower than WASM.
+
 ## Building
 
 For building locally you need C/C++ toolchain, Rust version >=1.50.0 and `wasm-opt` from [binaryen](https://github.com/WebAssembly/binaryen).

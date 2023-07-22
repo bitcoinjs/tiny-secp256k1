@@ -1,8 +1,9 @@
 import tiny_secp256k1_prev_js from "tiny-secp256k1/js.js";
 import tiny_secp256k1_prev_native from "tiny-secp256k1/native.js";
 import * as tiny_secp256k1 from "../lib/index.js";
+import * as tiny_secp256k1_asmjs from "../tiny-secp256k1-asmjs/lib/index.js";
 import * as cryptocoinjs_secp256k1 from "./cryptocoinjs_secp256k1.js";
-import noble_secp256k1 from "./noble_secp256k1.js";
+import noble_secp256k1 from "@bitcoinerlab/secp256k1";
 import {
   fecdsa,
   fpoints,
@@ -26,6 +27,10 @@ const modules = [
   {
     name: "tiny-secp256k1 (WASM)",
     secp256k1: tiny_secp256k1,
+  },
+  {
+    name: "tiny-secp256k1 (ASM.JS)",
+    secp256k1: tiny_secp256k1_asmjs,
   },
   {
     name: "tiny-secp256k1@1.1.6 (C++ addon, NAN/V8)",

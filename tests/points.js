@@ -2,8 +2,8 @@ import test from "tape";
 import { fromHex } from "./util.js";
 import fpoints from "./fixtures/points.json" assert { type: "json" };
 
-export default function (secp256k1) {
-  test("isPoint", (t) => {
+export default function (secp256k1, type) {
+  test(`isPoint (${type})`, (t) => {
     for (const f of fpoints.valid.isPoint) {
       const p = fromHex(f.P);
       t.equal(
@@ -16,7 +16,7 @@ export default function (secp256k1) {
     t.end();
   });
 
-  test("isPointCompressed", (t) => {
+  test(`isPointCompressed (${type})`, (t) => {
     for (const f of fpoints.valid.isPoint) {
       if (!f.expected) continue;
       const p = fromHex(f.P);
@@ -31,7 +31,7 @@ export default function (secp256k1) {
     t.end();
   });
 
-  test("isXOnlyPoint", (t) => {
+  test(`isXOnlyPoint (${type})`, (t) => {
     for (const f of fpoints.valid.isPoint) {
       if (!f.expected) continue;
       const p = fromHex(f.P);
@@ -47,7 +47,7 @@ export default function (secp256k1) {
     t.end();
   });
 
-  test("pointAdd", (t) => {
+  test(`pointAdd (${type})`, (t) => {
     for (const f of fpoints.valid.pointAdd) {
       const p = fromHex(f.P);
       const q = fromHex(f.Q);
@@ -83,7 +83,7 @@ export default function (secp256k1) {
     t.end();
   });
 
-  test("pointAddScalar", (t) => {
+  test(`pointAddScalar (${type})`, (t) => {
     for (const f of fpoints.valid.pointAddScalar) {
       const p = fromHex(f.P);
       const d = fromHex(f.d);
@@ -119,7 +119,7 @@ export default function (secp256k1) {
     t.end();
   });
 
-  test("pointCompress", (t) => {
+  test(`pointCompress (${type})`, (t) => {
     for (const f of fpoints.valid.pointCompress) {
       const p = fromHex(f.P);
       const expected = fromHex(f.expected);
@@ -144,7 +144,7 @@ export default function (secp256k1) {
     t.end();
   });
 
-  test("pointFromScalar", (t) => {
+  test(`pointFromScalar (${type})`, (t) => {
     for (const f of fpoints.valid.pointFromScalar) {
       const d = fromHex(f.d);
       const expected = fromHex(f.expected);
@@ -178,7 +178,7 @@ export default function (secp256k1) {
     t.end();
   });
 
-  test("pointMultiply", (t) => {
+  test(`pointMultiply (${type})`, (t) => {
     for (const f of fpoints.valid.pointMultiply) {
       const p = fromHex(f.P);
       const d = fromHex(f.d);
@@ -214,7 +214,7 @@ export default function (secp256k1) {
     t.end();
   });
 
-  test("pointNegate", (t) => {
+  test(`pointNegate (${type})`, (t) => {
     for (const f of fpoints.valid.pointNegate) {
       const d = fromHex(f.d);
       const expected = fromHex(f.expected);
