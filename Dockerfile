@@ -41,6 +41,7 @@ RUN curl -sSf https://apt.llvm.org/llvm.sh | bash -s -- 12 && \
 # Install wasm-opt from binaryen
 RUN git clone --depth 1 --branch version_114 https://github.com/WebAssembly/binaryen.git /binaryen && \
   cd /binaryen && \
+  git submodule update --init && \
   cmake . && \
   make -j$(nproc) && \
   make install && \
@@ -50,11 +51,14 @@ RUN git clone --depth 1 --branch version_114 https://github.com/WebAssembly/bina
 RUN useradd -ms /bin/bash builduser
 USER builduser
 
-# Install Rust stable
+# Install Rust (using ./rust-toolchain version)
+WORKDIR /home/builduser/
+COPY rust-toolchain .
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y \
-    --default-toolchain stable \
+    --default-toolchain $(cat rust-toolchain) \
     --profile minimal \
     --component clippy,rustfmt,rust-src \
-    --target wasm32-unknown-unknown
+    --target wasm32-unknown-unknown \
+    && rm rust-toolchain
 
 CMD Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 & export DISPLAY=':99.0' && bash
