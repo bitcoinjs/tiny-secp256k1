@@ -52,14 +52,13 @@ RUN useradd -ms /bin/bash builduser
 USER builduser
 
 # Install Rust (using ./rust-toolchain version)
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y \
-    --profile minimal
-# Install additional components and target (using ./rust-toolchain version)
 WORKDIR /home/builduser/
 COPY rust-toolchain .
-ENV PATH=/home/builduser/.cargo/bin:$PATH
-RUN rustup component add clippy rustfmt rust-src
-RUN rustup target add wasm32-unknown-unknown
-RUN rm rust-toolchain
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y \
+    --default-toolchain $(cat rust-toolchain) \
+    --profile minimal \
+    --component clippy,rustfmt,rust-src \
+    --target wasm32-unknown-unknown \
+    && rm rust-toolchain
 
 CMD Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 & export DISPLAY=':99.0' && bash
