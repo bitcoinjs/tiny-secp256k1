@@ -13,10 +13,7 @@ crate-type = ["cdylib"]
 [dependencies.secp256k1-sys]
 version = "=0.8.1"
 default-features = false
-features=[
-    "recovery",
-    "lowmemory"
-]
+features=["recovery"]
 
 [profile.release]
 lto = true
