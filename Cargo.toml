@@ -17,6 +17,8 @@ features=[
     "recovery",
     "lowmemory"
 ]
+git = "https://github.com/junderw/rust-secp256k1"
+branch = "junderw/aux_data_patch"
 
 [profile.release]
 lto = true

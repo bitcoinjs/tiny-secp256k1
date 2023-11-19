@@ -11,8 +11,7 @@ checksum = "79c2681d6594606957bbb8631c4b90a7fcaaa72cdb714743a437b156d6a7eedd"
 [[package]]
 name = "secp256k1-sys"
 version = "0.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "70a129b9e9efbfb223753b9163c4ab3b13cff7fd9c7f010fbac25ab4099fa07e"
+source = "git+https://github.com/junderw/rust-secp256k1?branch=junderw/aux_data_patch#5130c98961aa21d54507b5b25ea3521a0c7d629e"
 dependencies = [
  "cc",
 ]
