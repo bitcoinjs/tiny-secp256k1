@@ -36,7 +36,7 @@ macro_rules! impl_pubkey {
     ($name:ident, $( $lt:tt )?) => {
         impl$(<$lt>)? $name$(<$lt>)? {
             #[allow(clippy::len_without_is_empty)]
-            pub fn len(&self) -> usize {
+            pub const fn len(&self) -> usize {
                 match self {
                     Self::XOnly(_) => 32,
                     Self::Compressed(_) => 33,
@@ -44,7 +44,7 @@ macro_rules! impl_pubkey {
                 }
             }
 
-            pub fn as_ptr(&self) -> *const u8 {
+            pub const fn as_ptr(&self) -> *const u8 {
                 match self {
                     Self::XOnly(v) => v.as_ptr(),
                     Self::Compressed(v) => v.as_ptr(),

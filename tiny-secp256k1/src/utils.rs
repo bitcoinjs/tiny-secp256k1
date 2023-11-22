@@ -8,7 +8,7 @@ use secp256k1::{
     AllPreallocated, Message, Secp256k1, SecretKey,
 };
 
-pub(crate) fn assume_compression(compressed: Option<bool>, p: Option<usize>) -> usize {
+pub fn assume_compression(compressed: Option<bool>, p: Option<usize>) -> usize {
     // To allow for XOnly PubkeyRef length to indicate compressed,
     // We bitwise OR 1 (32 -> 33, while 33 and 65 stay unchanged)
     compressed.map_or_else(
@@ -24,7 +24,7 @@ pub(crate) fn assume_compression(compressed: Option<bool>, p: Option<usize>) -> 
 }
 
 // TODO: Get ecdsa sign and sign_recoverable to accept extra entropy for rfc6979
-pub(crate) fn sign_ecdsa(
+pub fn sign_ecdsa(
     secp: &'static Secp256k1<AllPreallocated<'static>>,
     msg: Message,
     sec: SecretKey,
@@ -62,7 +62,7 @@ pub(crate) fn sign_ecdsa(
 }
 
 // TODO: Get ecdsa sign and sign_recoverable to accept extra entropy for rfc6979
-pub(crate) fn sign_ecdsa_recoverable(
+pub fn sign_ecdsa_recoverable(
     secp: &'static Secp256k1<AllPreallocated<'static>>,
     msg: Message,
     sec: SecretKey,

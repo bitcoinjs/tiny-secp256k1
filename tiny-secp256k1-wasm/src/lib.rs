@@ -29,6 +29,7 @@ extern "C" {
     fn generate_int32() -> i32;
 }
 
+#[repr(transparent)]
 pub struct UCWrapper<T: Sync + Copy>(pub(crate) UnsafeCell<T>);
 unsafe impl<T: Sync + Copy> Sync for UCWrapper<T> {}
 impl<T: Sync + Copy> UCWrapper<T> {
@@ -81,12 +82,10 @@ pub static SIGNATURE_INPUT: UCWrapper<[u8; SIGNATURE_SIZE]> =
 
 fn build_context() {
     let mut seed = [0_u8; 32];
-    unsafe {
-        for offset in (0..8).map(|v| v * 4) {
-            let value = generate_int32();
-            let bytes: [u8; 4] = value.to_ne_bytes();
-            seed[offset..offset + 4].copy_from_slice(&bytes);
-        }
+    for offset in (0..8).map(|v| v * 4) {
+        let value = unsafe { generate_int32() };
+        let bytes: [u8; 4] = value.to_ne_bytes();
+        seed[offset..offset + 4].copy_from_slice(&bytes);
     }
     tiny_secp256k1::set_context(&seed);
 }
@@ -100,294 +99,346 @@ pub extern "C" fn initialize_context() {
 #[no_mangle]
 #[export_name = "isPoint"]
 pub extern "C" fn is_point(inputlen: usize) -> usize {
-    unsafe {
-        let pubkey = GeneralKey(PUBLIC_KEY_INPUT.get_ref(), &inputlen);
-        usize::from(tiny_secp256k1::is_point(&pubkey.into()))
-    }
+    // Safety: WASM is single threaded and we only get references once per function.
+    //         Also, the same static memory area is not called twice.
+    let pubkey_input = unsafe { PUBLIC_KEY_INPUT.get_ref() };
+    let pubkey = GeneralKey(pubkey_input, &inputlen);
+    usize::from(tiny_secp256k1::is_point(&pubkey.into()))
 }
 
 #[no_mangle]
 #[export_name = "pointAdd"]
 pub extern "C" fn point_add(inputlen: usize, inputlen2: usize, compressed: usize) -> i32 {
-    unsafe {
-        let pubkey = jstry_opt!(
-            tiny_secp256k1::point_add(
-                &GeneralKey(PUBLIC_KEY_INPUT.get_ref(), &inputlen).into(),
-                &GeneralKey(PUBLIC_KEY_INPUT2.get_ref(), &inputlen2).into(),
-                pubkey_size_to_opt_bool!(compressed)
-            ),
-            0
-        );
-        let size = pubkey.len();
-        PUBLIC_KEY_INPUT.get_mut()[..size].copy_from_slice(&pubkey.as_slice()[..size]);
-        1
-    }
+    // Safety: WASM is single threaded and we only get references once per function.
+    //         Also, the same static memory area is not called twice.
+    let (pubkey_input, pubkey_input2) =
+        unsafe { (PUBLIC_KEY_INPUT.get_mut(), PUBLIC_KEY_INPUT2.get_ref()) };
+    let pubkey = jstry_opt!(
+        tiny_secp256k1::point_add(
+            &GeneralKey(pubkey_input, &inputlen).into(),
+            &GeneralKey(pubkey_input2, &inputlen2).into(),
+            pubkey_size_to_opt_bool!(compressed)
+        ),
+        0
+    );
+    let size = pubkey.len();
+    pubkey_input[..size].copy_from_slice(&pubkey.as_slice()[..size]);
+    1
 }
 
 #[no_mangle]
 #[export_name = "pointAddScalar"]
 pub extern "C" fn point_add_scalar(inputlen: usize, compressed: usize) -> i32 {
-    unsafe {
-        let pubkey = jstry_opt!(
-            tiny_secp256k1::point_add_scalar(
-                &GeneralKey(PUBLIC_KEY_INPUT.get_ref(), &inputlen).into(),
-                TWEAK_INPUT.get_ref(),
-                pubkey_size_to_opt_bool!(compressed)
-            ),
-            0
-        );
-        let size = pubkey.len();
-        PUBLIC_KEY_INPUT.get_mut()[..size].copy_from_slice(&pubkey.as_slice()[..size]);
-        1
-    }
+    // Safety: WASM is single threaded and we only get references once per function.
+    //         Also, the same static memory area is not called twice.
+    let (pubkey_input, tweak_input) =
+        unsafe { (PUBLIC_KEY_INPUT.get_mut(), TWEAK_INPUT.get_ref()) };
+    let pubkey = jstry_opt!(
+        tiny_secp256k1::point_add_scalar(
+            &GeneralKey(pubkey_input, &inputlen).into(),
+            tweak_input,
+            pubkey_size_to_opt_bool!(compressed)
+        ),
+        0
+    );
+    let size = pubkey.len();
+    pubkey_input[..size].copy_from_slice(&pubkey.as_slice()[..size]);
+    1
 }
 
 #[no_mangle]
 #[export_name = "xOnlyPointAddTweak"]
 pub extern "C" fn x_only_point_add_tweak() -> i32 {
-    unsafe {
-        let (x_only_point, parity) = jstry_opt!(
-            tiny_secp256k1::x_only_point_add_tweak(
-                X_ONLY_PUBLIC_KEY_INPUT.get_ref(),
-                TWEAK_INPUT.get_ref()
-            ),
-            -1
-        );
-        X_ONLY_PUBLIC_KEY_INPUT.get_mut()[..X_ONLY_PUBLIC_KEY_SIZE]
-            .copy_from_slice(&x_only_point[..X_ONLY_PUBLIC_KEY_SIZE]);
-        parity
-    }
+    // Safety: WASM is single threaded and we only get references once per function.
+    //         Also, the same static memory area is not called twice.
+    let (x_only_pubkey_input, tweak_input) =
+        unsafe { (X_ONLY_PUBLIC_KEY_INPUT.get_mut(), TWEAK_INPUT.get_ref()) };
+    let (x_only_point, parity) = jstry_opt!(
+        tiny_secp256k1::x_only_point_add_tweak(x_only_pubkey_input, tweak_input),
+        -1
+    );
+    x_only_pubkey_input[..X_ONLY_PUBLIC_KEY_SIZE]
+        .copy_from_slice(&x_only_point[..X_ONLY_PUBLIC_KEY_SIZE]);
+    parity
 }
 
 #[no_mangle]
 #[export_name = "xOnlyPointAddTweakCheck"]
 pub extern "C" fn x_only_point_add_tweak_check(tweaked_parity: i32) -> i32 {
-    unsafe {
-        let tweaked_parity = parity_to_opt_int!(tweaked_parity);
-        i32::from(jstry!(
-            tiny_secp256k1::x_only_point_add_tweak_check(
-                X_ONLY_PUBLIC_KEY_INPUT.get_ref(),
-                &(*X_ONLY_PUBLIC_KEY_INPUT2.get_ref(), tweaked_parity),
-                TWEAK_INPUT.get_ref()
-            ),
-            0
-        ))
-    }
+    // Safety: WASM is single threaded and we only get references once per function.
+    //         Also, the same static memory area is not called twice.
+    let (x_only_pubkey_input, x_only_pubkey_input2, tweak_input) = unsafe {
+        (
+            X_ONLY_PUBLIC_KEY_INPUT.get_ref(),
+            X_ONLY_PUBLIC_KEY_INPUT2.get_ref(),
+            TWEAK_INPUT.get_ref(),
+        )
+    };
+    let tweaked_parity = parity_to_opt_int!(tweaked_parity);
+    i32::from(jstry!(
+        tiny_secp256k1::x_only_point_add_tweak_check(
+            x_only_pubkey_input,
+            &(*x_only_pubkey_input2, tweaked_parity),
+            tweak_input
+        ),
+        0
+    ))
 }
 
 #[no_mangle]
 #[export_name = "pointCompress"]
 pub extern "C" fn point_compress(inputlen: usize, compressed: usize) {
-    unsafe {
-        let pubkey = jstry!(tiny_secp256k1::point_compress(
-            &GeneralKey(PUBLIC_KEY_INPUT.get_ref(), &inputlen).into(),
-            pubkey_size_to_opt_bool!(compressed)
-        ));
-        let size = pubkey.len();
-        PUBLIC_KEY_INPUT.get_mut()[..size].copy_from_slice(&pubkey.as_slice()[..size]);
-    }
+    // Safety: WASM is single threaded and we only get references once per function.
+    //         Also, the same static memory area is not called twice.
+    let pubkey_input = unsafe { PUBLIC_KEY_INPUT.get_mut() };
+    let pubkey = jstry!(tiny_secp256k1::point_compress(
+        &GeneralKey(pubkey_input, &inputlen).into(),
+        pubkey_size_to_opt_bool!(compressed)
+    ));
+    let size = pubkey.len();
+    pubkey_input[..size].copy_from_slice(&pubkey.as_slice()[..size]);
 }
 
 #[no_mangle]
 #[export_name = "pointFromScalar"]
 pub extern "C" fn point_from_scalar(compressed: usize) -> i32 {
-    unsafe {
-        let pubkey = jstry_opt!(
-            tiny_secp256k1::point_from_scalar(
-                PRIVATE_INPUT.get_ref(),
-                pubkey_size_to_opt_bool!(compressed)
-            ),
-            0
-        );
-        let size = pubkey.len();
-        PUBLIC_KEY_INPUT.get_mut()[..size].copy_from_slice(&pubkey.as_slice()[..size]);
-        1
-    }
+    // Safety: WASM is single threaded and we only get references once per function.
+    //         Also, the same static memory area is not called twice.
+    let (public_key_input, private_input) =
+        unsafe { (PUBLIC_KEY_INPUT.get_mut(), PRIVATE_INPUT.get_ref()) };
+    let pubkey = jstry_opt!(
+        tiny_secp256k1::point_from_scalar(private_input, pubkey_size_to_opt_bool!(compressed)),
+        0
+    );
+    let size = pubkey.len();
+    public_key_input[..size].copy_from_slice(&pubkey.as_slice()[..size]);
+    1
 }
 
 #[no_mangle]
 #[export_name = "xOnlyPointFromScalar"]
+#[allow(clippy::missing_panics_doc)]
 pub extern "C" fn x_only_point_from_scalar() {
-    unsafe {
-        let (point, _parity) = tiny_secp256k1::x_only_point_from_scalar(PRIVATE_INPUT.get_ref())
-            .expect("JS side validation");
-        X_ONLY_PUBLIC_KEY_INPUT.get_mut().copy_from_slice(&point);
-    }
+    // Safety: WASM is single threaded and we only get references once per function.
+    //         Also, the same static memory area is not called twice.
+    let (x_only_public_key_input, private_input) =
+        unsafe { (X_ONLY_PUBLIC_KEY_INPUT.get_mut(), PRIVATE_INPUT.get_ref()) };
+    let (point, _parity) =
+        tiny_secp256k1::x_only_point_from_scalar(private_input).expect("JS side validation");
+    x_only_public_key_input.copy_from_slice(&point);
 }
 
 #[no_mangle]
 #[export_name = "xOnlyPointFromPoint"]
 pub extern "C" fn x_only_point_from_point(inputlen: usize) {
-    unsafe {
-        let (point, _parity) = jstry!(tiny_secp256k1::x_only_point_from_point(
-            &GeneralKey(PUBLIC_KEY_INPUT.get_ref(), &inputlen).into()
-        ));
-        X_ONLY_PUBLIC_KEY_INPUT.get_mut().copy_from_slice(&point);
-    }
+    // Safety: WASM is single threaded and we only get references once per function.
+    //         Also, the same static memory area is not called twice.
+    let (x_only_public_key_input, public_key_input) = unsafe {
+        (
+            X_ONLY_PUBLIC_KEY_INPUT.get_mut(),
+            PUBLIC_KEY_INPUT.get_ref(),
+        )
+    };
+    let (point, _parity) = jstry!(tiny_secp256k1::x_only_point_from_point(
+        &GeneralKey(public_key_input, &inputlen).into()
+    ));
+    x_only_public_key_input.copy_from_slice(&point);
 }
 
 #[no_mangle]
 #[export_name = "pointMultiply"]
 pub extern "C" fn point_multiply(inputlen: usize, compressed: usize) -> i32 {
-    unsafe {
-        let pubkey = jstry_opt!(
-            tiny_secp256k1::point_multiply(
-                &GeneralKey(PUBLIC_KEY_INPUT.get_ref(), &inputlen).into(),
-                TWEAK_INPUT.get_ref(),
-                pubkey_size_to_opt_bool!(compressed)
-            ),
-            0
-        );
-        let size = pubkey.len();
-        PUBLIC_KEY_INPUT.get_mut()[..size].copy_from_slice(&pubkey.as_slice()[..size]);
-        1
-    }
+    // Safety: WASM is single threaded and we only get references once per function.
+    //         Also, the same static memory area is not called twice.
+    let (public_key_input, tweak_input) =
+        unsafe { (PUBLIC_KEY_INPUT.get_mut(), TWEAK_INPUT.get_ref()) };
+    let pubkey = jstry_opt!(
+        tiny_secp256k1::point_multiply(
+            &GeneralKey(public_key_input, &inputlen).into(),
+            tweak_input,
+            pubkey_size_to_opt_bool!(compressed)
+        ),
+        0
+    );
+    let size = pubkey.len();
+    public_key_input[..size].copy_from_slice(&pubkey.as_slice()[..size]);
+    1
 }
 
 #[no_mangle]
 #[export_name = "privateAdd"]
 pub extern "C" fn private_add() -> i32 {
-    unsafe {
-        let private = jstry!(
-            tiny_secp256k1::private_add(PRIVATE_INPUT.get_ref(), TWEAK_INPUT.get_ref()),
-            0
-        );
-        PRIVATE_INPUT
-            .get_mut()
-            .copy_from_slice(&priv_or_ret!(private, 0));
-        1
-    }
+    // Safety: WASM is single threaded and we only get references once per function.
+    //         Also, the same static memory area is not called twice.
+    let (private_input, tweak_input) = unsafe { (PRIVATE_INPUT.get_mut(), TWEAK_INPUT.get_ref()) };
+    let private = jstry!(tiny_secp256k1::private_add(private_input, tweak_input), 0);
+    private_input.copy_from_slice(&priv_or_ret!(private, 0));
+    1
 }
 
 #[no_mangle]
 #[export_name = "privateSub"]
 pub extern "C" fn private_sub() -> i32 {
-    unsafe {
-        let private = jstry!(
-            tiny_secp256k1::private_sub(PRIVATE_INPUT.get_ref(), TWEAK_INPUT.get_ref()),
-            0
-        );
-        PRIVATE_INPUT
-            .get_mut()
-            .copy_from_slice(&priv_or_ret!(private, 0));
-        1
-    }
+    // Safety: WASM is single threaded and we only get references once per function.
+    //         Also, the same static memory area is not called twice.
+    let (private_input, tweak_input) = unsafe { (PRIVATE_INPUT.get_mut(), TWEAK_INPUT.get_ref()) };
+    let private = jstry!(tiny_secp256k1::private_sub(private_input, tweak_input), 0);
+    private_input.copy_from_slice(&priv_or_ret!(private, 0));
+    1
 }
 
 #[no_mangle]
 #[export_name = "privateNegate"]
 pub extern "C" fn private_negate() {
-    unsafe {
-        let private = jstry!(tiny_secp256k1::private_negate(PRIVATE_INPUT.get_ref()));
-        PRIVATE_INPUT.get_mut().copy_from_slice(&private);
-    }
+    // Safety: WASM is single threaded and we only get references once per function.
+    //         Also, the same static memory area is not called twice.
+    let private_input = unsafe { PRIVATE_INPUT.get_mut() };
+    let private = jstry!(tiny_secp256k1::private_negate(private_input));
+    private_input.copy_from_slice(&private);
 }
 
 #[no_mangle]
 pub extern "C" fn sign(extra_data: i32) {
-    unsafe {
-        SIGNATURE_INPUT
-            .get_mut()
-            .copy_from_slice(&jstry!(tiny_secp256k1::sign(
-                HASH_INPUT.get_ref(),
-                PRIVATE_INPUT.get_ref(),
-                if extra_data == 0 {
-                    None
-                } else {
-                    Some(EXTRA_DATA_INPUT.get_ref())
-                },
-            )));
-    }
+    // Safety: WASM is single threaded and we only get references once per function.
+    //         Also, the same static memory area is not called twice.
+    let (signature_input, hash_input, private_input, extra_data_input) = unsafe {
+        (
+            SIGNATURE_INPUT.get_mut(),
+            HASH_INPUT.get_ref(),
+            PRIVATE_INPUT.get_ref(),
+            EXTRA_DATA_INPUT.get_ref(),
+        )
+    };
+    signature_input.copy_from_slice(&jstry!(tiny_secp256k1::sign(
+        hash_input,
+        private_input,
+        if extra_data == 0 {
+            None
+        } else {
+            Some(extra_data_input)
+        },
+    )));
 }
 
 #[no_mangle]
 #[export_name = "signRecoverable"]
 pub extern "C" fn sign_recoverable(extra_data: i32) -> i32 {
-    unsafe {
-        let sig = jstry!(
-            tiny_secp256k1::sign_recoverable(
-                HASH_INPUT.get_ref(),
-                PRIVATE_INPUT.get_ref(),
-                if extra_data == 0 {
-                    None
-                } else {
-                    Some(EXTRA_DATA_INPUT.get_ref())
-                },
-            ),
-            0
-        );
-        SIGNATURE_INPUT.get_mut().copy_from_slice(&sig.1);
-        sig.0.to_i32()
-    }
+    // Safety: WASM is single threaded and we only get references once per function.
+    //         Also, the same static memory area is not called twice.
+    let (signature_input, hash_input, private_input, extra_data_input) = unsafe {
+        (
+            SIGNATURE_INPUT.get_mut(),
+            HASH_INPUT.get_ref(),
+            PRIVATE_INPUT.get_ref(),
+            EXTRA_DATA_INPUT.get_ref(),
+        )
+    };
+    let sig = jstry!(
+        tiny_secp256k1::sign_recoverable(
+            hash_input,
+            private_input,
+            if extra_data == 0 {
+                None
+            } else {
+                Some(extra_data_input)
+            },
+        ),
+        0
+    );
+    signature_input.copy_from_slice(&sig.1);
+    sig.0.to_i32()
 }
 
 #[no_mangle]
 #[export_name = "signSchnorr"]
 pub extern "C" fn sign_schnorr(extra_data: i32) {
-    unsafe {
-        SIGNATURE_INPUT
-            .get_mut()
-            .copy_from_slice(&jstry!(tiny_secp256k1::sign_schnorr(
-                HASH_INPUT.get_ref(),
-                PRIVATE_INPUT.get_ref(),
-                if extra_data == 0 {
-                    None
-                } else {
-                    Some(EXTRA_DATA_INPUT.get_ref())
-                },
-            )));
-    }
+    // Safety: WASM is single threaded and we only get references once per function.
+    //         Also, the same static memory area is not called twice.
+    let (signature_input, hash_input, private_input, extra_data_input) = unsafe {
+        (
+            SIGNATURE_INPUT.get_mut(),
+            HASH_INPUT.get_ref(),
+            PRIVATE_INPUT.get_ref(),
+            EXTRA_DATA_INPUT.get_ref(),
+        )
+    };
+    signature_input.copy_from_slice(&jstry!(tiny_secp256k1::sign_schnorr(
+        hash_input,
+        private_input,
+        if extra_data == 0 {
+            None
+        } else {
+            Some(extra_data_input)
+        },
+    )));
 }
 
 #[no_mangle]
 pub extern "C" fn verify(inputlen: usize, strict: i32) -> i32 {
-    unsafe {
-        i32::from(jstry!(
-            tiny_secp256k1::verify(
-                HASH_INPUT.get_ref(),
-                &GeneralKey(PUBLIC_KEY_INPUT.get_ref(), &inputlen).into(),
-                SIGNATURE_INPUT.get_ref(),
-                match strict {
-                    1 => Some(true),
-                    0 => Some(false),
-                    _ => None,
-                }
-            ),
-            0
-        ))
-    }
+    // Safety: WASM is single threaded and we only get references once per function.
+    //         Also, the same static memory area is not called twice.
+    let (signature_input, hash_input, public_key_input) = unsafe {
+        (
+            SIGNATURE_INPUT.get_ref(),
+            HASH_INPUT.get_ref(),
+            PUBLIC_KEY_INPUT.get_ref(),
+        )
+    };
+    i32::from(jstry!(
+        tiny_secp256k1::verify(
+            hash_input,
+            &GeneralKey(public_key_input, &inputlen).into(),
+            signature_input,
+            match strict {
+                1 => Some(true),
+                0 => Some(false),
+                _ => None,
+            }
+        ),
+        0
+    ))
 }
 
 #[allow(clippy::missing_panics_doc)]
 #[no_mangle]
 pub extern "C" fn recover(outputlen: usize, recid: i32) -> i32 {
-    unsafe {
-        let pubkey = jstry!(
-            tiny_secp256k1::recover(
-                HASH_INPUT.get_ref(),
-                SIGNATURE_INPUT.get_ref(),
-                tiny_secp256k1::RecoveryId::from_i32(recid).unwrap(),
-                pubkey_size_to_opt_bool!(outputlen),
-            ),
-            0
-        );
-        let size = pubkey.len();
-        PUBLIC_KEY_INPUT.get_mut()[..size].copy_from_slice(&pubkey.as_slice()[..size]);
-        1
-    }
+    // Safety: WASM is single threaded and we only get references once per function.
+    //         Also, the same static memory area is not called twice.
+    let (public_key_input, signature_input, hash_input) = unsafe {
+        (
+            PUBLIC_KEY_INPUT.get_mut(),
+            SIGNATURE_INPUT.get_ref(),
+            HASH_INPUT.get_ref(),
+        )
+    };
+    let pubkey = jstry!(
+        tiny_secp256k1::recover(
+            hash_input,
+            signature_input,
+            tiny_secp256k1::RecoveryId::from_i32(recid).unwrap(),
+            pubkey_size_to_opt_bool!(outputlen),
+        ),
+        0
+    );
+    let size = pubkey.len();
+    public_key_input[..size].copy_from_slice(&pubkey.as_slice()[..size]);
+    1
 }
 
 #[no_mangle]
 #[export_name = "verifySchnorr"]
 pub extern "C" fn verify_schnorr() -> i32 {
-    unsafe {
-        i32::from(jstry!(
-            tiny_secp256k1::verify_schnorr(
-                HASH_INPUT.get_ref(),
-                X_ONLY_PUBLIC_KEY_INPUT.get_ref(),
-                SIGNATURE_INPUT.get_ref()
-            ),
-            0
-        ))
-    }
+    // Safety: WASM is single threaded and we only get references once per function.
+    //         Also, the same static memory area is not called twice.
+    let (signature_input, hash_input, x_only_public_key_input) = unsafe {
+        (
+            SIGNATURE_INPUT.get_ref(),
+            HASH_INPUT.get_ref(),
+            X_ONLY_PUBLIC_KEY_INPUT.get_ref(),
+        )
+    };
+    i32::from(jstry!(
+        tiny_secp256k1::verify_schnorr(hash_input, x_only_public_key_input, signature_input),
+        0
+    ))
 }

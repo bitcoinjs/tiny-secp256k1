@@ -6,7 +6,7 @@ macro_rules! jstry {
         match $value {
             Ok(value) => value,
             Err(code) => {
-                throw_error(code as usize);
+                unsafe { throw_error(code as usize) };
                 return $ret;
             }
         }
@@ -24,7 +24,7 @@ macro_rules! jstry_opt {
                 }
             }
             Err(code) => {
-                throw_error(code as usize);
+                unsafe { throw_error(code as usize) };
                 return $ret;
             }
         }

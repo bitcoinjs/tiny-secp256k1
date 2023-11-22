@@ -40,7 +40,7 @@ pub fn set_context(seed: &[u8; 32]) -> &'static Secp256k1<AllPreallocated<'stati
     }
 }
 
-pub(crate) fn get_hcontext() -> &'static Secp256k1<AllPreallocated<'static>> {
+pub fn get_hcontext() -> &'static Secp256k1<AllPreallocated<'static>> {
     unsafe {
         if SECP256K1.is_some() {
             SECP256K1.as_ref().unwrap()
@@ -65,10 +65,10 @@ pub(crate) fn get_hcontext() -> &'static Secp256k1<AllPreallocated<'static>> {
 mod simple_rand {
     struct Xorshift128(u32, u32, u32, u32);
     impl Xorshift128 {
-        fn new(seed: u32) -> Self {
+        const fn new(seed: u32) -> Self {
             // Initial state is first 128 bits of
             // secp256k1 generator point x value
-            Xorshift128(
+            Self(
                 0x79BE_667E ^ seed,
                 0xF9DC_BBAC ^ seed.wrapping_shl(13),
                 0x55A0_6295 ^ seed.wrapping_shr(7),
@@ -98,7 +98,7 @@ mod simple_rand {
     }
 
     static mut USED: bool = false;
-    pub(crate) fn get_rand() -> [u8; 32] {
+    pub fn get_rand() -> [u8; 32] {
         // This function returns the same value
         // everytime it's called on the same run.
         // However, each run should produce a different

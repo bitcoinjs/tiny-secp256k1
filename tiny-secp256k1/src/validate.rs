@@ -16,7 +16,7 @@ use super::{
 //     v.1 == PUBLIC_KEY_COMPRESSED_SIZE
 // }
 
-pub(crate) fn is_tweak(v: &TweakSlice) -> bool {
+pub fn is_tweak(v: &TweakSlice) -> bool {
     v < &ORDER
 }
 
@@ -46,7 +46,7 @@ pub(crate) fn is_tweak(v: &TweakSlice) -> bool {
 //     }
 // }
 
-pub(crate) fn validate_tweak(p: &TweakSlice) -> InvalidInputResult<()> {
+pub fn validate_tweak(p: &TweakSlice) -> InvalidInputResult<()> {
     if is_tweak(p) {
         Ok(())
     } else {

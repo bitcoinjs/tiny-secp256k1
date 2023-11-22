@@ -1,8 +1,9 @@
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
+#![deny(clippy::nursery)]
 #![allow(clippy::must_use_candidate)]
 #![allow(clippy::module_name_repetitions)]
-#![cfg_attr(feature = "no_std", no_std)]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 //! # tiny-secp256k1
 //!
@@ -106,6 +107,9 @@ pub fn point_add(
 /// # Errors
 /// `Error::BadPoint` returned if `pubkey` is invalid.
 /// `Error::BadTweak` returned if `tweak` is invalid.
+///
+/// # Panics
+/// If tweak is invalid.
 pub fn point_add_scalar(
     pubkey: &PubkeyRef,
     tweak: &TweakSlice,
@@ -121,11 +125,11 @@ pub fn point_add_scalar(
         )
         .map_or_else(
             |_| None,
-            |key| {
+            |new_key| {
                 Some(if outputlen == 33 {
-                    Pubkey::Compressed(key.serialize())
+                    Pubkey::Compressed(new_key.serialize())
                 } else {
-                    Pubkey::Uncompressed(key.serialize_uncompressed())
+                    Pubkey::Uncompressed(new_key.serialize_uncompressed())
                 })
             },
         ))
@@ -134,6 +138,9 @@ pub fn point_add_scalar(
 /// # Errors
 /// `Error::BadPoint` returned if `pubkey` is invalid.
 /// `Error::BadTweak` returned if `tweak` is invalid.
+///
+/// # Panics
+/// If tweak is invalid.
 pub fn x_only_point_add_tweak(
     pubkey: &XOnlyPubkeySlice,
     tweak: &TweakSlice,
@@ -155,6 +162,9 @@ pub fn x_only_point_add_tweak(
 /// `Error::BadPoint` returned if `pubkey` or `result` is invalid.
 /// `Error::BadTweak` returned if `tweak` is invalid.
 /// `Error::BadParity` returned if `result` has `parity` and it is invalid.
+///
+/// # Panics
+/// If tweak is invalid.
 pub fn x_only_point_add_tweak_check(
     pubkey: &XOnlyPubkeySlice,
     result: &XOnlyPubkeyWithMaybeParity,
@@ -208,6 +218,7 @@ pub fn point_from_scalar(
 
 /// # Errors
 /// `Error::BadPrivate` returned if `private` is invalid.
+#[allow(clippy::missing_panics_doc)]
 pub fn x_only_point_from_scalar(
     private: &PrivkeySlice,
 ) -> InvalidInputResult<XOnlyPubkeyWithParity> {
@@ -222,6 +233,7 @@ pub fn x_only_point_from_scalar(
 
 /// # Errors
 /// `Error::BadPoint` returned if `pubkey` is invalid.
+#[allow(clippy::missing_panics_doc)]
 pub fn x_only_point_from_point(pubkey: &PubkeyRef) -> InvalidInputResult<XOnlyPubkeyWithParity> {
     let pb = PublicKey::from_slice(pubkey.as_slice()).map_err(|_| Error::BadPoint)?;
     let ser = pb.serialize();
@@ -234,6 +246,9 @@ pub fn x_only_point_from_point(pubkey: &PubkeyRef) -> InvalidInputResult<XOnlyPu
 /// # Errors
 /// `Error::BadPoint` returned if `pubkey` is invalid.
 /// `Error::BadTweak` returned if `tweak` is invalid.
+///
+/// # Panics
+/// If tweak is invalid.
 pub fn point_multiply(
     pubkey: &PubkeyRef,
     tweak: &TweakSlice,
@@ -242,39 +257,41 @@ pub fn point_multiply(
     let outputlen = assume_compression(compressed, Some(pubkey.len()));
     let pb = PublicKey::from_slice(pubkey.as_slice()).map_err(|_| Error::BadPoint)?;
     validate_tweak(tweak)?;
-    if let Ok(pb) = pb.mul_tweak(
+    pb.mul_tweak(
         get_hcontext(),
         &Scalar::from_be_bytes(*tweak).expect("Proper length checked"),
-    ) {
+    )
+    .map_or(Ok(None), |new_pb| {
         Ok(Some(if outputlen == 33 {
-            Pubkey::Compressed(pb.serialize())
+            Pubkey::Compressed(new_pb.serialize())
         } else {
-            Pubkey::Uncompressed(pb.serialize_uncompressed())
+            Pubkey::Uncompressed(new_pb.serialize_uncompressed())
         }))
-    } else {
-        Ok(None)
-    }
+    })
 }
 
 /// # Errors
 /// `Error::BadPrivate` returned if `private` is invalid.
 /// `Error::BadTweak` returned if `tweak` is invalid.
+///
+/// # Panics
+/// If tweak is invalid.
 pub fn private_add(
     private: &PrivkeySlice,
     tweak: &TweakSlice,
 ) -> InvalidInputResult<Option<PrivkeySlice>> {
     validate_tweak(tweak)?;
     let sec = SecretKey::from_slice(private.as_slice()).map_err(|_| Error::BadPrivate)?;
-    if let Ok(sec) = sec.add_tweak(&Scalar::from_be_bytes(*tweak).expect("Proper length checked")) {
-        Ok(Some(sec.secret_bytes()))
-    } else {
-        Ok(None)
-    }
+    sec.add_tweak(&Scalar::from_be_bytes(*tweak).expect("Proper length checked"))
+        .map_or(Ok(None), |new_sec| Ok(Some(new_sec.secret_bytes())))
 }
 
 /// # Errors
 /// `Error::BadPrivate` returned if `private` is invalid.
 /// `Error::BadTweak` returned if `tweak` is invalid.
+///
+/// # Panics
+/// If tweak is invalid.
 pub fn private_sub(
     private: &PrivkeySlice,
     tweak: &TweakSlice,
@@ -291,13 +308,8 @@ pub fn private_sub(
     let mut tweak = SecretKey::from_slice(tweak.as_slice()).map_err(|_| Error::BadPrivate)?;
     tweak = tweak.negate();
 
-    if let Ok(sec) =
-        sec.add_tweak(&Scalar::from_be_bytes(tweak.secret_bytes()).expect("Proper length checked"))
-    {
-        Ok(Some(sec.secret_bytes()))
-    } else {
-        Ok(None)
-    }
+    sec.add_tweak(&Scalar::from_be_bytes(tweak.secret_bytes()).expect("Proper length checked"))
+        .map_or(Ok(None), |new_sec| Ok(Some(new_sec.secret_bytes())))
 }
 
 /// # Errors

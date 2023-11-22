@@ -37,8 +37,8 @@ export default function (secp256k1) {
       const expected = fromHex(f.signature);
 
       t.same(
-        secp256k1.sign(m, d),
-        expected,
+        toHex(secp256k1.sign(m, d)),
+        toHex(expected),
         `sign(${f.m}, ...) == ${f.signature}`
       );
     }
@@ -116,8 +116,8 @@ export default function (secp256k1) {
 
       const res = secp256k1.signRecoverable(m, d);
       t.same(
-        res.signature,
-        expected,
+        toHex(res.signature),
+        toHex(expected),
         `signRecoverable(${f.m}, ...) == { signature: "${f.signature}", ...}`
       );
 
