@@ -1,3 +1,4 @@
+import { Buffer } from "buffer";
 import {
   ERROR_BAD_PRIVATE,
   ERROR_BAD_POINT,
@@ -31,8 +32,8 @@ const BN32_P_MINUS_N = new Uint8Array([
   196, 64, 45, 161, 114, 47, 201, 186, 238,
 ]);
 
-function isUint8Array(value: Uint8Array): boolean {
-  return value instanceof Uint8Array;
+function isUint8Array(value: any): boolean {
+  return value instanceof Uint8Array || value instanceof Buffer;
 }
 
 function cmpBN32(data1: Uint8Array, data2: Uint8Array): number {
