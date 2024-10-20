@@ -19,30 +19,30 @@ const THROW_BAD_SIGNATURE = 'Expected Signature'
 const THROW_BAD_EXTRA_DATA = 'Expected Extra Data (32 bytes)'
 
 function isScalar (x) {
-  return Buffer.isBuffer(x) && x.length === 32
+  return (x instanceof Uint8Array) && x.length === 32
 }
 
 function isOrderScalar (x) {
   if (!isScalar(x)) return false
-  return x.compare(EC_GROUP_ORDER) < 0 // < G
+  return EC_GROUP_ORDER.compare(x) > 0 // < G
 }
 
 function isPoint (p) {
-  if (!Buffer.isBuffer(p)) return false
+  if (!(p instanceof Uint8Array)) return false
   if (p.length < 33) return false
 
   const t = p[0]
-  const x = p.slice(1, 33)
-  if (x.compare(ZERO32) === 0) return false
-  if (x.compare(EC_P) >= 0) return false
+  const x = p.subarray(1, 33)
+  if (ZERO32.compare(x) === 0) return false
+  if (EC_P.compare(x) <= 0) return false
   if ((t === 0x02 || t === 0x03) && p.length === 33) {
     try { decodeFrom(p) } catch (e) { return false } // TODO: temporary
     return true
   }
 
-  const y = p.slice(33)
-  if (y.compare(ZERO32) === 0) return false
-  if (y.compare(EC_P) >= 0) return false
+  const y = p.subarray(33)
+  if (ZERO32.compare(y) === 0) return false
+  if (EC_P.compare(y) <= 0) return false
   if (t === 0x04 && p.length === 65) return true
   return false
 }
@@ -58,16 +58,16 @@ function isPointCompressed (p) {
 
 function isPrivate (x) {
   if (!isScalar(x)) return false
-  return x.compare(ZERO32) > 0 && // > 0
-    x.compare(EC_GROUP_ORDER) < 0 // < G
+  return ZERO32.compare(x) < 0 && // > 0
+    EC_GROUP_ORDER.compare(x) > 0 // < G
 }
 
 function isSignature (value) {
-  const r = value.slice(0, 32)
-  const s = value.slice(32, 64)
-  return Buffer.isBuffer(value) && value.length === 64 &&
-    r.compare(EC_GROUP_ORDER) < 0 &&
-    s.compare(EC_GROUP_ORDER) < 0
+  const r = value.subarray(0, 32)
+  const s = value.subarray(32, 64)
+  return (value instanceof Uint8Array) && value.length === 64 &&
+    EC_GROUP_ORDER.compare(r) > 0 &&
+    EC_GROUP_ORDER.compare(s) > 0
 }
 
 function assumeCompression (value, pubkey) {
@@ -100,7 +100,7 @@ function pointAddScalar (p, tweak, __compressed) {
 
   const compressed = assumeCompression(__compressed, p)
   const pp = decodeFrom(p)
-  if (tweak.compare(ZERO32) === 0) return getEncoded(pp, compressed)
+  if (ZERO32.compare(tweak) === 0) return getEncoded(pp, compressed)
 
   const tt = fromBuffer(tweak)
   const qq = G.mul(tt)
@@ -225,8 +225,8 @@ function verify (hash, q, signature, strict) {
   if (!isSignature(signature)) throw new TypeError(THROW_BAD_SIGNATURE)
 
   const Q = decodeFrom(q)
-  const r = fromBuffer(signature.slice(0, 32))
-  const s = fromBuffer(signature.slice(32, 64))
+  const r = fromBuffer(signature.subarray(0, 32))
+  const s = fromBuffer(signature.subarray(32, 64))
 
   if (strict && s.cmp(nDiv2) > 0) {
     return false
