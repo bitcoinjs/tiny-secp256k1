@@ -58,7 +58,7 @@ jobs:
     - name: Install Node.js dependencies
       run: npm ci
 
-    - uses: actions/cache@v2
+    - uses: actions/cache@v4
       id: binaryen-cache
       with:
         path: binaryen-version_114
@@ -136,7 +136,7 @@ jobs:
         name: package
         path: tiny-secp256k1-*
 
-    - uses: actions/cache@v2
+    - uses: actions/cache@v4
       id: binaryen-cache
       with:
         path: binaryen-version_114
@@ -182,7 +182,7 @@ jobs:
         name: wasm
         path: lib
 
-    - uses: actions/cache@v2
+    - uses: actions/cache@v4
       id: binaryen-cache
       with:
         path: binaryen-version_114
