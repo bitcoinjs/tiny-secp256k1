@@ -95,7 +95,7 @@ jobs:
         make test-browser-raw-ci
 
     - name: Upload wasm
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: wasm
         path: lib/secp256k1.wasm
@@ -131,7 +131,7 @@ jobs:
       run: npm pack
 
     - name: Upload package
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: package
         path: tiny-secp256k1-*
@@ -149,7 +149,7 @@ jobs:
         npm pack
 
     - name: Upload ASM.js package
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: package-asmjs
         path: tiny-secp256k1-asmjs/bitcoin-js-tiny-secp256k1-asmjs-*
