@@ -32,6 +32,7 @@ interface Secp256k1WASM {
   X_ONLY_PUBLIC_KEY_INPUT2: WebAssemblyGlobal;
   TWEAK_INPUT: WebAssemblyGlobal;
   HASH_INPUT: WebAssemblyGlobal;
+  SCHNORR_MSG_INPUT: WebAssemblyGlobal;
   EXTRA_DATA_INPUT: WebAssemblyGlobal;
   SIGNATURE_INPUT: WebAssemblyGlobal;
 
@@ -51,9 +52,9 @@ interface Secp256k1WASM {
   privateNegate: () => void;
   sign: (e: number) => void;
   signRecoverable: (e: number) => 0 | 1 | 2 | 3;
-  signSchnorr: (e: number) => void;
+  signSchnorr: (e: number, msglen: number) => void;
   verify: (Q: number, strict: number) => number;
-  verifySchnorr: () => number;
+  verifySchnorr: (msglen: number) => number;
   recover: (outputlen: number, recoveryId: RecoveryIdType) => number;
 }
 

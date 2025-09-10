@@ -59,6 +59,7 @@ const PUBLIC_KEY_UNCOMPRESSED_SIZE: usize = 65;
 const X_ONLY_PUBLIC_KEY_SIZE: usize = 32;
 const TWEAK_SIZE: usize = 32;
 const HASH_SIZE: usize = 32;
+const SCHNORR_MSG_SIZE: usize = 100;
 const EXTRA_DATA_SIZE: usize = 32;
 const SIGNATURE_SIZE: usize = 64;
 
@@ -86,6 +87,8 @@ pub static mut X_ONLY_PUBLIC_KEY_INPUT2: [u8; X_ONLY_PUBLIC_KEY_SIZE] = [0; X_ON
 pub static mut TWEAK_INPUT: [u8; TWEAK_SIZE] = [0; TWEAK_SIZE];
 #[no_mangle]
 pub static HASH_INPUT: [u8; HASH_SIZE] = [0; HASH_SIZE];
+#[no_mangle]
+pub static SCHNORR_MSG_INPUT: [u8; SCHNORR_MSG_SIZE] = [0; SCHNORR_MSG_SIZE];
 #[no_mangle]
 pub static EXTRA_DATA_INPUT: [u8; EXTRA_DATA_SIZE] = [0; EXTRA_DATA_SIZE];
 #[no_mangle]
@@ -489,7 +492,7 @@ pub extern "C" fn sign_recoverable(extra_data: i32) -> i32 {
 #[allow(clippy::missing_panics_doc)]
 #[no_mangle]
 #[export_name = "signSchnorr"]
-pub extern "C" fn sign_schnorr(extra_data: i32) {
+pub extern "C" fn sign_schnorr(extra_data: i32, msg_len: i32) {
     unsafe {
         let mut keypair = KeyPair::new();
         let noncedata = SchnorrSigExtraParams::new(
@@ -511,8 +514,8 @@ pub extern "C" fn sign_schnorr(extra_data: i32) {
             secp256k1_schnorrsig_sign_custom(
                 get_context(),
                 SIGNATURE_INPUT.as_mut_ptr(),
-                HASH_INPUT.as_ptr(),
-                32,
+                SCHNORR_MSG_INPUT.as_ptr(),
+                msg_len.try_into().unwrap(),
                 &keypair,
                 &noncedata
             ),
@@ -574,17 +577,18 @@ pub extern "C" fn recover(outputlen: usize, recid: i32) -> i32 {
     }
 }
 
+#[allow(clippy::missing_panics_doc)]
 #[no_mangle]
 #[export_name = "verifySchnorr"]
-pub extern "C" fn verify_schnorr() -> i32 {
+pub extern "C" fn verify_schnorr(msg_len: i32) -> i32 {
     unsafe {
         let pk = jstry!(x_only_pubkey_parse(X_ONLY_PUBLIC_KEY_INPUT.as_ptr()), 0);
         i32::from(
             secp256k1_schnorrsig_verify(
                 get_context(),
                 SIGNATURE_INPUT.as_ptr(),
-                HASH_INPUT.as_ptr(),
-                32,
+                SCHNORR_MSG_INPUT.as_ptr(),
+                msg_len.try_into().unwrap(),
                 &pk,
             ) == 1,
         )

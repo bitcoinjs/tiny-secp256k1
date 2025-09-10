@@ -10,6 +10,7 @@ const WASM_X_ONLY_PUBLIC_KEY_INPUT_PTR = wasm.X_ONLY_PUBLIC_KEY_INPUT.value;
 const WASM_X_ONLY_PUBLIC_KEY_INPUT2_PTR = wasm.X_ONLY_PUBLIC_KEY_INPUT2.value;
 const WASM_TWEAK_INPUT_PTR = wasm.TWEAK_INPUT.value;
 const WASM_HASH_INPUT_PTR = wasm.HASH_INPUT.value;
+const WASM_SCHNORR_MSG_INPUT_PTR = wasm.SCHNORR_MSG_INPUT.value;
 const WASM_EXTRA_DATA_INPUT_PTR = wasm.EXTRA_DATA_INPUT.value;
 const WASM_SIGNATURE_INPUT_PTR = wasm.SIGNATURE_INPUT.value;
 
@@ -40,6 +41,10 @@ const TWEAK_INPUT = WASM_BUFFER.subarray(
 const HASH_INPUT = WASM_BUFFER.subarray(
   WASM_HASH_INPUT_PTR,
   WASM_HASH_INPUT_PTR + validate.HASH_SIZE
+);
+const SCHNORR_MSG_INPUT = WASM_BUFFER.subarray(
+  WASM_SCHNORR_MSG_INPUT_PTR,
+  WASM_SCHNORR_MSG_INPUT_PTR + validate.SCHNORR_MSG_SIZE
 );
 const EXTRA_DATA_INPUT = WASM_BUFFER.subarray(
   WASM_EXTRA_DATA_INPUT_PTR,
@@ -376,17 +381,17 @@ export function signSchnorr(
   d: Uint8Array,
   e?: Uint8Array
 ): Uint8Array {
-  validate.validateHash(h);
+  validate.validateSchnorrMsg(h);
   validate.validatePrivate(d);
   validate.validateExtraData(e);
   try {
-    HASH_INPUT.set(h);
+    SCHNORR_MSG_INPUT.set(h);
     PRIVATE_KEY_INPUT.set(d);
     if (e !== undefined) EXTRA_DATA_INPUT.set(e);
-    wasm.signSchnorr(e === undefined ? 0 : 1);
+    wasm.signSchnorr(e === undefined ? 0 : 1, h.length);
     return SIGNATURE_INPUT.slice(0, validate.SIGNATURE_SIZE);
   } finally {
-    HASH_INPUT.fill(0);
+    SCHNORR_MSG_INPUT.fill(0);
     PRIVATE_KEY_INPUT.fill(0);
     if (e !== undefined) EXTRA_DATA_INPUT.fill(0);
     SIGNATURE_INPUT.fill(0);
@@ -451,16 +456,16 @@ export function verifySchnorr(
   Q: Uint8Array,
   signature: Uint8Array
 ): boolean {
-  validate.validateHash(h);
+  validate.validateSchnorrMsg(h);
   validate.validateXOnlyPoint(Q);
   validate.validateSignature(signature);
   try {
-    HASH_INPUT.set(h);
+    SCHNORR_MSG_INPUT.set(h);
     X_ONLY_PUBLIC_KEY_INPUT.set(Q);
     SIGNATURE_INPUT.set(signature);
-    return wasm.verifySchnorr() === 1 ? true : false;
+    return wasm.verifySchnorr(h.length) === 1 ? true : false;
   } finally {
-    HASH_INPUT.fill(0);
+    SCHNORR_MSG_INPUT.fill(0);
     X_ONLY_PUBLIC_KEY_INPUT.fill(0);
     SIGNATURE_INPUT.fill(0);
   }

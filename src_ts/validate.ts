@@ -16,6 +16,7 @@ export const PUBLIC_KEY_UNCOMPRESSED_SIZE = 65;
 export const X_ONLY_PUBLIC_KEY_SIZE = 32;
 export const TWEAK_SIZE = 32;
 export const HASH_SIZE = 32;
+export const SCHNORR_MSG_SIZE = 100;
 export const EXTRA_DATA_SIZE = 32;
 export const SIGNATURE_SIZE = 64;
 
@@ -94,6 +95,11 @@ function isHash(h: Uint8Array): boolean {
   return isUint8Array(h) && h.length === HASH_SIZE;
 }
 
+function isSchnorrMsg(h: Uint8Array): boolean {
+  // TODO: Remove 100 byte limit and give schnorr messages their own error.
+  return isUint8Array(h) && h.length <= SCHNORR_MSG_SIZE && h.length >= 0;
+}
+
 function isExtraData(e?: Uint8Array): boolean {
   return e === undefined || (isUint8Array(e) && e.length === EXTRA_DATA_SIZE);
 }
@@ -137,6 +143,11 @@ export function validateTweak(tweak: Uint8Array): void {
 
 export function validateHash(h: Uint8Array): void {
   if (!isHash(h)) throwError(ERROR_BAD_HASH);
+}
+
+export function validateSchnorrMsg(h: Uint8Array): void {
+  // TODO: Remove 100 byte limit and give schnorr messages their own error.
+  if (!isSchnorrMsg(h)) throwError(ERROR_BAD_HASH);
 }
 
 export function validateExtraData(e?: Uint8Array): void {
