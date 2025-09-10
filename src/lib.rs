@@ -21,12 +21,12 @@ use secp256k1_sys::{
     secp256k1_ec_seckey_tweak_add, secp256k1_ecdsa_sign, secp256k1_ecdsa_signature_normalize,
     secp256k1_ecdsa_signature_parse_compact, secp256k1_ecdsa_signature_serialize_compact,
     secp256k1_ecdsa_verify, secp256k1_keypair_create, secp256k1_keypair_xonly_pub,
-    secp256k1_nonce_function_rfc6979, secp256k1_schnorrsig_sign, secp256k1_schnorrsig_verify,
-    secp256k1_xonly_pubkey_from_pubkey, secp256k1_xonly_pubkey_parse,
+    secp256k1_nonce_function_rfc6979, secp256k1_schnorrsig_sign_custom,
+    secp256k1_schnorrsig_verify, secp256k1_xonly_pubkey_from_pubkey, secp256k1_xonly_pubkey_parse,
     secp256k1_xonly_pubkey_serialize, secp256k1_xonly_pubkey_tweak_add,
-    secp256k1_xonly_pubkey_tweak_add_check, types::c_void, Context, KeyPair, PublicKey, Signature,
-    XOnlyPublicKey, SECP256K1_SER_COMPRESSED, SECP256K1_SER_UNCOMPRESSED, SECP256K1_START_SIGN,
-    SECP256K1_START_VERIFY,
+    secp256k1_xonly_pubkey_tweak_add_check, types::c_void, Context, KeyPair, PublicKey,
+    SchnorrSigExtraParams, Signature, XOnlyPublicKey, SECP256K1_SER_COMPRESSED,
+    SECP256K1_SER_UNCOMPRESSED, SECP256K1_START_SIGN, SECP256K1_START_VERIFY,
 };
 
 use secp256k1_sys::recovery::{
@@ -492,12 +492,15 @@ pub extern "C" fn sign_recoverable(extra_data: i32) -> i32 {
 pub extern "C" fn sign_schnorr(extra_data: i32) {
     unsafe {
         let mut keypair = KeyPair::new();
-        let noncedata = if extra_data == 0 {
-            core::ptr::null()
-        } else {
-            EXTRA_DATA_INPUT.as_ptr()
-        }
-        .cast::<c_void>();
+        let noncedata = SchnorrSigExtraParams::new(
+            None,
+            if extra_data == 0 {
+                core::ptr::null()
+            } else {
+                EXTRA_DATA_INPUT.as_ptr()
+            }
+            .cast::<c_void>(),
+        );
 
         assert_eq!(
             secp256k1_keypair_create(get_context(), &mut keypair, PRIVATE_INPUT.as_ptr()),
@@ -505,12 +508,13 @@ pub extern "C" fn sign_schnorr(extra_data: i32) {
         );
 
         assert_eq!(
-            secp256k1_schnorrsig_sign(
+            secp256k1_schnorrsig_sign_custom(
                 get_context(),
                 SIGNATURE_INPUT.as_mut_ptr(),
                 HASH_INPUT.as_ptr(),
+                32,
                 &keypair,
-                noncedata.cast()
+                &noncedata
             ),
             1
         );
