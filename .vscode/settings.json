@@ -1,0 +1,7 @@
+{
+    "rust-analyzer.check.targets": [
+        "wasm32-unknown-unknown"
+    ],
+    "rust-analyzer.check.command": "clippy",
+    "js/ts.tsdk.path": "node_modules/typescript/lib"
+}

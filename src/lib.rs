@@ -6,7 +6,7 @@
 compile_error!("Only `wasm32` target_arch is supported.");
 
 #[panic_handler]
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", not(test)))]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     core::arch::wasm32::unreachable()
 }
