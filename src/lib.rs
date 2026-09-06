@@ -35,19 +35,13 @@ use secp256k1_sys::recovery::{
     RecoverableSignature,
 };
 
-#[link(wasm_import_module = "./validate_error.js")]
-extern "C" {
-    #[link_name = "throwError"]
-    fn throw_error(errcode: usize);
-}
-
 #[link(wasm_import_module = "./rand.js")]
 extern "C" {
     #[link_name = "generateInt32"]
     fn generate_int32() -> i32;
 }
 
-type InvalidInputResult<T> = Result<T, usize>;
+type InvalidInputResult<T> = Result<T, i32>;
 
 #[allow(clippy::large_stack_arrays)]
 static CONTEXT_BUFFER: [u8; 192] = [0; 192];
@@ -62,13 +56,13 @@ const HASH_SIZE: usize = 32;
 const EXTRA_DATA_SIZE: usize = 32;
 const SIGNATURE_SIZE: usize = 64;
 
-const ERROR_BAD_PRIVATE: usize = 0;
-const ERROR_BAD_POINT: usize = 1;
-// const ERROR_BAD_TWEAK: usize = 2;
-// const ERROR_BAD_HASH: usize = 3;
-const ERROR_BAD_SIGNATURE: usize = 4;
-// const ERROR_BAD_EXTRA_DATA: usize = 5;
-// const ERROR_BAD_PARITY: usize = 6;
+const ERROR_BAD_PRIVATE: i32 = 0x080;
+const ERROR_BAD_POINT: i32 = 0x180;
+// const ERROR_BAD_TWEAK: i32 = 0x280;
+// const ERROR_BAD_HASH: i32 = 0x380;
+const ERROR_BAD_SIGNATURE: i32 = 0x480;
+// const ERROR_BAD_EXTRA_DATA: i32 = 0x580;
+// const ERROR_BAD_PARITY: i32 = 0x680;
 
 #[no_mangle]
 pub static mut PRIVATE_INPUT: [u8; PRIVATE_KEY_SIZE] = [0; PRIVATE_KEY_SIZE];
@@ -99,8 +93,7 @@ macro_rules! jstry {
         match $value {
             Ok(value) => value,
             Err(code) => {
-                throw_error(code);
-                return $ret;
+                return $ret | code;
             }
         }
     };
@@ -150,7 +143,10 @@ unsafe fn create_keypair(input: *const u8) -> InvalidInputResult<KeyPair> {
 unsafe fn x_only_pubkey_from_pubkey(input: *const u8, inputlen: usize) -> (XOnlyPublicKey, i32) {
     let mut xonly_pk = XOnlyPublicKey::new();
     let mut parity: i32 = 0;
-    let pubkey = jstry!(pubkey_parse(input, inputlen), (xonly_pk, parity));
+    let pubkey = match pubkey_parse(input, inputlen) {
+        Ok(value) => value,
+        Err(code) => return (xonly_pk, code),
+    };
     x_only_pubkey_from_pubkey_struct(&mut xonly_pk, &mut parity, &pubkey)
 }
 
@@ -217,7 +213,7 @@ pub extern "C" fn initialize_context() {
 
 #[no_mangle]
 #[export_name = "isPoint"]
-pub extern "C" fn is_point(inputlen: usize) -> usize {
+pub extern "C" fn is_point(inputlen: usize) -> i32 {
     unsafe {
         if inputlen == X_ONLY_PUBLIC_KEY_SIZE {
             x_only_pubkey_parse(PUBLIC_KEY_INPUT.as_ptr()).map_or_else(|_error| 0, |_pk| 1)
@@ -281,7 +277,7 @@ pub extern "C" fn x_only_point_add_tweak() -> i32 {
         ) != 1
         {
             // infinity point
-            return -1;
+            return 42;
         }
         let mut parity: i32 = 0;
         x_only_pubkey_from_pubkey_struct(&mut xonly_pk, &mut parity, &pubkey);
@@ -310,11 +306,12 @@ pub extern "C" fn x_only_point_add_tweak_check(tweaked_parity: i32) -> i32 {
 
 #[no_mangle]
 #[export_name = "pointCompress"]
-pub extern "C" fn point_compress(inputlen: usize, outputlen: usize) {
+pub extern "C" fn point_compress(inputlen: usize, outputlen: usize) -> i32 {
     unsafe {
-        let pk = jstry!(pubkey_parse(PUBLIC_KEY_INPUT.as_ptr(), inputlen));
+        let pk = jstry!(pubkey_parse(PUBLIC_KEY_INPUT.as_ptr(), inputlen), 0);
         pubkey_serialize(&pk, PUBLIC_KEY_INPUT.as_mut_ptr(), outputlen);
     }
+    1
 }
 
 #[no_mangle]
@@ -352,7 +349,11 @@ pub extern "C" fn x_only_point_from_scalar() -> i32 {
 #[export_name = "xOnlyPointFromPoint"]
 pub extern "C" fn x_only_point_from_point(inputlen: usize) -> i32 {
     unsafe {
-        let (xonly_pk, _parity) = x_only_pubkey_from_pubkey(PUBLIC_KEY_INPUT.as_ptr(), inputlen);
+        let (xonly_pk, parity) = x_only_pubkey_from_pubkey(PUBLIC_KEY_INPUT.as_ptr(), inputlen);
+        // If parity is invalid, then it is an error code to be returned.
+        if parity > 1 {
+            return parity;
+        }
         x_only_pubkey_serialize(&xonly_pk, X_ONLY_PUBLIC_KEY_INPUT.as_mut_ptr());
         1
     }
@@ -408,18 +409,19 @@ pub extern "C" fn private_sub() -> i32 {
 #[allow(clippy::missing_panics_doc)]
 #[no_mangle]
 #[export_name = "privateNegate"]
-pub extern "C" fn private_negate() {
+pub extern "C" fn private_negate() -> i32 {
     unsafe {
         assert_eq!(
             secp256k1_ec_seckey_negate(secp256k1_context_no_precomp, PRIVATE_INPUT.as_mut_ptr()),
             1
         );
     }
+    1
 }
 
 #[allow(clippy::missing_panics_doc)]
 #[no_mangle]
-pub extern "C" fn sign(extra_data: i32) {
+pub extern "C" fn sign(extra_data: i32) -> i32 {
     unsafe {
         let mut sig = Signature::new();
         let noncedata = if extra_data == 0 {
@@ -449,6 +451,7 @@ pub extern "C" fn sign(extra_data: i32) {
             1
         );
     }
+    1
 }
 
 #[allow(clippy::missing_panics_doc)]
@@ -489,7 +492,7 @@ pub extern "C" fn sign_recoverable(extra_data: i32) -> i32 {
 #[allow(clippy::missing_panics_doc)]
 #[no_mangle]
 #[export_name = "signSchnorr"]
-pub extern "C" fn sign_schnorr(extra_data: i32) {
+pub extern "C" fn sign_schnorr(extra_data: i32) -> i32 {
     unsafe {
         let mut keypair = KeyPair::new();
         let noncedata = if extra_data == 0 {
@@ -515,6 +518,7 @@ pub extern "C" fn sign_schnorr(extra_data: i32) {
             1
         );
     }
+    1
 }
 
 #[no_mangle]
@@ -529,8 +533,7 @@ pub extern "C" fn verify(inputlen: usize, strict: i32) -> i32 {
             SIGNATURE_INPUT.as_ptr(),
         ) == 0
         {
-            throw_error(ERROR_BAD_SIGNATURE);
-            return 0;
+            return ERROR_BAD_SIGNATURE;
         }
 
         if strict == 0 {
@@ -556,8 +559,7 @@ pub extern "C" fn recover(outputlen: usize, recid: i32) -> i32 {
             recid,
         ) == 0
         {
-            throw_error(ERROR_BAD_SIGNATURE);
-            return 0;
+            return ERROR_BAD_SIGNATURE;
         }
 
         let mut pk = PublicKey::new();

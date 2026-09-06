@@ -23,3 +23,17 @@ export function throwError(errcode: number): never {
     ERRORS_MESSAGES[errcode.toString()] || `Unknow error code: ${errcode}`;
   throw new TypeError(message);
 }
+
+/**
+ * Checks for error codes in the higher bits and throws an error if any are found.
+ * @param retval The return value of the wasm function.
+ * @returns The original return value if no error is found.
+ */
+export function vCheck(retval: number): number {
+  if ((retval & 0x80) !== 0) {
+    const ERROR_MASK = 0xff00;
+    const errorCode = (retval & ERROR_MASK) >> 8;
+    throwError(errorCode);
+  }
+  return retval;
+}
