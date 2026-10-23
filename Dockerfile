@@ -49,14 +49,14 @@ RUN git clone --depth 1 --branch version_114 https://github.com/WebAssembly/bina
 RUN useradd -ms /bin/bash builduser
 USER builduser
 
-# Install Rust (using ./rust-toolchain version)
+# Install Rust (using ./rust-toolchain.toml version)
 WORKDIR /home/builduser/
-COPY rust-toolchain .
+COPY rust-toolchain.toml .
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y \
-    --default-toolchain $(cat rust-toolchain) \
+    --default-toolchain $(sed -n 's/^channel = "\(.*\)"/\1/p' rust-toolchain.toml) \
     --profile minimal \
     --component clippy,rustfmt,rust-src \
     --target wasm32-unknown-unknown \
-    && rm rust-toolchain
+    && rm rust-toolchain.toml
 
 CMD Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 & export DISPLAY=':99.0' && bash
