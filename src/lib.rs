@@ -63,6 +63,7 @@ const ERROR_BAD_POINT: i32 = 0x180;
 const ERROR_BAD_SIGNATURE: i32 = 0x480;
 // const ERROR_BAD_EXTRA_DATA: i32 = 0x580;
 // const ERROR_BAD_PARITY: i32 = 0x680;
+const ERROR_BAD_RECOVERY_ID: i32 = 0x780;
 
 #[no_mangle]
 pub static mut PRIVATE_INPUT: [u8; PRIVATE_KEY_SIZE] = [0; PRIVATE_KEY_SIZE];
@@ -550,6 +551,9 @@ pub extern "C" fn verify(inputlen: usize, strict: i32) -> i32 {
 
 #[no_mangle]
 pub extern "C" fn recover(outputlen: usize, recid: i32) -> i32 {
+    if !(0..=3).contains(&recid) {
+        return ERROR_BAD_RECOVERY_ID;
+    }
     unsafe {
         let mut signature = RecoverableSignature::new();
         if secp256k1_ecdsa_recoverable_signature_parse_compact(

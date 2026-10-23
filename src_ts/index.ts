@@ -426,6 +426,7 @@ export function recover(
 ): Uint8Array | null {
   validate.validateHash(h);
   validate.validateSignature(signature);
+  validate.validateRecoveryId(recoveryId);
   validate.validateSignatureNonzeroRS(signature);
   if (recoveryId & 2) {
     validate.validateSigrPMinusN(signature);
