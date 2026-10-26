@@ -1,12 +1,10 @@
 import { readFileSync } from "fs";
 import { path } from "./wasm_path.js";
 import * as rand from "./rand.js";
-import * as validate_error from "./validate_error.js";
 
 const binary = readFileSync(path("secp256k1.wasm"));
 const imports = {
   "./rand.js": rand,
-  "./validate_error.js": validate_error,
 };
 
 const mod = new WebAssembly.Module(binary);
@@ -43,15 +41,15 @@ interface Secp256k1WASM {
   pointFromScalar: (outputlen: number) => number;
   xOnlyPointFromScalar: () => number;
   xOnlyPointFromPoint: (inputLen: number) => number;
-  xOnlyPointAddTweak: () => 1 | 0 | -1;
+  xOnlyPointAddTweak: () => 1 | 0 | 42;
   xOnlyPointAddTweakCheck: (parity: number) => number;
   pointMultiply: (p: number, outputlen: number) => number;
   privateAdd: () => number;
   privateSub: () => number;
-  privateNegate: () => void;
-  sign: (e: number) => void;
+  privateNegate: () => number;
+  sign: (e: number) => number;
   signRecoverable: (e: number) => 0 | 1 | 2 | 3;
-  signSchnorr: (e: number) => void;
+  signSchnorr: (e: number) => number;
   verify: (Q: number, strict: number) => number;
   verifySchnorr: () => number;
   recover: (outputlen: number, recoveryId: RecoveryIdType) => number;

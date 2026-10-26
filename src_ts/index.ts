@@ -1,5 +1,6 @@
 import { compare } from "uint8array-tools";
 import * as validate from "./validate.js";
+import { vCheck } from "./validate_error.js";
 import wasm from "./wasm_loader.js";
 
 const WASM_BUFFER = new Uint8Array(wasm.memory.buffer);
@@ -62,7 +63,7 @@ function assumeCompression(compressed?: boolean, p?: Uint8Array): number {
 function _isPoint(p: Uint8Array): boolean {
   try {
     PUBLIC_KEY_INPUT.set(p);
-    return wasm.isPoint(p.length) === 1;
+    return vCheck(wasm.isPoint(p.length)) === 1;
   } finally {
     PUBLIC_KEY_INPUT.fill(0);
   }
@@ -99,7 +100,7 @@ export function pointAdd(
   try {
     PUBLIC_KEY_INPUT.set(pA);
     PUBLIC_KEY_INPUT2.set(pB);
-    return wasm.pointAdd(pA.length, pB.length, outputlen) === 1
+    return vCheck(wasm.pointAdd(pA.length, pB.length, outputlen)) === 1
       ? PUBLIC_KEY_INPUT.slice(0, outputlen)
       : null;
   } finally {
@@ -119,7 +120,7 @@ export function pointAddScalar(
   try {
     PUBLIC_KEY_INPUT.set(p);
     TWEAK_INPUT.set(tweak);
-    return wasm.pointAddScalar(p.length, outputlen) === 1
+    return vCheck(wasm.pointAddScalar(p.length, outputlen)) === 1
       ? PUBLIC_KEY_INPUT.slice(0, outputlen)
       : null;
   } finally {
@@ -133,7 +134,7 @@ export function pointCompress(p: Uint8Array, compressed?: boolean): Uint8Array {
   const outputlen = assumeCompression(compressed, p);
   try {
     PUBLIC_KEY_INPUT.set(p);
-    wasm.pointCompress(p.length, outputlen);
+    vCheck(wasm.pointCompress(p.length, outputlen));
     return PUBLIC_KEY_INPUT.slice(0, outputlen);
   } finally {
     PUBLIC_KEY_INPUT.fill(0);
@@ -148,7 +149,7 @@ export function pointFromScalar(
   const outputlen = assumeCompression(compressed);
   try {
     PRIVATE_KEY_INPUT.set(d);
-    return wasm.pointFromScalar(outputlen) === 1
+    return vCheck(wasm.pointFromScalar(outputlen)) === 1
       ? PUBLIC_KEY_INPUT.slice(0, outputlen)
       : null;
   } finally {
@@ -161,7 +162,7 @@ export function xOnlyPointFromScalar(d: Uint8Array): Uint8Array {
   validate.validatePrivate(d);
   try {
     PRIVATE_KEY_INPUT.set(d);
-    wasm.xOnlyPointFromScalar();
+    vCheck(wasm.xOnlyPointFromScalar());
     return X_ONLY_PUBLIC_KEY_INPUT.slice(0, validate.X_ONLY_PUBLIC_KEY_SIZE);
   } finally {
     PRIVATE_KEY_INPUT.fill(0);
@@ -173,7 +174,7 @@ export function xOnlyPointFromPoint(p: Uint8Array): Uint8Array {
   validate.validatePoint(p);
   try {
     PUBLIC_KEY_INPUT.set(p);
-    wasm.xOnlyPointFromPoint(p.length);
+    vCheck(wasm.xOnlyPointFromPoint(p.length));
     return X_ONLY_PUBLIC_KEY_INPUT.slice(0, validate.X_ONLY_PUBLIC_KEY_SIZE);
   } finally {
     PUBLIC_KEY_INPUT.fill(0);
@@ -192,7 +193,7 @@ export function pointMultiply(
   try {
     PUBLIC_KEY_INPUT.set(p);
     TWEAK_INPUT.set(tweak);
-    return wasm.pointMultiply(p.length, outputlen) === 1
+    return vCheck(wasm.pointMultiply(p.length, outputlen)) === 1
       ? PUBLIC_KEY_INPUT.slice(0, outputlen)
       : null;
   } finally {
@@ -210,7 +211,7 @@ export function privateAdd(
   try {
     PRIVATE_KEY_INPUT.set(d);
     TWEAK_INPUT.set(tweak);
-    return wasm.privateAdd() === 1
+    return vCheck(wasm.privateAdd()) === 1
       ? PRIVATE_KEY_INPUT.slice(0, validate.PRIVATE_KEY_SIZE)
       : null;
   } finally {
@@ -235,7 +236,7 @@ export function privateSub(
   try {
     PRIVATE_KEY_INPUT.set(d);
     TWEAK_INPUT.set(tweak);
-    return wasm.privateSub() === 1
+    return vCheck(wasm.privateSub()) === 1
       ? PRIVATE_KEY_INPUT.slice(0, validate.PRIVATE_KEY_SIZE)
       : null;
   } finally {
@@ -249,7 +250,7 @@ export function privateNegate(d: Uint8Array): Uint8Array {
 
   try {
     PRIVATE_KEY_INPUT.set(d);
-    wasm.privateNegate();
+    vCheck(wasm.privateNegate());
     return PRIVATE_KEY_INPUT.slice(0, validate.PRIVATE_KEY_SIZE);
   } finally {
     PRIVATE_KEY_INPUT.fill(0);
@@ -269,8 +270,8 @@ export function xOnlyPointAddTweak(
   try {
     X_ONLY_PUBLIC_KEY_INPUT.set(p);
     TWEAK_INPUT.set(tweak);
-    const parity = wasm.xOnlyPointAddTweak();
-    return parity !== -1
+    const parity = vCheck(wasm.xOnlyPointAddTweak()) as 1 | 0 | 42;
+    return parity !== 42
       ? {
           parity,
           xOnlyPubkey: X_ONLY_PUBLIC_KEY_INPUT.slice(
@@ -302,9 +303,9 @@ export function xOnlyPointAddTweakCheck(
     X_ONLY_PUBLIC_KEY_INPUT2.set(resultToCheck);
     TWEAK_INPUT.set(tweak);
     if (hasParity) {
-      return wasm.xOnlyPointAddTweakCheck(tweakParity) === 1;
+      return vCheck(wasm.xOnlyPointAddTweakCheck(tweakParity)) === 1;
     } else {
-      wasm.xOnlyPointAddTweak();
+      if (vCheck(wasm.xOnlyPointAddTweak()) === 42) return false;
       const newKey = X_ONLY_PUBLIC_KEY_INPUT.slice(
         0,
         validate.X_ONLY_PUBLIC_KEY_SIZE
@@ -326,7 +327,7 @@ export function sign(h: Uint8Array, d: Uint8Array, e?: Uint8Array): Uint8Array {
     HASH_INPUT.set(h);
     PRIVATE_KEY_INPUT.set(d);
     if (e !== undefined) EXTRA_DATA_INPUT.set(e);
-    wasm.sign(e === undefined ? 0 : 1);
+    vCheck(wasm.sign(e === undefined ? 0 : 1));
     return SIGNATURE_INPUT.slice(0, validate.SIGNATURE_SIZE);
   } finally {
     HASH_INPUT.fill(0);
@@ -352,9 +353,9 @@ export function signRecoverable(
     HASH_INPUT.set(h);
     PRIVATE_KEY_INPUT.set(d);
     if (e !== undefined) EXTRA_DATA_INPUT.set(e);
-    const recoveryId: RecoveryIdType = wasm.signRecoverable(
-      e === undefined ? 0 : 1
-    );
+    const recoveryId: RecoveryIdType = vCheck(
+      wasm.signRecoverable(e === undefined ? 0 : 1)
+    ) as RecoveryIdType;
     const signature: Uint8Array = SIGNATURE_INPUT.slice(
       0,
       validate.SIGNATURE_SIZE
@@ -383,7 +384,7 @@ export function signSchnorr(
     HASH_INPUT.set(h);
     PRIVATE_KEY_INPUT.set(d);
     if (e !== undefined) EXTRA_DATA_INPUT.set(e);
-    wasm.signSchnorr(e === undefined ? 0 : 1);
+    vCheck(wasm.signSchnorr(e === undefined ? 0 : 1));
     return SIGNATURE_INPUT.slice(0, validate.SIGNATURE_SIZE);
   } finally {
     HASH_INPUT.fill(0);
@@ -406,7 +407,9 @@ export function verify(
     HASH_INPUT.set(h);
     PUBLIC_KEY_INPUT.set(Q);
     SIGNATURE_INPUT.set(signature);
-    return wasm.verify(Q.length, strict === true ? 1 : 0) === 1 ? true : false;
+    return vCheck(wasm.verify(Q.length, strict === true ? 1 : 0)) === 1
+      ? true
+      : false;
   } finally {
     HASH_INPUT.fill(0);
     PUBLIC_KEY_INPUT.fill(0);
@@ -423,6 +426,7 @@ export function recover(
 ): Uint8Array | null {
   validate.validateHash(h);
   validate.validateSignature(signature);
+  validate.validateRecoveryId(recoveryId);
   validate.validateSignatureNonzeroRS(signature);
   if (recoveryId & 2) {
     validate.validateSigrPMinusN(signature);
@@ -436,7 +440,7 @@ export function recover(
     HASH_INPUT.set(h);
     SIGNATURE_INPUT.set(signature);
 
-    return wasm.recover(outputlen, recoveryId) === 1
+    return vCheck(wasm.recover(outputlen, recoveryId)) === 1
       ? PUBLIC_KEY_INPUT.slice(0, outputlen)
       : null;
   } finally {
@@ -458,7 +462,7 @@ export function verifySchnorr(
     HASH_INPUT.set(h);
     X_ONLY_PUBLIC_KEY_INPUT.set(Q);
     SIGNATURE_INPUT.set(signature);
-    return wasm.verifySchnorr() === 1 ? true : false;
+    return vCheck(wasm.verifySchnorr()) === 1 ? true : false;
   } finally {
     HASH_INPUT.fill(0);
     X_ONLY_PUBLIC_KEY_INPUT.fill(0);

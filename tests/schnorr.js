@@ -109,6 +109,18 @@ export default function (secp256k1, type) {
           f.result,
           `xOnlyPointAddTweak returns null when G pubkey and n - 1 tweak used`
         );
+        for (const parity of [undefined, 0, 1]) {
+          t.equal(
+            secp256k1.xOnlyPointAddTweakCheck(
+              f.pubkey,
+              f.tweak,
+              f.pubkey,
+              parity
+            ),
+            false,
+            `xOnlyPointAddTweakCheck rejects infinity with parity ${parity}`
+          );
+        }
         continue;
       }
       const { parity, xOnlyPubkey: result } = res;

@@ -119,6 +119,11 @@ export function validateParity(p: 1 | 0): void {
   if (p !== 0 && p !== 1) throwError(ERROR_BAD_PARITY);
 }
 
+export function validateRecoveryId(recoveryId: number): void {
+  if (!Number.isInteger(recoveryId) || recoveryId < 0 || recoveryId > 3)
+    throwError(ERROR_BAD_RECOVERY_ID);
+}
+
 export function validatePrivate(d: Uint8Array): void {
   if (!isPrivate(d)) throwError(ERROR_BAD_PRIVATE);
 }

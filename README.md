@@ -340,6 +340,7 @@ Returns the ECDSA public key from a signature if it can be recovered, `null` oth
 
 - `Expected Signature` if `signature` has any (r, s) values not in range `(0...order - 1]`
 - `Bad Recovery Id` if `recid & 2 !== 0`  and `signature` has any r value not in range `(0...P - N - 1]`
+- `Bad Recovery Id` if `recoveryId` is not an integer from 0 through 3
 - `Expected Hash` if `h` is not 256-bit
 
 
